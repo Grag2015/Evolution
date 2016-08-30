@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import time
 
 # atomic relations block algebra
 ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
@@ -7,6 +8,7 @@ ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 # комнаты
 compartments = {"envelope", "hall", "room", "bath", "kitchen"}
 
+timeout = 15
 
 # Ограничения
 # смежные
@@ -85,7 +87,7 @@ def PathConsistency(C):
         if (len(TmpCij)==0):
             print C[elem[0]][elem[1]]
             print noatomicBAcomp(C[elem[0]][elem[2]],C[elem[1]][elem[2]])
-            return (elem, NPathsChecked, NChanges)
+            return (elem, C, NPathsChecked, NChanges)
         if (TmpCij != C[elem[0]][elem[1]]):
             NChanges += 1
             C[elem[0]][elem[1]] = TmpCij
@@ -99,14 +101,14 @@ def PathConsistency(C):
 
         TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[1]][elem[2]]) # intersection в оригинале C[elem[2]][elem[1]]
         if (len(TmpCij)==0):
-            return (elem, NPathsChecked, NChanges)
+            return (elem, C, NPathsChecked, NChanges)
         if (TmpCij != C[elem[0]][elem[1]]):
             NChanges += 1
             C[elem[0]][elem[1]] = TmpCij
             LPathsToVisit = LPathsToVisit | Paths(elem[0],elem[1],elem[2])
     # end second loop
 
-    return ((0, 0, 0), NPathsChecked, NChanges)
+    return ((0, 0, 0), C, NPathsChecked, NChanges)
 
 
 envel_other = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,8),(8,9),(6,9),(6,10),(2,6)}
@@ -118,7 +120,46 @@ tc_test=[[{}, envel_other, envel_other, envel_other, envel_other],
     [{}, {}, {}, {}, kitchen_bath],
     [{}, {}, {}, {}, {}]] # - удалить первый столбец
 
-PathConsistency(tc_test)
+def IsScenario(N):
+    for i in range(0,len(compartments)): # go along rows
+        for j in range(i+1, len(compartments)): # go along columns
+            if (len(N[i][j])!=1):
+                return False
+    return True
 
 
+def EnumerateScenarios(N):
+    t1 = time.clock()
+    # input - matrix of constraints
+    L = []
+    ((i, j, k), N, NPathsChecked, NChanges) = PathConsistency(N)
+
+    # begin base cases
+    if ((i!=0)|(j!=0)):
+        return L # if N is inconsistent, return the empty list
+    if IsScenario(N):
+        L.append(N)
+        return L # if N is a scenario, return a list only with N
+    # end base cases
+
+    # begin recursive case 1
+    TmpN = N
+    #TmpN = AssignNextRelFirst(TmpN) #assign next relation
+    TmpL = EnumerateScenarios(TmpN) # recursive call
+    L.append(TmpL)
+    # end recursive case 1
+
+    t2 = time.clock()
+    if ((t2-t1) > timeout):
+        print "timeout"
+        return L
+
+    # begin recursive case 1
+    TmpN = N
+    # TmpN = AssignNextRelRest(TmpN) #rest of the assignments
+    TmpL = EnumerateScenarios(TmpN)  # recursive call
+    L.append(TmpL)
+    # end recursive case 2
+
+    return L
 
