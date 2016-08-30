@@ -17,9 +17,11 @@ adjacency = {ARelBA[2][1],ARelBA[3][1],ARelBA[4][1],ARelBA[5][1],ARelBA[6][1],AR
 inclusion = {ARelBA[4][4]}
 
 # topologic constraints
-tc=[[{},adjacency,adjacency,inclusion],
-    [{},{},adjacency,inclusion],
-    [{},{}, {}, inclusion]] # - удалить первый столбец
+tc=[[{}, adjacency, adjacency, adjacency, inclusion],
+    [{},{}, adjacency, adjacency, inclusion],
+    [{},{}, {}, adjacency, inclusion],
+    [{}, {}, {}, {}, adjacency],
+    [{}, {}, {}, {}, {}]] # - удалить первый столбец
 
 def atomicIAcomp(IArel1, IArel2):
     # interval algebra composition matrix
@@ -81,6 +83,8 @@ def PathConsistency(C):
             LPathsToVisit.remove(elem)
         TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[1]][elem[2]]) # intersection в оригинале C[elem[2]][elem[1]]
         if (len(TmpCij)==0):
+            print C[elem[0]][elem[1]]
+            print noatomicBAcomp(C[elem[0]][elem[2]],C[elem[1]][elem[2]])
             return (elem, NPathsChecked, NChanges)
         if (TmpCij != C[elem[0]][elem[1]]):
             NChanges += 1
@@ -104,6 +108,17 @@ def PathConsistency(C):
 
     return ((0, 0, 0), NPathsChecked, NChanges)
 
+
+envel_other = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,8),(8,9),(6,9),(6,10),(2,6)}
+hall_room={(1,2), (11,10), (1,10), (11,2)}
+kitchen_bath={(11,0), (1,12)}
+tc_test=[[{}, envel_other, envel_other, envel_other, envel_other],
+    [{},{}, hall_room, {(1,3),(1,5),(1,7),(1,9),(11,3),(11,5),(11,7),(11,9)}, {(6,1),(11,6)}],
+    [{},{}, {}, {(6,1),(11,6)}, {(1,3),(1,5),(1,7),(1,9),(11,3),(11,5),(11,7),(11,9)}],
+    [{}, {}, {}, {}, kitchen_bath],
+    [{}, {}, {}, {}, {}]] # - удалить первый столбец
+
+PathConsistency(tc_test)
 
 
 
