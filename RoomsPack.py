@@ -2,13 +2,17 @@ import itertools
 import numpy as np
 import time
 
+timeout = 15
+depth_recurs = 500
+recur_int = 0
+
 # atomic relations block algebra
 ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
 # комнаты
 compartments = {"envelope", "hall", "room", "bath", "kitchen"}
 
-timeout = 15
+
 
 # Ограничения
 # смежные
@@ -17,11 +21,12 @@ adjacency = {ARelBA[2][1],ARelBA[3][1],ARelBA[4][1],ARelBA[5][1],ARelBA[6][1],AR
             ARelBA[2][11],ARelBA[3][11],ARelBA[4][11],ARelBA[5][11],ARelBA[6][11],ARelBA[7][11],ARelBA[8][11],ARelBA[9][11],ARelBA[10][11], \
              ARelBA[11][2], ARelBA[11][3], ARelBA[11][4], ARelBA[11][5], ARelBA[11][6], ARelBA[11][7], ARelBA[11][8], ARelBA[11][9], ARelBA[11][10]}
 inclusion = {ARelBA[4][4]}
+envel_other = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,8),(8,9),(6,9),(6,10),(2,6)}
 
 # topologic constraints
-tc=[[{}, adjacency, adjacency, adjacency, inclusion],
-    [{},{}, adjacency, adjacency, inclusion],
-    [{},{}, {}, adjacency, inclusion],
+tc=[[{}, envel_other, envel_other, envel_other, envel_other],
+    [{},{}, adjacency, adjacency, adjacency],
+    [{},{}, {}, adjacency, adjacency],
     [{}, {}, {}, {}, adjacency],
     [{}, {}, {}, {}, {}]] # - удалить первый столбец
 
@@ -72,7 +77,7 @@ def Paths(i,j,k):
     return res
 
 
-def PathConsistency(C):
+def PathConsistency(C): # проход не вычищает все несовместимые элементы, ф-ю надо запускать раза 3.
     LPathsToVisit = set()
     NPathsChecked = 0
     NChanges = 0
@@ -90,7 +95,10 @@ def PathConsistency(C):
             return (elem, C, NPathsChecked, NChanges)
         if (TmpCij != C[elem[0]][elem[1]]):
             NChanges += 1
+            # print C[elem[0]][elem[1]]
+            # print TmpCij
             C[elem[0]][elem[1]] = TmpCij
+            # print 'union',  C[elem[0]][elem[1]]
             LPathsToVisit = LPathsToVisit | Paths(elem[0],elem[1],elem[2])
     # end first loop
 
@@ -104,11 +112,14 @@ def PathConsistency(C):
             return (elem, C, NPathsChecked, NChanges)
         if (TmpCij != C[elem[0]][elem[1]]):
             NChanges += 1
+            # print C[elem[0]][elem[1]]
+            # print TmpCij
             C[elem[0]][elem[1]] = TmpCij
+            # print 'union', C[elem[0]][elem[1]]
             LPathsToVisit = LPathsToVisit | Paths(elem[0],elem[1],elem[2])
     # end second loop
 
-    return ((0, 0, 0), C, NPathsChecked, NChanges)
+    return ((0, 0, 0), C, NPathsChecked, NChanges) #
 
 
 envel_other = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,8),(8,9),(6,9),(6,10),(2,6)}
@@ -120,6 +131,7 @@ tc_test=[[{}, envel_other, envel_other, envel_other, envel_other],
     [{}, {}, {}, {}, kitchen_bath],
     [{}, {}, {}, {}, {}]] # - удалить первый столбец
 
+
 def IsScenario(N):
     for i in range(0,len(compartments)): # go along rows
         for j in range(i+1, len(compartments)): # go along columns
@@ -127,39 +139,87 @@ def IsScenario(N):
                 return False
     return True
 
+# ctrl+j - insert template
+# ctrl+K - commit
+
+def AssignNextRelFirst(TmpN):
+    tmp=set()
+    for i in range(0,len(compartments)): # go along rows
+        for j in range(i+1, len(compartments)): # go along columns
+            if (len(TmpN[i][j])>1):
+                # удалить некоторый элемент из множества
+                tmp.add(copy.copy(TmpN[i][j]).pop())
+                TmpN[i][j] = tmp
+                return TmpN
+
+
+
+def AssignNextRelRest(TmpN):
+    tmp=set()
+    for i in range(0,len(compartments)): # go along rows
+        for j in range(i+1, len(compartments)): # go along columns
+            if (len(TmpN[i][j])>1):
+                # удалить некоторый элемент из множества
+                tmp = copy.copy(TmpN[i][j])
+                tmp.pop()
+                TmpN[i][j] = tmp
+                return TmpN
+
+
 
 def EnumerateScenarios(N):
-    t1 = time.clock()
+    global recur_int
+    recur_int+=1
+
     # input - matrix of constraints
     L = []
     ((i, j, k), N, NPathsChecked, NChanges) = PathConsistency(N)
 
     # begin base cases
     if ((i!=0)|(j!=0)):
+        print 1
         return L # if N is inconsistent, return the empty list
     if IsScenario(N):
         L.append(N)
+        print 2
         return L # if N is a scenario, return a list only with N
     # end base cases
 
+    #print depth_recurs
+    if (recur_int > depth_recurs):
+        print "depth_recurs exceeded"
+        return L
+
     # begin recursive case 1
-    TmpN = N
-    #TmpN = AssignNextRelFirst(TmpN) #assign next relation
+    TmpN = copy.deepcopy(N)
+    TmpN = AssignNextRelFirst(TmpN) #assign next relation
     TmpL = EnumerateScenarios(TmpN) # recursive call
     L.append(TmpL)
     # end recursive case 1
 
-    t2 = time.clock()
-    if ((t2-t1) > timeout):
-        print "timeout"
-        return L
-
     # begin recursive case 1
-    TmpN = N
-    # TmpN = AssignNextRelRest(TmpN) #rest of the assignments
+    TmpN = copy.deepcopy(N)
+    TmpN = AssignNextRelRest(TmpN) #rest of the assignments
     TmpL = EnumerateScenarios(TmpN)  # recursive call
     L.append(TmpL)
     # end recursive case 2
-
+    print 3
     return L
 
+N = copy.deepcopy(tc_tmp)
+recur_int = 0
+tt=EnumerateScenarios(N)
+
+IsScenario(tc_tmp)
+
+import copy
+
+tc_tmp=[[{}, {(9,9)}, {(7,6)}, {(8,9)}, {(9,7)}],
+    [{},{}, {(12,3), (12,9), (0,3), (0,9)}, {(1,6),(11,6)}, {(3,1),(9,11)}],
+    [{},{}, {}, {(1,3),(11,9)}, {(11,7),(1,5)}],
+    [{}, {}, {}, {}, {(7,11),(5,1)}],
+    [{}, {}, {}, {}, {}]] # - удалить первый столбец
+
+PathConsistency(tc_tmp)
+
+noatomicBAcomp({(7, 6)}, {(12, 9)})
