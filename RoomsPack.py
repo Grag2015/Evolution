@@ -1,6 +1,7 @@
 import itertools
 import numpy as np
 import time
+import copy
 
 timeout = 15
 depth_recurs = 500
@@ -37,7 +38,7 @@ def atomicIAcomp(IArel1, IArel2):
             [{0},{0},{0,1,2},{0},{2,3,4},{2,3,4},{2},{0,1,2},{0,1,2,7,8},{2,7,8},{2,3,4,5,6,7,8,9,10},{8,9,10},{8,9,10,11,12}],
             [{0},{0},{0,1,2},{3},{4},{4},{3},{0,1,2},{0,1,2,7,8},{3,6,9},{4,5,10},{11},{12}],
             [{0},{0},{0,1,2,3,4},{4},{4},{4},{4},{0,1,2,3,4},{0,1,2,3,4,5,6,7,8,9,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{12},{12}],
-            [{0},{5},{2,3,4},{4},{4},{5},{5},{5,6,7},{8,9,10,11,12},{10,11,12},{10,11,12},{12},{12}],
+            [{0},{1},{2,3,4},{4},{4},{5},{5},{5,6,7},{8,9,10,11,12},{10,11,12},{10,11,12},{12},{12}],
             [{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}],
             [{0},{1},{2},{2},{2,3,4},{5,6,7},{7},{7},{8},{8},{8,9,10},{8,9,10},{8,9,10,11,12}],
             [{0,1,2,7,8},{2,7,8},{2,7,8},{2,7,8},{2,3,4,5,6,7,8,9,10},{8,9,10},{8},{8},{8},{8},{8,9,10},{8,9,10},{8,9,10,11,12}],
@@ -47,6 +48,8 @@ def atomicIAcomp(IArel1, IArel2):
             [{0,1,2,3,4,5,6,7,8,9,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{12},{12},{12},{12},{12},{12},{12},{12}]]
     return IAcomp[IArel1][IArel2]
 
+atomicIAcomp(5,1)
+atomicIAcomp(1,5)
 
 def cartesProduct(set1, set2):
     cp=set()
@@ -65,17 +68,26 @@ def noatomicBAcomp(noatomicBArel1, noatomicBArel2):
             res= res | atomicBAcomp(i,j)
     return res
 
+def inverse(noatomicBArel):
+    res=set()
+    for elem in noatomicBArel:
+        res.add((12-elem[0],12-elem[1]))
+    return res
+
+inverse({(1,2),(3,4),(0,12)})
+
 def Paths(i,j,k):
     # ищем пути из i в j xthtp 3-ю точку, но не k
     ls = range(len(compartments))
     ls.remove(k)
-    restm = set(itertools.combinations(ls, 3))
+    ls.remove(i)
+    ls.remove(j)
     res=set()
-    for elem in restm:
-        if (i in elem) & (j in elem):
-            res.add(elem)
+    for elem in ls:
+        res.add((i,j,elem))
     return res
 
+Paths(3,2,0)
 
 def PathConsistency(C): # проход не вычищает все несовместимые элементы, ф-ю надо запускать раза 3.
     LPathsToVisit = set()
@@ -83,21 +95,22 @@ def PathConsistency(C): # проход не вычищает все несовм
     NChanges = 0
 
     # begin first loop
-    samples_3 = set(itertools.combinations(range(len(compartments)),3))
+    samples_3 = set(itertools.permutations(range(len(compartments)),3))
     for elem in samples_3:
         NPathsChecked+=1
         if (elem in LPathsToVisit):
             LPathsToVisit.remove(elem)
-        TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[1]][elem[2]]) # intersection в оригинале C[elem[2]][elem[1]]
+        TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
         if (len(TmpCij)==0):
             print C[elem[0]][elem[1]]
-            print noatomicBAcomp(C[elem[0]][elem[2]],C[elem[1]][elem[2]])
+            print noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
             return (elem, C, NPathsChecked, NChanges)
         if (TmpCij != C[elem[0]][elem[1]]):
             NChanges += 1
             # print C[elem[0]][elem[1]]
             # print TmpCij
             C[elem[0]][elem[1]] = TmpCij
+            C[elem[1]][elem[0]] = inverse(TmpCij)
             # print 'union',  C[elem[0]][elem[1]]
             LPathsToVisit = LPathsToVisit | Paths(elem[0],elem[1],elem[2])
     # end first loop
@@ -107,7 +120,7 @@ def PathConsistency(C): # проход не вычищает все несовм
         NPathsChecked += 1
         (i, j, k) = LPathsToVisit.pop()
 
-        TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[1]][elem[2]]) # intersection в оригинале C[elem[2]][elem[1]]
+        TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
         if (len(TmpCij)==0):
             return (elem, C, NPathsChecked, NChanges)
         if (TmpCij != C[elem[0]][elem[1]]):
@@ -115,6 +128,7 @@ def PathConsistency(C): # проход не вычищает все несовм
             # print C[elem[0]][elem[1]]
             # print TmpCij
             C[elem[0]][elem[1]] = TmpCij
+            C[elem[1]][elem[0]] = inverse(TmpCij)
             # print 'union', C[elem[0]][elem[1]]
             LPathsToVisit = LPathsToVisit | Paths(elem[0],elem[1],elem[2])
     # end second loop
@@ -212,14 +226,23 @@ tt=EnumerateScenarios(N)
 
 IsScenario(tc_tmp)
 
-import copy
 
-tc_tmp=[[{}, {(9,9)}, {(7,6)}, {(8,9)}, {(9,7)}],
-    [{},{}, {(12,3), (12,9), (0,3), (0,9)}, {(1,6),(11,6)}, {(3,1),(9,11)}],
-    [{},{}, {}, {(1,3),(11,9)}, {(11,7),(1,5)}],
-    [{}, {}, {}, {}, {(7,11),(5,1)}],
-    [{}, {}, {}, {}, {}]] # - удалить первый столбец
+# WORKING TEST EXAMPLE
+
+# scenario
+tc_tmp=[[{(6,6)}, {(9,9)}, {(7,6)}, {(8,9)}, {(9,7)}],
+    [{(3,3)}, {(6,6)}, {(0,3)}, {(1,6)}, {(3,1)}],
+    [{(5,6)}, {(12,9)}, {(6,6)}, {(11,9)}, {(11,7)}],
+    [{(4,3)}, {(11,6)}, {(1,3)}, {(6,6)}, {(5,1)}],
+    [{(3,5)}, {(9,11)}, {(1,5)}, {(7,11)}, {(6,6)}]]
+
+
+# scenario with noise
+tc_tmp=[[{(6,6)}, {(9,9),(3,3)}, {(7,6),(3,3)}, {(8,9),(12,12)}, {(9,7)}],
+    [{(3,3)}, {(6,6)}, {(0,3)}, {(1,6)}, {(3,1)}],
+    [{(5,6)}, {(12,9), (12,12)}, {(6,6)}, {(11,9),(3,3)}, {(11,7),(5,6)}],
+    [{(4,3),(5,6),(12,12)}, {(11,6)}, {(1,3),(5,6)}, {(6,6)}, {(5,1)}],
+    [{(3,5)}, {(9,11),(5,6)}, {(1,5)}, {(7,11),(5,6)}, {(6,6),(12,12)}]]
 
 PathConsistency(tc_tmp)
-
-noatomicBAcomp({(7, 6)}, {(12, 9)})
+tt=EnumerateScenarios(N)
