@@ -25,11 +25,26 @@ inclusion = {ARelBA[4][4]}
 envel_other = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,8),(8,9),(6,9),(6,10),(2,6)}
 
 # topologic constraints
-tc=[[{}, envel_other, envel_other, envel_other, envel_other],
-    [{},{}, adjacency, adjacency, adjacency],
-    [{},{}, {}, adjacency, adjacency],
-    [{}, {}, {}, {}, adjacency],
-    [{}, {}, {}, {}, {}]] # - удалить первый столбец
+tc_src=[[set(), envel_other, envel_other, envel_other, envel_other],
+    [set(),set(), adjacency, adjacency, adjacency],
+    [set(),set(), set(), adjacency, adjacency],
+    [set(), set(), set(), set(), adjacency],
+    [set(), set(), set(), set(), set()]]
+
+def prepare_tc(tc_src):
+    tc = copy.deepcopy(tc_src)
+    # верхний треугольник оставляем без изменений
+    # диагональ заполняем значением (6,6)
+    for i in range(len(compartments)):
+        tc[i][i].add((6,6))
+
+    # нижний треугольник заполняем симметричными элементами преобразованными ф-ей inverse
+    for i in range(0,len(compartments)): # go along rows
+        for j in range(i+1, len(compartments)): # go along columns
+            tc[j][i] = inverse(tc[i][j])
+    return tc
+
+tc = prepare_tc(tc_src)
 
 def atomicIAcomp(IArel1, IArel2):
     # interval algebra composition matrix
@@ -48,8 +63,6 @@ def atomicIAcomp(IArel1, IArel2):
             [{0,1,2,3,4,5,6,7,8,9,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{12},{12},{12},{12},{12},{12},{12},{12}]]
     return IAcomp[IArel1][IArel2]
 
-atomicIAcomp(5,1)
-atomicIAcomp(1,5)
 
 def cartesProduct(set1, set2):
     cp=set()
@@ -102,8 +115,8 @@ def PathConsistency(C): # проход не вычищает все несовм
             LPathsToVisit.remove(elem)
         TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
         if (len(TmpCij)==0):
-            print C[elem[0]][elem[1]]
-            print noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
+            # print C[elem[0]][elem[1]]
+            # print noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
             return (elem, C, NPathsChecked, NChanges)
         if (TmpCij != C[elem[0]][elem[1]]):
             NChanges += 1
@@ -220,29 +233,40 @@ def EnumerateScenarios(N):
     print 3
     return L
 
-N = copy.deepcopy(tc_tmp)
+# проверка на рабочем примере
+N = copy.deepcopy(tc)
 recur_int = 0
-tt=EnumerateScenarios(N)
+EnumerateScenarios(N)
 
 IsScenario(tc_tmp)
 
 
+
+tt=EnumerateScenarios(N)
+
+
 # WORKING TEST EXAMPLE
 
-# scenario
+# scenario pic1
 tc_tmp=[[{(6,6)}, {(9,9)}, {(7,6)}, {(8,9)}, {(9,7)}],
     [{(3,3)}, {(6,6)}, {(0,3)}, {(1,6)}, {(3,1)}],
     [{(5,6)}, {(12,9)}, {(6,6)}, {(11,9)}, {(11,7)}],
     [{(4,3)}, {(11,6)}, {(1,3)}, {(6,6)}, {(5,1)}],
     [{(3,5)}, {(9,11)}, {(1,5)}, {(7,11)}, {(6,6)}]]
 
+# scenario pic2
+tc_tmp=[[{(6,6)}, {(9,9)}, {(7,7)}, {(7,9)}, {(9,7)}],
+    [{(3,3)}, {(6,6)}, {(0,1)}, {(1,6)}, {(3,1)}],
+    [{(5,5)}, {(12,11)}, {(6,6)}, {(5,11)}, {(11,6)}],
+    [{(5,3)}, {(11,6)}, {(7,1)}, {(6,6)}, {(10,1)}],
+    [{(3,5)}, {(9,11)}, {(1,6)}, {(2,11)}, {(6,6)}]]
 
 # scenario with noise
-tc_tmp=[[{(6,6)}, {(9,9),(3,3)}, {(7,6),(3,3)}, {(8,9),(12,12)}, {(9,7)}],
-    [{(3,3)}, {(6,6)}, {(0,3)}, {(1,6)}, {(3,1)}],
-    [{(5,6)}, {(12,9), (12,12)}, {(6,6)}, {(11,9),(3,3)}, {(11,7),(5,6)}],
+tc_tmp=[[{(6,6)}, {(9,9),(7,7)}, {(7,6),(3,3)}, {(8,9),(12,12)}, {(9,7)}],
+    [{(3,3)}, {(6,6)}, {(0,3)}, {(1,5)}, {(3,1)}],
+    [{(5,5)}, {(12,9), (12,12)}, {(6,6)}, {(11,9),(3,3)}, {(11,7),(5,6)}],
     [{(4,3),(5,6),(12,12)}, {(11,6)}, {(1,3),(5,6)}, {(6,6)}, {(5,1)}],
-    [{(3,5)}, {(9,11),(5,6)}, {(1,5)}, {(7,11),(5,6)}, {(6,6),(12,12)}]]
+    [{(3,5)}, {(9,11),(1,6)}, {(1,5)}, {(7,11),(5,6)}, {(6,6),(12,12)}]]
 
 PathConsistency(tc_tmp)
 tt=EnumerateScenarios(N)
