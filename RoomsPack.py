@@ -9,22 +9,29 @@ timeout = 15
 depth_recurs = 2000
 recur_int = 0
 
+
+
 # atomic relations block algebra
 ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
 # комнаты
 compartments = {"envelope", "hall", "room", "bath", "kitchen"}
-
+comp_col = {0: '#F0CCAD',
+           1: '#ECA7A7',
+           2: '#73DD9B',
+           3: '#ACBFEC',
+           4: '#EAE234'
+           }
 
 
 # Ограничения
 # смежные
-adjacency = {ARelBA[1][1], ARelBA[2][1],ARelBA[3][1] ,ARelBA[4][1],ARelBA[5][1],ARelBA[6][1],ARelBA[7][1],ARelBA[8][1],ARelBA[9][1],ARelBA[10][1],ARelBA[11][1], \
-        ARelBA[1][2], ARelBA[1][3], ARelBA[1][4], ARelBA[1][5], ARelBA[1][6], ARelBA[1][7], ARelBA[1][8], ARelBA[1][9], ARelBA[1][10]}
+adjacency = {ARelBA[0][11], ARelBA[0][1], ARelBA[1][1], ARelBA[2][1],ARelBA[3][1], ARelBA[4][1],ARelBA[5][1],ARelBA[6][1],ARelBA[6][11],ARelBA[7][1],ARelBA[8][1],ARelBA[9][1],ARelBA[10][1],ARelBA[11][1], \
+        ARelBA[1][2], ARelBA[1][3], ARelBA[1][4], ARelBA[1][5], ARelBA[1][6], ARelBA[1][7], ARelBA[1][8], ARelBA[1][9], ARelBA[1][10], ARelBA[11][6], ARelBA[0][6]}
 
 inclusion = {ARelBA[4][4]}
 envel_hall = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,9),(6,9),(6,10),(2,6)}
-envel_room = {(9,6),(9,7),(9,9),(7,6),(7,7),(7,9),(8,6),(6,9),(6,10),(2,6)}
+envel_room = {(9,6),(9,7),(9,9),(7,6),(7,7),(7,9),(8,6),(6,9),(6,10), (6,7),(6,3)}
 
 # topologic constraints
 tc_src=[[set(), envel_hall, envel_room, envel_room, envel_room],
@@ -228,7 +235,7 @@ def EnumerateScenarios(N):
     TmpL = EnumerateScenarios(TmpN) # recursive call
     #print TmpL
     if (len(TmpL)!=0):
-        L.append(TmpL)
+        L+=TmpL
 
     # end recursive case 1
 
@@ -237,21 +244,10 @@ def EnumerateScenarios(N):
     TmpN = AssignNextRelRest(TmpN) #rest of the assignments
     TmpL = EnumerateScenarios(TmpN)  # recursive call
     if (len(TmpL)!=0):
-        L.append(TmpL)
+        L+=TmpL
     # end recursive case 2
     #print 3
     return L
-
-# проверка на рабочем примере
-N = copy.deepcopy(tc)
-recur_int = 0
-tt=EnumerateScenarios(N)
-len(tt)
-IsScenario(tc_tmp)
-
-
-
-tt=EnumerateScenarios(N)
 
 
 # WORKING TEST EXAMPLE
@@ -313,17 +309,25 @@ def dmin(i, j, scen, dim):
     if ((IAatom==8)|(IAatom==4)): #During, вношу сразу пару симметричных значений.
         dminm = [[1,2],[2,1]]
         return dminm[i%2][j%2]
-    else:
-        dminm = [[0,B,0,1,0,1,0,1,0,1],
-                [B,0,1,0,1,0,1,0,1,0],
-                [0,1,0,1,0,0,0,0,0,0],
-                [1,0,1,0,0,0,0,0,0,0],
-                [0,1,0,0,0,1,0,0,0,0],
-                [1,0,0,0,1,0,0,0,0,0],
-                [0,1,0,0,0,0,0,1,0,0],
-                [1,0,0,0,0,0,1,0,0,0],
-                [0,1,0,0,0,0,0,0,0,1],
-                [1,0,0,0,0,0,0,0,1,0]]
+
+    if ((IAatom==3)|(IAatom==9)): #During, вношу сразу пару симметричных значений.
+        dminm = [[0,0.5],[0.5,0.5]]
+        return dminm[i%2][j%2]
+
+    if ((IAatom==2)|(IAatom==10)): #During, вношу сразу пару симметричных значений.
+        dminm = [[0.5,0.5],[0.5,0.5]]
+        return dminm[i%2][j%2]
+
+    dminm = [[0,B,0,1,0,1,0,1,0,1],
+            [B,0,1,0,1,0,1,0,1,0],
+            [0,1,0,1,0,0,0,0,0,0],
+            [1,0,1,0,0,0,0,0,0,0],
+            [0,1,0,0,0,1,0,0,0,0],
+            [1,0,0,0,1,0,0,0,0,0],
+            [0,1,0,0,0,0,0,1,0,0],
+            [1,0,0,0,0,0,1,0,0,0],
+            [0,1,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,1,0]]
     return dminm[i][j]
 
 dmin(0, 2, scen, 0)
@@ -436,22 +440,51 @@ pl_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 1, 9, 0, 9, 9, 10, 9, 10]]
 # pl_all = [[0, 10, 0, 3, 3, 6, 6, 10, 0, 3, 3, 6, 6, 10], [0, 10, 0, 6, 0, 3, 0, 6, 6, 10, 3, 10, 6, 10]]
 def visual(placement_all):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
-    fig1 = plt.figure(figsize=(10,10) )
+    # fig1 = plt.figure(figsize=(10,10) )
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
-    ax1 = fig1.add_subplot(111, aspect='equal')
-    i=0
+    # ax1 = fig1.add_subplot(111, aspect='equal')
     for i in range(1, len(placement_all[0])/2): # объединяющий прямоугольник не отрисовываем
-        if (i % 2 ==0):
-            hatch = '\\'
-        else:
-            hatch = '//'
         ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B), placement_all[1][2*i]/float(H)),   # (x,y)
                                          abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B),          # width
-                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H),  hatch=hatch, alpha=0.6        # height
+                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H), alpha=0.6, label='test '+str(i),
+                                         facecolor=comp_col[i]
             )
         )
-    plt.show()
+    # plt.show()
 
 placement_all(dmin, dmax, scen)
 
-visual(placement_all(dmin, dmax, scen))
+visual(placement_all(dmin, dmax, scens[4]))
+
+# проверка на рабочем примере
+N = copy.deepcopy(tc)
+recur_int = 0
+scens=EnumerateScenarios(N)
+len(scens)
+
+
+
+# отображение всех решений:
+i=0
+for scen in scens:
+    if i%9==0:
+        fig1 = plt.figure(figsize=(15, 15))
+    ax1 = fig1.add_subplot(3,3,i%9+1, title='testtt', aspect='equal')
+    visual(placement_all(dmin, dmax, scen))
+    i+=1
+    if (i>50):
+        break
+plt.show()
+
+
+# за счет добавления симметричных элементов в одной ячейки матрицы ограничений. у нас возникло много "зеркальных" и "поворотных" вариантов.
+# но при этом так и не удалось получить сценарий с холллом в центре
+
+
+scen=[[{(6, 6)}, {(8, 9)}, {(9, 9)}, {(7, 9)}, {(6, 3)}],
+   [{(4, 3)}, {(6, 6)}, {(11, 6)}, {(1, 6)}, {(4, 1)}],
+   [{(5, 3)}, {(11, 6)}, {(6, 6)}, {(11, 1)}, {(6, 1)}],
+   [{(3, 5)}, {(7, 11)}, {(1, 11)}, {(6, 6)}, {(1, 6)}],
+   [{(5, 5)}, {(11, 11)}, {(6, 11)}, {(11, 6)}, {(6, 6)}]]
+
+
