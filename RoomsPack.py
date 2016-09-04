@@ -15,7 +15,7 @@ recur_int = 0
 ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
 # комнаты
-compartments = {"envelope", "hall", "room", "bath", "kitchen"}
+compartments = ["envelope", "hall", "room", "bath", "kitchen"]
 comp_col = {0: '#F0CCAD',
            1: '#ECA7A7',
            2: '#73DD9B',
@@ -27,17 +27,18 @@ comp_col = {0: '#F0CCAD',
 # Ограничения
 # смежные
 adjacency = {ARelBA[0][11], ARelBA[0][1], ARelBA[1][1], ARelBA[2][1],ARelBA[3][1], ARelBA[4][1],ARelBA[5][1],ARelBA[6][1],ARelBA[6][11],ARelBA[7][1],ARelBA[8][1],ARelBA[9][1],ARelBA[10][1],ARelBA[11][1], \
-        ARelBA[1][2], ARelBA[1][3], ARelBA[1][4], ARelBA[1][5], ARelBA[1][6], ARelBA[1][7], ARelBA[1][8], ARelBA[1][9], ARelBA[1][10], ARelBA[11][6], ARelBA[0][6]}
+        ARelBA[1][2], ARelBA[1][3], ARelBA[1][4], ARelBA[1][5], ARelBA[1][6], ARelBA[1][7], ARelBA[1][8], ARelBA[1][9], ARelBA[1][10], ARelBA[11][6], ARelBA[0][6],
+             ARelBA[3][0], ARelBA[5][0], ARelBA[7][0], ARelBA[9][0], ARelBA[0][3], ARelBA[0][5], ARelBA[0][7], ARelBA[0][9]}
 
 inclusion = {ARelBA[4][4]}
 envel_hall = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,9),(6,9),(6,10),(2,6)}
 envel_room = {(9,6),(9,7),(9,9),(7,6),(7,7),(7,9),(8,6),(6,9),(6,10), (6,7),(6,3)}
-
+bath_kitchen = {(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1)}
 # topologic constraints
 tc_src=[[set(), envel_hall, envel_room, envel_room, envel_room],
     [set(),set(), adjacency, adjacency, adjacency],
     [set(),set(), set(), adjacency, adjacency],
-    [set(), set(), set(), set(), adjacency],
+    [set(), set(), set(), set(), bath_kitchen],
     [set(), set(), set(), set(), set()]]
 
 def prepare_tc(tc_src):
@@ -220,7 +221,7 @@ def EnumerateScenarios(N):
         return L # if N is inconsistent, return the empty list
     if IsScenario(N):
         L.append(N)
-        print 2
+        #print 2
         return L # if N is a scenario, return a list only with N
     # end base cases
 
@@ -318,6 +319,14 @@ def dmin(i, j, scen, dim):
         dminm = [[0.5,0.5],[0.5,0.5]]
         return dminm[i%2][j%2]
 
+    if ((IAatom==0)|(IAatom==12)): #During, вношу сразу пару симметричных значений.
+        dminm = [[2,3],[1,2]]
+        return dminm[i%2][j%2]
+
+    if ((IAatom==7)|(IAatom==5)): #During, вношу сразу пару симметричных значений.
+        dminm = [[1,1],[1,1]]
+        return dminm[i%2][j%2]
+
     dminm = [[0,B,0,1,0,1,0,1,0,1],
             [B,0,1,0,1,0,1,0,1,0],
             [0,1,0,1,0,0,0,0,0,0],
@@ -389,7 +398,7 @@ def placement(dim, dmin, dmax, scen):
                 if ((AfterTo(j,k, scen, dim)==-1)): # walls j and k are coincident
                     if (p[j]!=p[k]):
                         done = False
-                        print j, k, 1
+                        #print j, k, 1
                         if (p[j] > p[k]):
                             p[k] = p[j]
                         else:
@@ -399,28 +408,37 @@ def placement(dim, dmin, dmax, scen):
                     if (AfterTo(k,j, scen, dim)==1):
                         if (p[k] < p[j] + dmin(j, k, scen, dim)):
                             done = False
-                            print j, k, 2
+                            #print j, k, 2
                             p[k] = p[j] + dmin(j, k, scen, dim)
                         else:
                             if (p[k] > p[j] + dmax[j][k]):
                                 done = False
-                                print j, k, 3
+                                #print j, k, 3
                                 p[j] = p[k] - dmax[j][k]
 
                     if (AfterTo(j, k, scen, dim)==1):
                         if (p[k] > p[j] - dmin(j, k, scen, dim)):
                             done = False
-                            print j, k, 4
+                            #print j, k, 4
                             p[j] = p[k] + dmin(j, k, scen, dim)
                         else:
                             if (p[k] < p[j] - dmax[j][k]):
                                 done = False
-                                print j, k, 5
+                                #print j, k, 5
                                 p[k] = p[j] - dmax[j][k]
                 # print j, k
                 # print p
         #done = True
     return p
+
+def withoutgapes(plac_all): #[[0, 10, 0, 1, 1, 2, 3, 10, 2, 3], [0, 10, 0, 10, 0, 10, 0, 10, 0, 10]]
+    s=0
+    for i in range(1,len(compartments)):
+       s+=(plac_all[0][2*i+1] - plac_all[0][2*i])*(plac_all[1][2*i+1] - plac_all[1][2*i])
+    if (s==H*B):
+        return True
+    else:
+        return False
 
 def placement_all(dmin, dmax, scen):
     res=[]
@@ -450,11 +468,16 @@ def visual(placement_all):
                                          facecolor=comp_col[i]
             )
         )
+        ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
+                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
     # plt.show()
+
+
+
 
 placement_all(dmin, dmax, scen)
 
-visual(placement_all(dmin, dmax, scens[4]))
+visual(placement_all(dmin, dmax, scens[16]))
 
 # проверка на рабочем примере
 N = copy.deepcopy(tc)
@@ -462,17 +485,55 @@ recur_int = 0
 scens=EnumerateScenarios(N)
 len(scens)
 
+# получить все плэйсменты и проверить gape
+wogapes_playsments=[]
+wogapes_scens=[]
+all_playsments=[]
+i=0
+for scen in scens:
+    pl=placement_all(dmin, dmax, scen)
+    all_playsments.append(pl)
+    if (withoutgapes(pl)):
+        wogapes_playsments.append(pl)
+        wogapes_scens.append(i)
+    i+=1
+print "Yes"
 
+# move walls
+def movewalls(playsments_all):
+    dm=[B,H]
+    newplas=[]
+    for dim in [0,1]:
+        ls=[]
+        for i in range(len(compartments)*2):
+            if (i%2==1):
+                ls.append(playsments_all[dim][i])
+                st = set(ls)
+        if dm[dim] in st:
+            st.remove(dm[dim])
+        l = float(dm[dim])/(len(st)+1) #step
+        ls2=list(st)
+        print ls2
+        newplasit=playsments_all[dim]
+        for i in range(len(compartments)*2):
+            if ((playsments_all[dim][i]!=0) & (playsments_all[dim][i]!= dm[dim])):
+                newplasit[i]=l*(ls2.index(playsments_all[dim][i])+1)
+        newplas.append(newplasit)
+    return newplas
+
+movewalls(wogapes_playsments[0])
+
+len(wogapes_playsments)
 
 # отображение всех решений:
 i=0
-for scen in scens:
+for pl in wogapes_playsments:
     if i%9==0:
         fig1 = plt.figure(figsize=(15, 15))
-    ax1 = fig1.add_subplot(3,3,i%9+1, title='testtt', aspect='equal')
-    visual(placement_all(dmin, dmax, scen))
+    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
+    visual(movewalls(pl))
     i+=1
-    if (i>50):
+    if (i>30):
         break
 plt.show()
 
@@ -488,3 +549,4 @@ scen=[[{(6, 6)}, {(8, 9)}, {(9, 9)}, {(7, 9)}, {(6, 3)}],
    [{(5, 5)}, {(11, 11)}, {(6, 11)}, {(11, 6)}, {(6, 6)}]]
 
 
+# 1. c
