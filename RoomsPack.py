@@ -34,9 +34,11 @@ inclusion = {ARelBA[4][4]}
 envel_hall = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,9),(6,9),(6,10),(2,6)}
 envel_room = {(9,6),(9,7),(9,9),(7,6),(7,7),(7,9),(8,6),(6,9),(6,10), (6,7),(6,3)}
 bath_kitchen = {(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1)}
+hall_other = {(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1),(1,2),(1,4),(1,8),(1,10),(2,1),(4,1),(8,1),(10,1), (11,6),(6,11)}
+
 # topologic constraints
 tc_src=[[set(), envel_hall, envel_room, envel_room, envel_room],
-    [set(),set(), adjacency, adjacency, adjacency],
+    [set(),set(), hall_other, hall_other, hall_other],
     [set(),set(), set(), adjacency, adjacency],
     [set(), set(), set(), set(), bath_kitchen],
     [set(), set(), set(), set(), set()]]
@@ -483,6 +485,7 @@ visual(placement_all(dmin, dmax, scens[16]))
 N = copy.deepcopy(tc)
 recur_int = 0
 scens=EnumerateScenarios(N)
+print "Yes"
 len(scens)
 
 # получить все плэйсменты и проверить gape
@@ -525,7 +528,7 @@ movewalls(wogapes_playsments[0])
 
 len(wogapes_playsments)
 
-# отображение всех решений:
+# отображение всех решений без пропусков:
 i=0
 for pl in wogapes_playsments:
     if i%9==0:
@@ -535,18 +538,15 @@ for pl in wogapes_playsments:
     i+=1
     if (i>30):
         break
-plt.show()
 
+# отображение всех решений:
+i=0
+for pl in all_playsments:
+    if i%9==0:
+        fig1 = plt.figure(figsize=(15, 15))
+    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
+    visual(movewalls(pl))
+    i+=1
+    if (i>30):
+        break
 
-# за счет добавления симметричных элементов в одной ячейки матрицы ограничений. у нас возникло много "зеркальных" и "поворотных" вариантов.
-# но при этом так и не удалось получить сценарий с холллом в центре
-
-
-scen=[[{(6, 6)}, {(8, 9)}, {(9, 9)}, {(7, 9)}, {(6, 3)}],
-   [{(4, 3)}, {(6, 6)}, {(11, 6)}, {(1, 6)}, {(4, 1)}],
-   [{(5, 3)}, {(11, 6)}, {(6, 6)}, {(11, 1)}, {(6, 1)}],
-   [{(3, 5)}, {(7, 11)}, {(1, 11)}, {(6, 6)}, {(1, 6)}],
-   [{(5, 5)}, {(11, 11)}, {(6, 11)}, {(11, 6)}, {(6, 6)}]]
-
-
-# 1. c
