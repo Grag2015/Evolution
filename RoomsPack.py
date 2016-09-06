@@ -6,42 +6,66 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 timeout = 15
-depth_recurs = 2000
+depth_recurs = 100000
 recur_int = 0
-
+B=10
+H=10
 
 
 # atomic relations block algebra
 ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
 # комнаты
-compartments = ["envelope", "hall", "room", "bath", "kitchen"]
+compartments = ["envelope",  "hall", "corr", "room", "bath", "kitchen"]
 comp_col = {0: '#F0CCAD',
-           1: '#ECA7A7',
-           2: '#73DD9B',
-           3: '#ACBFEC',
-           4: '#EAE234'
+            1: '#ECA7A7',
+            2: '#73DD9B',
+            3: '#ACBFEC',
+            4: '#EAE234',
+            5: '#ECA7A7'
            }
 
 
 # Ограничения
-# смежные
-adjacency = {ARelBA[0][11], ARelBA[0][1], ARelBA[1][1], ARelBA[2][1],ARelBA[3][1], ARelBA[4][1],ARelBA[5][1],ARelBA[6][1],ARelBA[6][11],ARelBA[7][1],ARelBA[8][1],ARelBA[9][1],ARelBA[10][1],ARelBA[11][1], \
-        ARelBA[1][2], ARelBA[1][3], ARelBA[1][4], ARelBA[1][5], ARelBA[1][6], ARelBA[1][7], ARelBA[1][8], ARelBA[1][9], ARelBA[1][10], ARelBA[11][6], ARelBA[0][6],
-             ARelBA[3][0], ARelBA[5][0], ARelBA[7][0], ARelBA[9][0], ARelBA[0][3], ARelBA[0][5], ARelBA[0][7], ARelBA[0][9]}
+all_const = set()
+for i in range(13):
+    for j in range(13):
+        all_const.add(ARelBA[i][j])
 
-inclusion = {ARelBA[4][4]}
-envel_hall = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,9),(6,9),(6,10),(2,6)}
-envel_room = {(9,6),(9,7),(9,9),(7,6),(7,7),(7,9),(8,6),(6,9),(6,10), (6,7),(6,3)}
-bath_kitchen = {(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1)}
-hall_other = {(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1),(1,2),(1,4),(1,8),(1,10),(2,1),(4,1),(8,1),(10,1), (11,6),(6,11)}
+
+# часть общей стены + минимум одна смежная стена
+partcommon_adjacency = {(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1)}
+# часть общей стены
+partcommon = partcommon_adjacency | {(1,2),(1,4),(1,8),(1,10),(2,1),(4,1),(8,1),(10,1), (11,6),(6,11)}
+# А содержит В и есть 1,2 общая часть стены
+inclusion_partcommon = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,9),(6,9),(6,10)}
+
+# смежные
+adjacency = {ARelBA[1][1], ARelBA[2][1],ARelBA[3][1], ARelBA[4][1],ARelBA[5][1],ARelBA[6][1],ARelBA[6][11],ARelBA[7][1],ARelBA[8][1],ARelBA[9][1],ARelBA[10][1],ARelBA[11][1], \
+        ARelBA[1][2], ARelBA[1][3], ARelBA[1][4], ARelBA[1][5], ARelBA[1][6], ARelBA[1][7], ARelBA[1][8], ARelBA[1][9], ARelBA[1][10], ARelBA[11][6],
+        ARelBA[0][1], ARelBA[0][2], ARelBA[0][3], ARelBA[0][4], ARelBA[0][5],ARelBA[0][6], ARelBA[0][7],ARelBA[0][8], ARelBA[0][9], ARelBA[0][10], ARelBA[0][11],
+        ARelBA[1][0], ARelBA[2][0], ARelBA[3][0], ARelBA[4][0], ARelBA[5][0], ARelBA[6][0], ARelBA[7][0], ARelBA[8][0], ARelBA[9][0], ARelBA[10][0], ARelBA[11][0]}
+
+envel_hall = inclusion_partcommon
+envel_room = inclusion_partcommon #- {(7, 8), (8, 7), (8, 9), (9, 8)}
+bath_kitchen = partcommon_adjacency
+# hall_other = partcommon #Для случая без коридора
+hall_corr = partcommon - {(1,6),(6,1)} #Для случая c коридор
+envel_corr = inclusion_partcommon | {(8,8)}
+corr_other = partcommon | inverse(partcommon)
 
 # topologic constraints
-tc_src=[[set(), envel_hall, envel_room, envel_room, envel_room],
-    [set(),set(), hall_other, hall_other, hall_other],
-    [set(),set(), set(), adjacency, adjacency],
-    [set(), set(), set(), set(), bath_kitchen],
-    [set(), set(), set(), set(), set()]]
+tc_src=[[set(), envel_hall, envel_corr, envel_room, envel_room, envel_room],
+    [set(),set(), hall_corr , adjacency , adjacency , adjacency],
+    [set(),set(), set(), corr_other, corr_other, corr_other],
+    [set(), set(), set(), set(), adjacency, adjacency],
+    [set(), set(), set(), set(), set(), bath_kitchen],
+    [set(), set(), set(), set(), set(), set()]]
+
+# envel_hall | envel_corr | envel_room
+
+dct = [(6, 9), (6, 10), (7, 6), (7, 7), (7, 8), (7, 9), (8, 6), (8, 7), (8, 8), (8, 9), (9, 6), (9, 7), (9, 8), (9, 9)]
+korner =[2, 0, 2, 1, 0, 1, 0, 0, 0, 0, 2, 1, 0, 1]
 
 def prepare_tc(tc_src):
     tc = copy.deepcopy(tc_src)
@@ -111,7 +135,7 @@ def Paths(i,j,k):
         res.add((i,j,elem))
     return res
 
-def PathConsistency(C): # проход не вычищает все несовместимые элементы, ф-ю надо запускать раза 3.
+def PathConsistency(C):
     LPathsToVisit = set()
     NPathsChecked = 0
     NChanges = 0
@@ -156,16 +180,6 @@ def PathConsistency(C): # проход не вычищает все несовм
     # end second loop
 
     return ((0, 0, 0), C, NPathsChecked, NChanges) #
-
-
-envel_other = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,8),(8,9),(6,9),(6,10),(2,6)}
-hall_room={(1,2), (11,10), (1,10), (11,2)}
-kitchen_bath={(11,0), (1,12)}
-tc_test=[[{}, envel_other, envel_other, envel_other, envel_other],
-    [{},{}, hall_room, {(1,3),(1,5),(1,7),(1,9),(11,3),(11,5),(11,7),(11,9)}, {(6,1),(11,6)}],
-    [{},{}, {}, {(6,1),(11,6)}, {(1,3),(1,5),(1,7),(1,9),(11,3),(11,5),(11,7),(11,9)}],
-    [{}, {}, {}, {}, kitchen_bath],
-    [{}, {}, {}, {}, {}]] # - удалить первый столбец
 
 
 def IsScenario(N):
@@ -222,7 +236,18 @@ def EnumerateScenarios(N):
         #print 1
         return L # if N is inconsistent, return the empty list
     if IsScenario(N):
-        L.append(N)
+        # быстрая проверка на наличие пустот
+        s=0
+        st=set()
+        for t in range(1,len(compartments)):
+           st = st | (N[0][t])
+
+        for t in range(len(dct)):
+            if dct[t] in st:
+                s += korner[t]
+
+        if s==4:
+            L.append(N)
         #print 2
         return L # if N is a scenario, return a list only with N
     # end base cases
@@ -253,58 +278,7 @@ def EnumerateScenarios(N):
     return L
 
 
-# WORKING TEST EXAMPLE
 
-# scenario pic1
-tc_tmp1=[[{(6,6)}, {(9,9)}, {(7,6)}, {(8,9)}, {(9,7)}],
-    [{(3,3)}, {(6,6)}, {(0,3)}, {(1,6)}, {(3,1)}],
-    [{(5,6)}, {(12,9)}, {(6,6)}, {(11,9)}, {(11,7)}],
-    [{(4,3)}, {(11,6)}, {(1,3)}, {(6,6)}, {(5,1)}],
-    [{(3,5)}, {(9,11)}, {(1,5)}, {(7,11)}, {(6,6)}]]
-
-# scenario pic2
-tc_tmp2=[[{(6,6)}, {(9,9)}, {(7,7)}, {(7,9)}, {(9,7)}],
-    [{(3,3)}, {(6,6)}, {(0,1)}, {(1,6)}, {(3,1)}],
-    [{(5,5)}, {(12,11)}, {(6,6)}, {(5,11)}, {(11,6)}],
-    [{(5,3)}, {(11,6)}, {(7,1)}, {(6,6)}, {(10,1)}],
-    [{(3,5)}, {(9,11)}, {(1,6)}, {(2,11)}, {(6,6)}]]
-
-# объединенный сценарий из 2-х рабочих - алгоритму удалось их разделить
-tc_tmp3 = copy.deepcopy(tc_tmp1)
-for i in range(5):
-    for j in range(5):
-        tc_tmp3[i][j].add(tc_tmp2[i][j].pop())
-
-PathConsistency(tc_tmp3)
-
-# scenario with noise
-tc_tmp=[[{(6,6)}, {(9,9),(3,3)}, {(7,6),(3,3)}, {(8,9),(12,12)}, {(9,7)}],
-   [{(3,3)}, {(6,6)}, {(0,3)}, {(1,6)}, {(3,1)}],
-    [{(5,6)}, {(12,9), (12,12)}, {(6,6)}, {(11,9),(3,3)}, {(11,7),(5,6)}],
-    [{(4,3),(5,6),(12,12)}, {(11,6)}, {(1,3),(5,6)}, {(6,6)}, {(5,1)}],
-    [{(3,5)}, {(9,11),(5,6)}, {(1,5)}, {(7,11),(5,6)}, {(6,6),(12,12)}]]
-
-tt=PathConsistency(tc_tmp)
-tt2=PathConsistency(tt[1])
-
-N = copy.deepcopy(tc_tmp3)
-EnumerateScenarios(N)
-
-N = copy.deepcopy(tc_tmp3)
-AssignNextRelRest(N)
-
-tt=[[{(6, 6)}, {(9, 8)}, {(7, 8)}, {(8, 7)}, {(7, 8)}],
-  [{(3, 4)}, {(6, 6)}, {(1, 6)}, {(7, 1)}, {(1, 1)}],
-  [{(5, 4)}, {(11, 6)}, {(6, 6)}, {(11, 1)}, {(6, 1)}],
-  [{(4, 5)}, {(5, 11)}, {(1, 11)}, {(6, 6)}, {(1, 9)}],
-  [{(5, 4)}, {(11, 11)}, {(6, 11)}, {(11, 3)}, {(6, 6)}]]
-
-AfterTo(0,5, tt, 0)
-
-PathConsistency(tt)
-
-B=10
-H=10
 
 def dmin(i, j, scen, dim):
     tmp = copy.deepcopy(scen)
@@ -329,30 +303,33 @@ def dmin(i, j, scen, dim):
         dminm = [[1,1],[1,1]]
         return dminm[i%2][j%2]
 
-    dminm = [[0,B,0,1,0,1,0,1,0,1],
-            [B,0,1,0,1,0,1,0,1,0],
-            [0,1,0,1,0,0,0,0,0,0],
-            [1,0,1,0,0,0,0,0,0,0],
-            [0,1,0,0,0,1,0,0,0,0],
-            [1,0,0,0,1,0,0,0,0,0],
-            [0,1,0,0,0,0,0,1,0,0],
-            [1,0,0,0,0,0,1,0,0,0],
-            [0,1,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,1,0]]
+    dminm = [[0,B,0,1,0,1,0,1,0,1,0,1],
+            [B,0,1,0,1,0,1,0,1,0,1,0],
+            [0,1,0,1,0,0,0,0,0,0,0,0],
+            [1,0,1,0,0,0,0,0,0,0,0,0],
+            [0,1,0,0,0,1,0,0,0,0,0,0],
+            [1,0,0,0,1,0,0,0,0,0,0,0],
+            [0,1,0,0,0,0,0,1,0,0,0,0],
+            [1,0,0,0,0,0,1,0,0,0,0,0],
+            [0,1,0,0,0,0,0,0,0,1,0,0],
+            [1,0,0,0,0,0,0,0,1,0,0,0],
+            [0,1,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,1,0]]
     return dminm[i][j]
 
-dmin(0, 2, scen, 0)
 
-dmax = [[0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B],
-        [B, 0, B, B - 1, B, B - 1, B, B - 1, B, B - 1],
-        [B - 1, B, 0, B, B - 1, B, B - 1, B, B - 1, B],
-        [B, B - 1, B, 0, B, B-1, B, B-1, B, B-1],
-        [B - 1, B, B - 1, B, 0, B, B - 1, B, B - 1, B],
-        [B, B - 1, B, B - 1, B, 0, B, B - 1, B, B - 1],
-        [B - 1, B, B - 1, B, B - 1, B, 0, B, B - 1, B],
-        [B, B - 1, B, B - 1, B, B - 1, B, 0, B, B - 1],
-        [B - 1, B, B - 1, B, B - 1, B, B - 1, B, 0, B],
-        [B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, 0]]
+dmax = [[0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B],
+        [B, 0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1],
+        [B - 1, B, 0, B, B - 1, B, B - 1, B, B - 1, B, B-1, B],
+        [B, B - 1, B, 0, B, B-1, B, B-1, B, B-1, B, B-1],
+        [B - 1, B, B - 1, B, 0, B, B - 1, B, B - 1, B, B-1 , B],
+        [B, B - 1, B, B - 1, B, 0, B, B - 1, B, B - 1, B, B-1],
+        [B - 1, B, B - 1, B, B - 1, B, 0, B, B - 1, B, B-1, B],
+        [B, B - 1, B, B - 1, B, B - 1, B, 0, B, B - 1, B, B-1],
+        [B - 1, B, B - 1, B, B - 1, B, B - 1, B, 0, B, B-1, B],
+        [B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, 0, B, B-1],
+        [B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B, 0, B],
+        [B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B, 0]]
 
 # # проверка симметричности таблица мин и макс.
 # for i in range(10):
@@ -424,6 +401,7 @@ def placement(dim, dmin, dmax, scen):
                             #print j, k, 4
                             p[j] = p[k] + dmin(j, k, scen, dim)
                         else:
+                            #print j, k, 5
                             if (p[k] < p[j] - dmax[j][k]):
                                 done = False
                                 #print j, k, 5
@@ -448,16 +426,6 @@ def placement_all(dmin, dmax, scen):
     res.append(placement(1, dmin, dmax, scen))
     return res
 
-scen=[[{(6, 6)}, {(8, 9)}, {(7, 9)}, {(9, 7)}, {(7, 7)}],
-   [{(4, 3)}, {(6, 6)}, {(1, 6)}, {(5, 1)}, {(1, 1)}],
-   [{(5, 3)}, {(11, 6)}, {(6, 6)}, {(11, 1)}, {(6, 1)}],
-   [{(3, 5)}, {(7, 11)}, {(1, 11)}, {(6, 6)}, {(1, 6)}],
-   [{(5, 5)}, {(11, 11)}, {(6, 11)}, {(11, 6)}, {(6, 6)}]]
-
-placement(1, dmin, dmax, scen)
-
-pl_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 1, 9, 0, 9, 9, 10, 9, 10]]
-# pl_all = [[0, 10, 0, 3, 3, 6, 6, 10, 0, 3, 3, 6, 6, 10], [0, 10, 0, 6, 0, 3, 0, 6, 6, 10, 3, 10, 6, 10]]
 def visual(placement_all):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     # fig1 = plt.figure(figsize=(10,10) )
@@ -482,18 +450,26 @@ placement_all(dmin, dmax, scen)
 visual(placement_all(dmin, dmax, scens[16]))
 
 # проверка на рабочем примере
+# Расчет времени выполнения - import time
+t1=time.clock()
+
 N = copy.deepcopy(tc)
 recur_int = 0
 scens=EnumerateScenarios(N)
 print "Yes"
 len(scens)
 
+t2=time.clock()
+t2-t1
+
 # получить все плэйсменты и проверить gape
 wogapes_playsments=[]
 wogapes_scens=[]
 all_playsments=[]
 i=0
+t1=time.clock()
 for scen in scens:
+    # print i
     pl=placement_all(dmin, dmax, scen)
     all_playsments.append(pl)
     if (withoutgapes(pl)):
@@ -501,9 +477,12 @@ for scen in scens:
         wogapes_scens.append(i)
     i+=1
 print "Yes"
+t2=time.clock()
+t2-t1
 
 # move walls
-def movewalls(playsments_all):
+def movewalls(playsments_a):
+    playsments_all=copy.deepcopy(playsments_a)
     dm=[B,H]
     newplas=[]
     for dim in [0,1]:
@@ -516,7 +495,8 @@ def movewalls(playsments_all):
             st.remove(dm[dim])
         l = float(dm[dim])/(len(st)+1) #step
         ls2=list(st)
-        print ls2
+        ls2.sort()
+        # print ls2
         newplasit=playsments_all[dim]
         for i in range(len(compartments)*2):
             if ((playsments_all[dim][i]!=0) & (playsments_all[dim][i]!= dm[dim])):
@@ -545,8 +525,57 @@ for pl in all_playsments:
     if i%9==0:
         fig1 = plt.figure(figsize=(15, 15))
     ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-    visual(movewalls(pl))
+    visual(pl)
     i+=1
     if (i>30):
         break
 
+sc=[[{(6, 6)}, {(9, 9)}, {(8, 9)}, {(7, 9)}, {(7, 7)}, {(9, 7)}],
+ [{(3, 4)}, {(6, 6)}, {(1, 3)}, {(0,3)}, {(1, 0)}, {(6, 1)}],
+ [{(4, 3)}, {(11, 7)}, {(6, 6)}, {(1, 6)}, {(3, 1)}, {(11, 2)}],
+ [{(3, 3)}, {(6, 1)}, {(1, 3)}, {(6, 6)}, {(5, 1)}, {(12, 2)}],
+ [{(3, 5)}, {(9, 11)}, {(7, 11)}, {(9, 12)}, {(6, 6)}, {(11, 5)}],
+ [{(5, 5)}, {(12, 9)}, {(11, 10)}, {(12, 11)}, {(11, 7)}, {(6, 6)}]]
+
+sc2 = prepare_tc(sc)
+PathConsistency(sc2)
+
+def visual_pl(placement_all):
+    # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
+    fig1 = plt.figure(figsize=(10,10) )
+    # plt.axis([-0.1, 1.1, -0.1, 1.1])
+    ax1 = fig1.add_subplot(111, aspect='equal')
+    for i in range(1, len(placement_all[0])/2): # объединяющий прямоугольник не отрисовываем
+        ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B), placement_all[1][2*i]/float(H)),   # (x,y)
+                                         abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B),          # width
+                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H), alpha=0.6, label='test '+str(i),
+                                         facecolor=comp_col[i]
+            )
+        )
+        ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
+                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
+    # plt.show()
+
+visual_pl(placement_all(dmin, dmax,sc2))
+
+sc2=copy.deepcopy(scens[10])
+for i in range(6):
+    for j in range(6):
+        if (not(sc2[i][j].pop() in tc[i][j])):
+            print i,j
+
+
+
+
+sc2[0][0].pop in tc[0][0]
+
+scen
+
+s = 0
+st = set()
+for t in range(1, len(compartments)):
+    st = st | (scen[0][t])
+
+for t in range(len(dct)):
+    if dct[i] in st:
+        s += korner[t]
