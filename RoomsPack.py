@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 timeout = 15
-depth_recurs = 100000
+depth_recurs = 5000
 recur_int = 0
 B=10
 H=10
@@ -17,6 +17,7 @@ ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
 # комнаты
 compartments = ["envelope",  "hall", "corr", "room", "bath", "kitchen"]
+areaconstr = [1,1,14,3.6,9] # без оболочки
 comp_col = {0: '#F0CCAD',
             1: '#ECA7A7',
             2: '#73DD9B',
@@ -45,6 +46,12 @@ adjacency = {ARelBA[1][1], ARelBA[2][1],ARelBA[3][1], ARelBA[4][1],ARelBA[5][1],
         ARelBA[1][2], ARelBA[1][3], ARelBA[1][4], ARelBA[1][5], ARelBA[1][6], ARelBA[1][7], ARelBA[1][8], ARelBA[1][9], ARelBA[1][10], ARelBA[11][6],
         ARelBA[0][1], ARelBA[0][2], ARelBA[0][3], ARelBA[0][4], ARelBA[0][5],ARelBA[0][6], ARelBA[0][7],ARelBA[0][8], ARelBA[0][9], ARelBA[0][10], ARelBA[0][11],
         ARelBA[1][0], ARelBA[2][0], ARelBA[3][0], ARelBA[4][0], ARelBA[5][0], ARelBA[6][0], ARelBA[7][0], ARelBA[8][0], ARelBA[9][0], ARelBA[10][0], ARelBA[11][0]}
+
+def inverse(noatomicBArel):
+    res=set()
+    for elem in noatomicBArel:
+        res.add((12-elem[0],12-elem[1]))
+    return res
 
 envel_hall = inclusion_partcommon
 envel_room = inclusion_partcommon #- {(7, 8), (8, 7), (8, 9), (9, 8)}
@@ -118,11 +125,7 @@ def noatomicBAcomp(noatomicBArel1, noatomicBArel2):
             res= res | atomicBAcomp(i,j)
     return res
 
-def inverse(noatomicBArel):
-    res=set()
-    for elem in noatomicBArel:
-        res.add((12-elem[0],12-elem[1]))
-    return res
+
 
 def Paths(i,j,k):
     # ищем пути из i в j xthtp 3-ю точку, но не k
@@ -445,10 +448,6 @@ def visual(placement_all):
 
 
 
-placement_all(dmin, dmax, scen)
-
-visual(placement_all(dmin, dmax, scens[16]))
-
 # проверка на рабочем примере
 # Расчет времени выполнения - import time
 t1=time.clock()
@@ -480,6 +479,8 @@ print "Yes"
 t2=time.clock()
 t2-t1
 
+len(wogapes_scens)
+
 # move walls
 def movewalls(playsments_a):
     playsments_all=copy.deepcopy(playsments_a)
@@ -504,9 +505,6 @@ def movewalls(playsments_a):
         newplas.append(newplasit)
     return newplas
 
-movewalls(wogapes_playsments[0])
-
-len(wogapes_playsments)
 
 # отображение всех решений без пропусков:
 i=0
@@ -530,15 +528,15 @@ for pl in all_playsments:
     if (i>30):
         break
 
-sc=[[{(6, 6)}, {(9, 9)}, {(8, 9)}, {(7, 9)}, {(7, 7)}, {(9, 7)}],
- [{(3, 4)}, {(6, 6)}, {(1, 3)}, {(0,3)}, {(1, 0)}, {(6, 1)}],
- [{(4, 3)}, {(11, 7)}, {(6, 6)}, {(1, 6)}, {(3, 1)}, {(11, 2)}],
- [{(3, 3)}, {(6, 1)}, {(1, 3)}, {(6, 6)}, {(5, 1)}, {(12, 2)}],
- [{(3, 5)}, {(9, 11)}, {(7, 11)}, {(9, 12)}, {(6, 6)}, {(11, 5)}],
- [{(5, 5)}, {(12, 9)}, {(11, 10)}, {(12, 11)}, {(11, 7)}, {(6, 6)}]]
-
-sc2 = prepare_tc(sc)
-PathConsistency(sc2)
+# sc=[[{(6, 6)}, {(9, 9)}, {(8, 9)}, {(7, 9)}, {(7, 7)}, {(9, 7)}],
+#  [{(3, 4)}, {(6, 6)}, {(1, 3)}, {(0,3)}, {(1, 0)}, {(6, 1)}],
+#  [{(4, 3)}, {(11, 7)}, {(6, 6)}, {(1, 6)}, {(3, 1)}, {(11, 2)}],
+#  [{(3, 3)}, {(6, 1)}, {(1, 3)}, {(6, 6)}, {(5, 1)}, {(12, 2)}],
+#  [{(3, 5)}, {(9, 11)}, {(7, 11)}, {(9, 12)}, {(6, 6)}, {(11, 5)}],
+#  [{(5, 5)}, {(12, 9)}, {(11, 10)}, {(12, 11)}, {(11, 7)}, {(6, 6)}]]
+#
+# sc2 = prepare_tc(sc)
+# PathConsistency(sc2)
 
 def visual_pl(placement_all):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
@@ -579,3 +577,195 @@ for t in range(1, len(compartments)):
 for t in range(len(dct)):
     if dct[i] in st:
         s += korner[t]
+
+
+# Решение уравнение
+
+import scipy.optimize.fsolve as fsol
+import scipy.optimize as opt
+
+def equations(p):
+    y,z,t = p
+    f1 = -10*z*t + 4*y*z*t - 5*y*t + 4*t*(z**2) - 7
+    f2 = 2*y*z*t + 5*y*t - 3
+    f3 = - 10*t + 2*y*t + 4*z*t - 1
+    return (f1,f2,f3)
+
+
+y,z,t = opt.fsolve(equations, x0, maxfev =10000)
+print equations((y,z,t))
+
+x0=np.array([0, 0, 0])
+type(x0)
+
+def func(p):
+    y,z,t = p
+
+    f1 = -10*z*t + 4*y*z*t - 5*y*t + 4*t*(z**2)# - 7
+    f2 = 2*y*z*t + 5*y*t# - 3
+    f3 = - 10*t + 2*y*t + 4*z*t #- 1
+    return np.sqrt(f1**2 + f2**2 + f3**2)
+
+bounds = [(0,2), (0, 2), (0, 2)]
+res=opt.differential_evolution(func, bounds)
+func(res.x)
+
+minroom =50
+minkitch = 40
+minhall = 5
+minbath = 5
+
+def func(p):
+    x,y,z,s1,s2,s3,s4,s5 = p
+    f1 = x-z-s1
+    f2 = y*z-s2-minroom
+    f3 = y*(B-x)-s3-minkitch
+    f4 = z*(H-y)-s4-minhall
+    f5 = (B-z)*(H-y)-s5-minbath
+
+    return np.sqrt(f1**2 + f2**2 + f3**2 + f4**2 + f5**2)
+
+bounds = [(1,B), (0, H), (0, B), (0,100), (0,100), (0,100), (0, 100), (0, 100)]
+res=opt.differential_evolution(func, bounds)
+
+func(res.x)
+
+# placement example
+placemnt = [[0, 10, 0, 10, 1, 2, 0, 1, 0, 2, 2, 10], [0, 10, 0, 1, 1, 4, 2, 3, 4, 10, 3, 10]]
+def makematr(placemnt):
+
+    global Ax, Ay, Bx, By, bounds
+
+    xlist = list(set(placemnt[0]))
+    xlist.sort()
+    xlist.remove(0)
+    xlist.remove(B)
+
+    ylist = list(set(placemnt[1]))
+    ylist.sort()
+    ylist.remove(0)
+    ylist.remove(H)
+
+    # ограничение по площади
+    Ax = np.zeros((len(compartments) - 1, len(xlist)))
+    Ay = np.zeros((len(compartments) - 1, len(ylist)))
+
+    # ограничение по взаимному расположению
+    Bx = np.zeros((len(xlist) - 1, len(xlist)))
+    By = np.zeros((len(ylist) - 1, len(ylist)))
+
+    for i in range(len(Bx)):
+        Bx[i,i] = -1
+        Bx[i,i+1] = 1
+
+    for i in range(len(By)):
+        By[i,i] = -1
+        By[i,i+1] = 1
+
+    for i in range(len(compartments)-1):
+        for xl in range(len(xlist)):
+            # если стенка левая
+            if (placemnt[0][2*i]==xlist[xl]):
+                Ax[i,xl] = -1
+                Ax[i, xlist.index(placemnt[0][2*i+1])] = 1
+            # если стенка правая
+            if (placemnt[0][2*i+1]==xlist[xl]):
+                Ax[i, xl] = 1
+                if (placemnt[0][2 * i]!=0):
+                    Ax[i, xlist.index(placemnt[0][2 * i])] = -1
+        for yl in range(len(ylist)):
+            # если стенка левая
+            if (placemnt[0][2*i]==ylist[yl]):
+                Ay[i,yl] = -1
+                Ay[i,ylist.index(placemnt[0][2*i+1])] = 1
+            # если стенка правая
+            if (placemnt[0][2*i+1]==ylist[yl]):
+                Ay[i, yl] = 1
+                if (placemnt[0][2 * i] != 0):
+                    Ay[i, ylist.index(placemnt[0][2 * i])] = -1
+    bounds = []
+    matrlist =  [Ax[0], Ay[0], Ax, Bx, By]
+    boundslist = [(0, B), (0, H), (0,100), (0,100), (0,100)]
+    for matr in range(len(matrlist)):
+        for i in range(len(matrlist[matr])):
+            bounds.append(boundslist[matr])
+    return True
+
+x=[0,0,0]
+y=[0,0,0,0,0]
+s=[0,0,0,0,0]
+
+def func2(xys):
+    # добавить В и Х в конце векторов у и х
+    global Ax
+    global Ay
+    global Bx
+    global By
+    global areaconstr
+
+    #print xys
+
+    x = xys[0:len(Ax[0])]
+    np.append(x,B)
+    y = xys[len(Ax[0]):len(Ax[0])+len(Ay[0])]
+    np.append(y,H)
+    s = xys[len(Ax[0])+len(Ay[0]):len(Ax[0])+len(Ay[0])+len(Ax)]
+    sx = xys[len(Ax[0])+len(Ay[0])+len(Ax):len(Ax[0])+len(Ay[0])+len(Ax)+len(Bx)]
+    sy = xys[len(Ax[0])+len(Ay[0])+len(Ax)+len(Bx):]
+
+    res1 = Ax.dot(x)*Ay.dot(y)- s - areaconstr
+    res2 = Bx.dot(xys[0:len(Ax[0])]) - sx
+    res3 = By.dot(xys[len(Ax[0]):len(Ax[0])+len(Ay[0])]) - sy
+
+    return sum(np.absolute(res1))+sum(np.absolute(res2))+sum(np.absolute(res3))
+
+
+def summ(x):
+    return sum(x)
+
+def summ(x,y):
+    return x+y
+
+summ(10,20)
+
+t1=time.clock()
+func2(x,y,s)
+t2=time.clock()
+t2-t1
+
+def optim_placement(placemnt, xlistnew, ylistnew):
+
+    xlist = list(set(placemnt[0]))
+    xlist.sort()
+    xlistnew = [0]+xlistnew
+    # xlist.remove(0)
+    # xlist.remove(B)
+    plac_new = copy.copy(placemnt)
+    for i in range(len(placemnt[0])):
+        plac_new[0][i]=xlistnew[xlist.index(placemnt[0][i])]
+
+    ylist = list(set(placemnt[1]))
+    ylist.sort()
+    ylistnew = [0] + ylistnew
+    # ylist.remove(0)
+    for i in range(len(placemnt[1])):
+        plac_new[1][i] = ylistnew[ylist.index(placemnt[1][i])]
+
+    return plac_new
+
+
+xlistnew = [1.85560736e+00, 7.61048607e+00, 8.43569489e+00]
+ylistnew = [2.38739016e+00, 5.05108607e+00, 5.24403547e+00, 5.25532927e+00, 5.29781274e+00]
+optim_placement(placemnt, xlistnew, ylistnew)
+
+res=opt.differential_evolution(func2, bounds)
+res
+# При визуализации, можно указать, сколько можно еще добавитть метража для каждой комнаты (при сохранении данной топологии)
+
+def summ(x, y):
+    return sum(x)-sum(y)
+
+y=[0,0,0]
+bounds = [(1,B), (0, H), (0, B), (1,B), (0, H), (0, B)]
+res=opt.differential_evolution(summ, bounds)
+1
