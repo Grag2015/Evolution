@@ -73,8 +73,7 @@ tc_src=[[set(), envel_hall, envel_corr, envel_room, envel_room, envel_room],
 
 # envel_hall | envel_corr | envel_room
 
-dct = [(6, 9), (6, 10), (7, 6), (7, 7), (7, 8), (7, 9), (8, 6), (8, 7), (8, 8), (8, 9), (9, 6), (9, 7), (9, 8), (9, 9)]
-korner =[2, 0, 2, 1, 0, 1, 0, 0, 0, 0, 2, 1, 0, 1]
+
 
 def prepare_tc(tc_src):
     tc = copy.deepcopy(tc_src)
@@ -248,16 +247,8 @@ def EnumerateScenarios(N):
         return L # if N is inconsistent, return the empty list
     if IsScenario(N):
         # быстрая проверка на наличие пустот
-        s=0
-        st=set()
-        for t in range(1,len(compartments)):
-           st = st | (N[0][t])
-
-        for t in range(len(dct)):
-            if dct[t] in st:
-                s += korner[t]
-
-        if s==4:
+        # TODO нужна точная проверка на наличие пустот
+        if(withoutgapes(N)):
             L.append(N)
             nres+=1
             if (nres>=max_res):
@@ -345,7 +336,6 @@ dmax = [[0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B],
         [B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B, 0, B],
         [B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B, 0]]
 
-# TODO реализовать этот метод
 # # проверка симметричности таблица мин и макс.
 # for i in range(10):
 #     for j in range(10):
@@ -372,6 +362,25 @@ def AfterTo(j,k, scen, dim):
             [[1, -1], [1, 1]],
             [[1,1],[1,1]]]
     return matr[IAatom][j%2][k%2] # остаток от деления на 2 указывает правая ли стена
+
+
+# функция используется для быстрой оценки наличия пустот
+def quickplacement(scen):
+    BH=[B,H]
+    def quickplacementdim(dim, dmin, dmax, scen):
+        matr=np.zeros(((len(compartments)) * 2,(len(compartments)) * 2))
+        for i in range(1,len(compartments)*2):
+            for j in range(i+1,len(compartments)*2):
+                tmp = AfterTo(i, j, scen, dim)
+                if(tmp==1):
+                    matr[i][j] += 1
+                else:
+                    if (tmp==0):
+                        matr[j][i] += 1
+        tmp = map(sum, matr)
+        return map(lambda x: BH[dim]*float(x)/max(tmp),tmp)
+    return [quickplacementdim(0, dmin, dmax, scen),quickplacementdim(1, dmin, dmax, scen)]
+
 
 # функция запускается для каждой размерности
 def placement(dim, dmin, dmax, scen):
@@ -426,12 +435,32 @@ def placement(dim, dmin, dmax, scen):
         #done = True
     return p
 
+# Проверяет содержит ли сценарий (т.е. топология) пустоты
+def withoutgapes(N):
+
+# Неточная проверка на наличие пустот
+    # вначале проверяем эвристикой, и если она не дает результата, то делаем точную проверку.
+    dct = [(6, 9), (6, 10), (7, 6), (7, 7), (7, 8), (7, 9), (8, 6), (8, 7), (8, 8), (8, 9), (9, 6), (9, 7), (9, 8), (9, 9)]
+    korner =[2, 0, 2, 1, 0, 1, 0, 0, 0, 0, 2, 1, 0, 1]
+
+    s = 0
+    st = set()
+    for t in range(1, len(compartments)):
+        st = st | (N[0][t])
+    for t in range(len(dct)):
+        if dct[t] in st:
+            s += korner[t]
+    if s == 4:
+        return withoutgapes2(quickplacement(N))
+    else:
+        return False
+
 # проверяет содержит ли планировка пустоты
-def withoutgapes(plac_all): #[[0, 10, 0, 1, 1, 2, 3, 10, 2, 3], [0, 10, 0, 10, 0, 10, 0, 10, 0, 10]]
+def withoutgapes2(plac_all): #[[0, 10, 0, 1, 1, 2, 3, 10, 2, 3], [0, 10, 0, 10, 0, 10, 0, 10, 0, 10]]
     s=0
     for i in range(1,len(compartments)):
        s+=(plac_all[0][2*i+1] - plac_all[0][2*i])*(plac_all[1][2*i+1] - plac_all[1][2*i])
-    if (s==H*B):
+    if (abs(s-H*B)<10**(-3)):
         return True
     else:
         return False #
@@ -476,6 +505,13 @@ len(scens)
 t2=time.clock()
 t2-t1
 
+t1=time.clock()
+# withoutgapes(quickplacement(dmin, dmax, N))
+quickplacement(N)
+# AfterTo(1,2, scen, 0)
+t2=time.clock()
+t2-t1
+
 # получить все плэйсменты и проверить gape
 wogapes_playsments=[]
 wogapes_scens=[]
@@ -486,7 +522,7 @@ for scen in scens:
     # print i
     pl=placement_all(dmin, dmax, scen)
     all_playsments.append(pl)
-    if (withoutgapes(pl)):
+    if (withoutgapes2(pl)):
         wogapes_playsments.append(pl)
         wogapes_scens.append(i)
     i+=1
@@ -534,7 +570,7 @@ for pl in wogapes_playsments:
 
 # отображение всех решений:
 i=0
-for pl in all_playsments:
+for pl in scens:
     if i%9==0:
         fig1 = plt.figure(figsize=(15, 15))
     ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
