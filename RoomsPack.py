@@ -5,11 +5,13 @@ import copy
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
+# настройки алгоритма
 timeout = 15
 depth_recurs = 5000
 recur_int = 0
 B=10
 H=10
+max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
 
 
 # atomic relations block algebra
@@ -225,13 +227,19 @@ def AssignNextRelRest(TmpN):
                 return TmpN
 
 
-
+nres = 0
+stop = False
 def EnumerateScenarios(N):
     global recur_int
     recur_int+=1
+    global nres
+    global stop
 
     # input - matrix of constraints
     L = []
+    if (stop):
+        return L
+
     ((i, j, k), N, NPathsChecked, NChanges) = PathConsistency(N)
 
     # begin base cases
@@ -251,6 +259,9 @@ def EnumerateScenarios(N):
 
         if s==4:
             L.append(N)
+            nres+=1
+            if (nres>=max_res):
+                stop = True
         #print 2
         return L # if N is a scenario, return a list only with N
     # end base cases
@@ -334,6 +345,7 @@ dmax = [[0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B],
         [B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B, 0, B],
         [B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B, 0]]
 
+# TODO реализовать этот метод
 # # проверка симметричности таблица мин и макс.
 # for i in range(10):
 #     for j in range(10):
@@ -414,6 +426,7 @@ def placement(dim, dmin, dmax, scen):
         #done = True
     return p
 
+# проверяет содержит ли планировка пустоты
 def withoutgapes(plac_all): #[[0, 10, 0, 1, 1, 2, 3, 10, 2, 3], [0, 10, 0, 10, 0, 10, 0, 10, 0, 10]]
     s=0
     for i in range(1,len(compartments)):
@@ -421,7 +434,7 @@ def withoutgapes(plac_all): #[[0, 10, 0, 1, 1, 2, 3, 10, 2, 3], [0, 10, 0, 10, 0
     if (s==H*B):
         return True
     else:
-        return False
+        return False #
 
 def placement_all(dmin, dmax, scen):
     res=[]
@@ -454,6 +467,8 @@ t1=time.clock()
 
 N = copy.deepcopy(tc)
 recur_int = 0
+nres = 0
+stop = False
 scens=EnumerateScenarios(N)
 print "Yes"
 len(scens)
