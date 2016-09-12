@@ -769,3 +769,30 @@ y=[0,0,0]
 bounds = [(1,B), (0, H), (0, B), (1,B), (0, H), (0, B)]
 res=opt.differential_evolution(summ, bounds)
 1
+
+import scipy.optimize
+
+A = np.zeros((3, 3))
+A[0][0]=1
+A[0][1]=2
+A[0][2]=3
+A[1][0]=1
+A[1][1]=1
+A[1][2]=1
+A[2][0]=2
+A[2][1]=4
+A[2][2]=6
+
+A=np.ndarray([[1, 2, 3],[3, 3, 3],[2, 4, 6]])
+
+def F(x):
+    return A.dot(x)
+
+makematr(wogapes_playsments[0])
+bounds
+x = scipy.optimize.broyden1(func2,(0,0,0,0,0,0,0,0,0,0,0))
+x
+F(x)
+array([ 4.04674914,  3.91158389,  2.71791677,  1.61756251])
+np.cos(x) + x[::-1]
+array([ 1.,  2.,  3.,  4.])
