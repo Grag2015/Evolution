@@ -4,13 +4,14 @@ import time
 import copy
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import re
 
 # настройки алгоритма
 timeout = 15
 depth_recurs = 5000
 recur_int = 0
-B=10
-H=10
+B=5
+H=6
 max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
 
 
@@ -18,8 +19,10 @@ max_res = 10 #максимальное количество результато
 ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
 # комнаты
+# TODO удалить лишние элементы в списке (коридор)
 compartments = ["envelope",  "hall", "corr", "room", "bath", "kitchen"]
-areaconstr = [1,1,14,3.6,9] # без оболочки
+areaconstr = [1,1,14,3.6,9] # минимальные без оболочки
+areaconstr_opt = [3,1,16,4,12] # оптимальные без оболочки
 comp_col = {0: '#F0CCAD',
             1: '#ECA7A7',
             2: '#73DD9B',
@@ -64,6 +67,7 @@ envel_corr = inclusion_partcommon | {(8,8)}
 corr_other = partcommon | inverse(partcommon)
 
 # topologic constraints
+# TODO эту матрицу тоже надо чистить
 tc_src=[[set(), envel_hall, envel_corr, envel_room, envel_room, envel_room],
     [set(),set(), hall_corr , adjacency , adjacency , adjacency],
     [set(),set(), set(), corr_other, corr_other, corr_other],
@@ -88,11 +92,11 @@ def prepare_tc(tc_src):
             tc[j][i] = inverse(tc[i][j])
     return tc
 
-
+# Подготовка матрицы ограничений tc_src
 tc = prepare_tc(tc_src)
 
+# interval algebra composition matrix
 def atomicIAcomp(IArel1, IArel2):
-    # interval algebra composition matrix
     IAcomp=[[{0},{0},{0},{0},{0,1,2,3,4},{0,1,2,3,4},{0},{0},{0},{0},{0,1,2,3,4},{0,1,2,3,4},{0,1,2,3,4,5,6,7,8,9,10,11,12}],
             [{0},{0},{0},{1},{2,3,4},{2,3,4},{1},{0},{0},{1},{0,1,2,3,4},{5,6,7},{8,9,10,11,12}],
             [{0},{0},{0,1,2},{0},{2,3,4},{2,3,4},{2},{0,1,2},{0,1,2,7,8},{2,7,8},{2,3,4,5,6,7,8,9,10},{8,9,10},{8,9,10,11,12}],
@@ -108,7 +112,7 @@ def atomicIAcomp(IArel1, IArel2):
             [{0,1,2,3,4,5,6,7,8,9,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{4,5,10,11,12},{12},{12},{12},{12},{12},{12},{12},{12}]]
     return IAcomp[IArel1][IArel2]
 
-
+# декартово произведение множеств
 def cartesProduct(set1, set2):
     cp=set()
     for i in set1:
@@ -116,9 +120,11 @@ def cartesProduct(set1, set2):
             cp.add((i,j))
     return cp
 
+# композиция атомарных элементов блочной алгебры
 def atomicBAcomp(atomicBArel1, atomicBArel2):
     return cartesProduct(atomicIAcomp(atomicBArel1[0],atomicBArel2[0]),atomicIAcomp(atomicBArel1[1],atomicBArel2[1]))
 
+# композиция НЕатомарных элементов блочной алгебры
 def noatomicBAcomp(noatomicBArel1, noatomicBArel2):
     res=set()
     for i in noatomicBArel1:
@@ -126,10 +132,8 @@ def noatomicBAcomp(noatomicBArel1, noatomicBArel2):
             res= res | atomicBAcomp(i,j)
     return res
 
-
-
+# ищем пути из i в j xthtp 3-ю точку, но не k
 def Paths(i,j,k):
-    # ищем пути из i в j xthtp 3-ю точку, но не k
     ls = range(len(compartments))
     ls.remove(k)
     ls.remove(i)
@@ -139,6 +143,7 @@ def Paths(i,j,k):
         res.add((i,j,elem))
     return res
 
+# Функция поиска допустимых подмножеств
 def PathConsistency(C):
     LPathsToVisit = set()
     NPathsChecked = 0
@@ -185,7 +190,7 @@ def PathConsistency(C):
 
     return ((0, 0, 0), C, NPathsChecked, NChanges) #
 
-
+#
 def IsScenario(N):
     for i in range(0,len(compartments)): # go along rows
         for j in range(i+1, len(compartments)): # go along columns
@@ -209,9 +214,6 @@ def AssignNextRelFirst(TmpN):
                 tmp2.add((12-tt[0], 12-tt[1]))
                 TmpN[j][i] = tmp2
                 return TmpN
-
-
-
 
 def AssignNextRelRest(TmpN):
     tmp=set()
@@ -282,9 +284,7 @@ def EnumerateScenarios(N):
     #print 3
     return L
 
-
-
-
+# TODO в dmin и dmax надо удалять пару столбцов и пару строк
 def dmin(i, j, scen, dim):
     tmp = copy.deepcopy(scen)
     IAatom = tmp[i/2][j/2].pop()[dim]
@@ -321,7 +321,6 @@ def dmin(i, j, scen, dim):
             [0,1,0,0,0,0,0,0,0,0,0,1],
             [1,0,0,0,0,0,0,0,0,0,1,0]]
     return dminm[i][j]
-
 
 dmax = [[0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B],
         [B, 0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1],
@@ -487,51 +486,6 @@ def visual(placement_all):
                  placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
     # plt.show()
 
-
-
-
-# проверка на рабочем примере
-# Расчет времени выполнения - import time
-t1=time.clock()
-
-N = copy.deepcopy(tc)
-recur_int = 0
-nres = 0
-stop = False
-scens=EnumerateScenarios(N)
-print "Yes"
-len(scens)
-
-t2=time.clock()
-t2-t1
-
-t1=time.clock()
-# withoutgapes(quickplacement(dmin, dmax, N))
-quickplacement(N)
-# AfterTo(1,2, scen, 0)
-t2=time.clock()
-t2-t1
-
-# получить все плэйсменты и проверить gape
-wogapes_playsments=[]
-wogapes_scens=[]
-all_playsments=[]
-i=0
-t1=time.clock()
-for scen in scens:
-    # print i
-    pl=placement_all(dmin, dmax, scen)
-    all_playsments.append(pl)
-    if (withoutgapes2(pl)):
-        wogapes_playsments.append(pl)
-        wogapes_scens.append(i)
-    i+=1
-print "Yes"
-t2=time.clock()
-t2-t1
-
-len(wogapes_scens)
-
 # move walls
 def movewalls(playsments_a):
     playsments_all=copy.deepcopy(playsments_a)
@@ -555,29 +509,6 @@ def movewalls(playsments_a):
                 newplasit[i]=l*(ls2.index(playsments_all[dim][i])+1)
         newplas.append(newplasit)
     return newplas
-
-
-# отображение всех решений без пропусков:
-i=0
-for pl in wogapes_playsments:
-    if i%9==0:
-        fig1 = plt.figure(figsize=(15, 15))
-    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-    visual(movewalls(pl))
-    i+=1
-    if (i>30):
-        break
-
-# отображение всех решений:
-i=0
-for pl in scens:
-    if i%9==0:
-        fig1 = plt.figure(figsize=(15, 15))
-    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-    visual(pl)
-    i+=1
-    if (i>30):
-        break
 
 # sc=[[{(6, 6)}, {(9, 9)}, {(8, 9)}, {(7, 9)}, {(7, 7)}, {(9, 7)}],
 #  [{(3, 4)}, {(6, 6)}, {(1, 3)}, {(0,3)}, {(1, 0)}, {(6, 1)}],
@@ -605,97 +536,30 @@ def visual_pl(placement_all):
                  placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
     # plt.show()
 
-visual_pl(placement_all(dmin, dmax,sc2))
-
-sc2=copy.deepcopy(scens[10])
-for i in range(6):
-    for j in range(6):
-        if (not(sc2[i][j].pop() in tc[i][j])):
-            print i,j
-
-
-
-
-sc2[0][0].pop in tc[0][0]
-
-scen
-
-s = 0
-st = set()
-for t in range(1, len(compartments)):
-    st = st | (scen[0][t])
-
-for t in range(len(dct)):
-    if dct[i] in st:
-        s += korner[t]
-
 
 # Решение уравнение
 
-import scipy.optimize.fsolve as fsol
 import scipy.optimize as opt
 
-def equations(p):
-    y,z,t = p
-    f1 = -10*z*t + 4*y*z*t - 5*y*t + 4*t*(z**2) - 7
-    f2 = 2*y*z*t + 5*y*t - 3
-    f3 = - 10*t + 2*y*t + 4*z*t - 1
-    return (f1,f2,f3)
-
-
-y,z,t = opt.fsolve(equations, x0, maxfev =10000)
-print equations((y,z,t))
-
-x0=np.array([0, 0, 0])
-type(x0)
-
-def func(p):
-    y,z,t = p
-
-    f1 = -10*z*t + 4*y*z*t - 5*y*t + 4*t*(z**2)# - 7
-    f2 = 2*y*z*t + 5*y*t# - 3
-    f3 = - 10*t + 2*y*t + 4*z*t #- 1
-    return np.sqrt(f1**2 + f2**2 + f3**2)
-
-bounds = [(0,2), (0, 2), (0, 2)]
-res=opt.differential_evolution(func, bounds)
-func(res.x)
-
-minroom =50
-minkitch = 40
-minhall = 5
-minbath = 5
-
-def func(p):
-    x,y,z,s1,s2,s3,s4,s5 = p
-    f1 = x-z-s1
-    f2 = y*z-s2-minroom
-    f3 = y*(B-x)-s3-minkitch
-    f4 = z*(H-y)-s4-minhall
-    f5 = (B-z)*(H-y)-s5-minbath
-
-    return np.sqrt(f1**2 + f2**2 + f3**2 + f4**2 + f5**2)
-
-bounds = [(1,B), (0, H), (0, B), (0,100), (0,100), (0,100), (0, 100), (0, 100)]
-res=opt.differential_evolution(func, bounds)
-
-func(res.x)
-
 # placement example
-placemnt = [[0, 10, 0, 10, 1, 2, 0, 1, 0, 2, 2, 10], [0, 10, 0, 1, 1, 4, 2, 3, 4, 10, 3, 10]]
+# placemnt = [[0, 10, 0, 10, 1, 2, 0, 1, 0, 2, 2, 10], [0, 10, 0, 1, 1, 4, 2, 3, 4, 10, 3, 10]]
+# функция формирует матрицы для целевой функции
 def makematr(placemnt):
 
     global Ax, Ay, Bx, By, bounds
+    # удаляем из планировки стены контура
+    placemnt[0] = placemnt[0][2:]
+    placemnt[1] = placemnt[1][2:]
 
     xlist = list(set(placemnt[0]))
     xlist.sort()
     xlist.remove(0)
-    xlist.remove(B)
+    #xlist.remove(B)
 
     ylist = list(set(placemnt[1]))
     ylist.sort()
     ylist.remove(0)
-    ylist.remove(H)
+    #ylist.remove(H)
 
     # ограничение по площади
     Ax = np.zeros((len(compartments) - 1, len(xlist)))
@@ -726,25 +590,21 @@ def makematr(placemnt):
                     Ax[i, xlist.index(placemnt[0][2 * i])] = -1
         for yl in range(len(ylist)):
             # если стенка левая
-            if (placemnt[0][2*i]==ylist[yl]):
+            if (placemnt[1][2*i]==ylist[yl]):
                 Ay[i,yl] = -1
-                Ay[i,ylist.index(placemnt[0][2*i+1])] = 1
+                Ay[i,ylist.index(placemnt[1][2*i+1])] = 1
             # если стенка правая
-            if (placemnt[0][2*i+1]==ylist[yl]):
+            if (placemnt[1][2*i+1]==ylist[yl]):
                 Ay[i, yl] = 1
-                if (placemnt[0][2 * i] != 0):
-                    Ay[i, ylist.index(placemnt[0][2 * i])] = -1
+                if (placemnt[1][2 * i] != 0):
+                    Ay[i, ylist.index(placemnt[1][2 * i])] = -1
     bounds = []
-    matrlist =  [Ax[0], Ay[0], Ax, Bx, By]
+    matrlist =  [len(Ax[0])-1, len(Ay[0])-1, len(Ax), len(Bx), len(By)]
     boundslist = [(0, B), (0, H), (0,100), (0,100), (0,100)]
     for matr in range(len(matrlist)):
-        for i in range(len(matrlist[matr])):
+        for i in range(matrlist[matr]):
             bounds.append(boundslist[matr])
     return True
-
-x=[0,0,0]
-y=[0,0,0,0,0]
-s=[0,0,0,0,0]
 
 def func2(xys):
     # добавить В и Х в конце векторов у и х
@@ -756,94 +616,99 @@ def func2(xys):
 
     #print xys
 
-    x = xys[0:len(Ax[0])]
-    np.append(x,B)
-    y = xys[len(Ax[0]):len(Ax[0])+len(Ay[0])]
-    np.append(y,H)
-    s = xys[len(Ax[0])+len(Ay[0]):len(Ax[0])+len(Ay[0])+len(Ax)]
-    sx = xys[len(Ax[0])+len(Ay[0])+len(Ax):len(Ax[0])+len(Ay[0])+len(Ax)+len(Bx)]
-    sy = xys[len(Ax[0])+len(Ay[0])+len(Ax)+len(Bx):]
+    x = xys[0:len(Ax[0]) - 1]
+    x = np.append(x, B)
+    y = xys[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2]
+    y = np.append(y, H)
+    s = xys[len(Ax[0]) + len(Ay[0]) - 2:len(Ax[0]) + len(Ay[0]) - 2 + len(Ax)]
+    sx = xys[len(Ax[0]) + len(Ay[0]) - 2 + len(Ax):len(Ax[0]) + len(Ay[0]) - 2 + len(Ax) + len(Bx)]
+    sy = xys[len(Ax[0]) + len(Ay[0]) - 2 + len(Ax) + len(Bx):]
 
-    res1 = Ax.dot(x)*Ay.dot(y)- s - areaconstr
+    res1 = Ax.dot(x) * Ay.dot(y) - s - areaconstr
     res2 = Bx.dot(xys[0:len(Ax[0])]) - sx
-    res3 = By.dot(xys[len(Ax[0]):len(Ax[0])+len(Ay[0])]) - sy
+    res3 = By.dot(xys[len(Ax[0]):len(Ax[0]) + len(Ay[0])]) - sy
 
-    return sum(np.absolute(res1))+sum(np.absolute(res2))+sum(np.absolute(res3))
+    return 2*np.absolute(res1).dot([1,1,2,1,1.5])+sum(np.absolute(res2))+sum(np.absolute(res3))+sum(np.absolute(s))
 
-
-def summ(x):
-    return sum(x)
-
-def summ(x,y):
-    return x+y
-
-summ(10,20)
-
-t1=time.clock()
-func2(x,y,s)
-t2=time.clock()
-t2-t1
-
+# декодирование размещения из результатов решения уравнения func2==0
+# xlistnew, ylistnew - списки
 def optim_placement(placemnt, xlistnew, ylistnew):
 
     xlist = list(set(placemnt[0]))
     xlist.sort()
-    xlistnew = [0]+xlistnew
+    xlistnew = [0]+xlistnew + [B]
     # xlist.remove(0)
     # xlist.remove(B)
     plac_new = copy.copy(placemnt)
     for i in range(len(placemnt[0])):
+        print i
         plac_new[0][i]=xlistnew[xlist.index(placemnt[0][i])]
 
     ylist = list(set(placemnt[1]))
     ylist.sort()
-    ylistnew = [0] + ylistnew
+    ylistnew = [0] + ylistnew + [H]
     # ylist.remove(0)
     for i in range(len(placemnt[1])):
         plac_new[1][i] = ylistnew[ylist.index(placemnt[1][i])]
 
     return plac_new
 
-
-xlistnew = [1.85560736e+00, 7.61048607e+00, 8.43569489e+00]
-ylistnew = [2.38739016e+00, 5.05108607e+00, 5.24403547e+00, 5.25532927e+00, 5.29781274e+00]
-optim_placement(placemnt, xlistnew, ylistnew)
-
-res=opt.differential_evolution(func2, bounds)
-res
+# TODO рассмотреть такую возможность.
 # При визуализации, можно указать, сколько можно еще добавитть метража для каждой комнаты (при сохранении данной топологии)
 
-def summ(x, y):
-    return sum(x)-sum(y)
+# Поиск различных вариантов компоновки (топологий)
+def main_topology(max_results, compartments_list):
+    global max_res, compartments, recur_int, nres, stop, fig1
+    max_res = max_results
+    compartments = compartments_list
+    # topology
+    t1 = time.clock()
+    N = copy.deepcopy(tc)
+    recur_int = 0
+    nres = 0
+    stop = False
+    scens = EnumerateScenarios(N)
+    t2 = time.clock()
+    print "Найдено " + str(len(scens)) + " вариантов размещения комнат" + '\n' + "Время выполнения программы sec.- " + str(t2-t1)
 
-y=[0,0,0]
-bounds = [(1,B), (0, H), (0, B), (1,B), (0, H), (0, B)]
-res=opt.differential_evolution(summ, bounds)
-1
+    return scens
 
-import scipy.optimize
+# Учет ограничений по площади/длине
+def main_size(height, width, scens):
+    global B, H
+    B = width
+    H = height
+    t1 = time.clock()
+    optim_scens=[]
+    for i in range(len(scens)):
+        makematr(quickplacement(scens[i]))
+        res = opt.differential_evolution(func2, bounds)
+        xlistnew = list(res.x[0:len(Ax[0]) - 1])
+        ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
+        #print i
+        optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+    t2 = time.clock()
+    print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
 
-A = np.zeros((3, 3))
-A[0][0]=1
-A[0][1]=2
-A[0][2]=3
-A[1][0]=1
-A[1][1]=1
-A[1][2]=1
-A[2][0]=2
-A[2][1]=4
-A[2][2]=6
+    return optim_scens
 
-A=np.ndarray([[1, 2, 3],[3, 3, 3],[2, 4, 6]])
 
-def F(x):
-    return A.dot(x)
 
-makematr(wogapes_playsments[0])
-bounds
-x = scipy.optimize.broyden1(func2,(0,0,0,0,0,0,0,0,0,0,0))
-x
-F(x)
-array([ 4.04674914,  3.91158389,  2.71791677,  1.61756251])
-np.cos(x) + x[::-1]
-array([ 1.,  2.,  3.,  4.])
+# Поиск топологий
+# Параметры - количество результатов, список комнат
+scens = main_topology(10, ["envelope",  "hall", "corr", "room", "bath", "kitchen"])
+# Учет ограничений по площади
+# Параметры - ширина, высота, сценарии (топологические)
+optim_scens = main_size(7, 5, scens)
+# Визуализация
+i=0
+for pl in optim_scens:
+    if i%9==0:
+        fig1 = plt.figure(figsize=(15, 15))
+    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
+    visual(pl)
+    i+=1
+    if (i>30):
+        break
+
+# TODO добавить площадь
