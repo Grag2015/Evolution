@@ -551,69 +551,78 @@ import scipy.optimize as opt
 # placement example
 # placemnt = [[0, 10, 0, 10, 1, 2, 0, 1, 0, 2, 2, 10], [0, 10, 0, 1, 1, 4, 2, 3, 4, 10, 3, 10]]
 # функция формирует матрицы для целевой функции
-def makematr(placemnt):
 
+def makeconst(placemnt, discret=True):
     global Ax, Ay, Bx, By, bounds
-    # удаляем из планировки стены контура
-    placemnt[0] = placemnt[0][2:]
-    placemnt[1] = placemnt[1][2:]
+    def makematr(placemnt):
 
-    xlist = list(set(placemnt[0]))
-    xlist.sort()
-    xlist.remove(0)
-    #xlist.remove(B)
+        global Ax, Ay, Bx, By
+        # удаляем из планировки стены контура
+        placemnt[0] = placemnt[0][2:]
+        placemnt[1] = placemnt[1][2:]
 
-    ylist = list(set(placemnt[1]))
-    ylist.sort()
-    ylist.remove(0)
-    #ylist.remove(H)
+        xlist = list(set(placemnt[0]))
+        xlist.sort()
+        xlist.remove(0)
+        #xlist.remove(B)
 
-    # ограничение по площади
-    Ax = np.zeros((len(compartments) - 1, len(xlist)))
-    Ay = np.zeros((len(compartments) - 1, len(ylist)))
+        ylist = list(set(placemnt[1]))
+        ylist.sort()
+        ylist.remove(0)
+        #ylist.remove(H)
 
-    # ограничение по взаимному расположению
-    Bx = np.zeros((len(xlist) - 1, len(xlist)))
-    By = np.zeros((len(ylist) - 1, len(ylist)))
+        # ограничение по площади
+        Ax = np.zeros((len(compartments) - 1, len(xlist)))
+        Ay = np.zeros((len(compartments) - 1, len(ylist)))
 
-    for i in range(len(Bx)):
-        Bx[i,i] = -1
-        Bx[i,i+1] = 1
+        # ограничение по взаимному расположению
+        Bx = np.zeros((len(xlist) - 2, len(xlist)-1))
+        By = np.zeros((len(ylist) - 2, len(ylist)-1))
 
-    for i in range(len(By)):
-        By[i,i] = -1
-        By[i,i+1] = 1
+        for i in range(len(Bx)):
+            Bx[i,i] = -1
+            Bx[i,i+1] = 1
 
-    for i in range(len(compartments)-1):
-        for xl in range(len(xlist)):
-            # если стенка левая
-            if (placemnt[0][2*i]==xlist[xl]):
-                Ax[i,xl] = -1
-                Ax[i, xlist.index(placemnt[0][2*i+1])] = 1
-            # если стенка правая
-            if (placemnt[0][2*i+1]==xlist[xl]):
-                Ax[i, xl] = 1
-                if (placemnt[0][2 * i]!=0):
-                    Ax[i, xlist.index(placemnt[0][2 * i])] = -1
-        for yl in range(len(ylist)):
-            # если стенка левая
-            if (placemnt[1][2*i]==ylist[yl]):
-                Ay[i,yl] = -1
-                Ay[i,ylist.index(placemnt[1][2*i+1])] = 1
-            # если стенка правая
-            if (placemnt[1][2*i+1]==ylist[yl]):
-                Ay[i, yl] = 1
-                if (placemnt[1][2 * i] != 0):
-                    Ay[i, ylist.index(placemnt[1][2 * i])] = -1
+        for i in range(len(By)):
+            By[i,i] = -1
+            By[i,i+1] = 1
+
+        for i in range(len(compartments)-1):
+            for xl in range(len(xlist)):
+                # если стенка левая
+                if (placemnt[0][2*i]==xlist[xl]):
+                    Ax[i,xl] = -1
+                    Ax[i, xlist.index(placemnt[0][2*i+1])] = 1
+                # если стенка правая
+                if (placemnt[0][2*i+1]==xlist[xl]):
+                    Ax[i, xl] = 1
+                    if (placemnt[0][2 * i]!=0):
+                        Ax[i, xlist.index(placemnt[0][2 * i])] = -1
+            for yl in range(len(ylist)):
+                # если стенка левая
+                if (placemnt[1][2*i]==ylist[yl]):
+                    Ay[i,yl] = -1
+                    Ay[i,ylist.index(placemnt[1][2*i+1])] = 1
+                # если стенка правая
+                if (placemnt[1][2*i+1]==ylist[yl]):
+                    Ay[i, yl] = 1
+                    if (placemnt[1][2 * i] != 0):
+                        Ay[i, ylist.index(placemnt[1][2 * i])] = -1
+    makematr(placemnt)
     bounds = []
-    matrlist =  [len(Ax[0])-1, len(Ay[0])-1, len(Ax), len(Bx), len(By)]
-    boundslist = [(0, B), (0, H), (0,100), (0,100), (0,100)]
+    if (discret):
+        matrlist =  [len(Ax[0])-1, len(Ay[0])-1]
+        boundslist = [(0, B), (0, H)]
+    else:
+        matrlist =  [len(Ax[0])-1, len(Ay[0])-1, len(Ax), len(Bx), len(By)]
+        boundslist = [(0, B), (0, H), (0,B*H), (0.5,B), (0.5,H)]
     for matr in range(len(matrlist)):
         for i in range(matrlist[matr]):
             bounds.append(boundslist[matr])
     return True
 
-def func2(xys):
+# непрерывная функция с фиктивными переменными для описания ограничений-неравенств
+def func2_contin(xys):
     # добавить В и Х в конце векторов у и х
     global Ax
     global Ay
@@ -633,9 +642,36 @@ def func2(xys):
 
     res1 = Ax.dot(x) * Ay.dot(y) - s - areaconstr
     res2 = Bx.dot(xys[0:len(Ax[0])]) - sx
-    res3 = By.dot(xys[len(Ax[0]):len(Ax[0]) + len(Ay[0])]) - sy
+    res3 = By.dot(xys[len(Ax[0]):len(Ax[0]) + len(Ay[0])]) - sy # тут видимо ошибка см. дискретную версию ф-и
 
-    return 2*np.absolute(res1).dot(rooms_weights)+sum(np.absolute(res2))+sum(np.absolute(res3))+sum(np.absolute(s))
+    return np.absolute(res1).dot(rooms_weights)+sum(np.absolute(res2))*5+sum(np.absolute(res3))*5+sum(np.absolute(s))
+
+# дискретная ф-я, в т.ч. для ген.алгоритма
+def func2_discret(xy):
+    # добавить В и Х в конце векторов у и х
+    global Ax
+    global Ay
+    global Bx
+    global By
+    global areaconstr
+
+    #print xys
+
+    x = xy[0:len(Ax[0]) - 1]
+    x = np.append(x, B)
+    y = xy[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2]
+    y = np.append(y, H)
+
+    res1 = Ax.dot(x) * Ay.dot(y) - areaconstr
+    res2 = Bx.dot(xy[0:len(Ax[0])-1]) - np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*0.5
+    res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*0.5
+
+    res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
+    res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
+    res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
+
+    return res1sign.dot(rooms_weights) + sum(res2sign)*5 + sum(res3sign)*5
+
 
 # декодирование размещения из результатов решения уравнения func2==0
 # xlistnew, ylistnew - списки
@@ -679,18 +715,20 @@ def main_topology(max_results, compartments_list):
 
 # Учет ограничений по площади/длине
 def main_size(height, width, scens):
-    global B, H
+    global B, H, res_x
     B = width
     H = height
     t1 = time.clock()
     optim_scens=[]
+    res_x=[]
     for i in range(len(scens)):
-        makematr(quickplacement(scens[i]))
-        res = opt.differential_evolution(func2, bounds)
+        makeconst(quickplacement(scens[i]))
+        res = opt.differential_evolution(func2_discret, bounds)
         xlistnew = list(res.x[0:len(Ax[0]) - 1])
         ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
         #print i
         optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+        res_x.append(res.fun)
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
 
@@ -701,16 +739,28 @@ def main_size(height, width, scens):
 # Поиск топологий
 # Параметры - количество результатов, список комнат
 scens = main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
-# Учет ограничений по площади
-# Параметры - ширина, высота, сценарии (топологические)
-optim_scens = main_size(7, 5, scens)
+
 # Визуализация
 i=0
 for pl in scens:
     if i%9==0:
         fig1 = plt.figure(figsize=(15, 15))
-    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
+    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
     visual(quickplacement(pl))
+    i+=1
+    if (i>30):
+        break
+
+# Учет ограничений по площади
+# Параметры - ширина, высота, сценарии (топологические)
+optim_scens = main_size(7, 8, scens)
+# Визуализация
+i=0
+for pl in optim_scens:
+    if i%9==0:
+        fig1 = plt.figure(figsize=(15, 15))
+    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+    visual(pl)
     i+=1
     if (i>30):
         break
