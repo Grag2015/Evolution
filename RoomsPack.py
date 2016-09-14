@@ -8,27 +8,28 @@ import re
 
 # настройки алгоритма
 timeout = 15
-depth_recurs = 5000
+depth_recurs = 10000
 recur_int = 0
 B=5
 H=6
 max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
-
 
 # atomic relations block algebra
 ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
 # комнаты
 # TODO удалить лишние элементы в списке (коридор)
-compartments = ["envelope",  "hall", "corr", "room", "bath", "kitchen"]
-areaconstr = [1,1,14,3.6,9] # минимальные без оболочки
-areaconstr_opt = [3,1,16,4,12] # оптимальные без оболочки
+compartments = ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"]
+rooms_weights = [1, 1, 2, 2, 1, 1.5] # веса комнат, используются для придания ограничений по каждому типу комнат
+areaconstr = [1,1,14,14,3.6,9] # минимальные без оболочки
+areaconstr_opt = [3,1,16,16,4,12] # оптимальные без оболочки
 comp_col = {0: '#F0CCAD',
             1: '#ECA7A7',
             2: '#73DD9B',
             3: '#ACBFEC',
-            4: '#EAE234',
-            5: '#ECA7A7'
+            4: '#ACBFEC',
+            5: '#EAE234',
+            6: '#ECA7A7'
            }
 
 
@@ -68,12 +69,13 @@ corr_other = partcommon | inverse(partcommon)
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src=[[set(), envel_hall, envel_corr, envel_room, envel_room, envel_room],
-    [set(),set(), hall_corr , adjacency , adjacency , adjacency],
-    [set(),set(), set(), corr_other, corr_other, corr_other],
-    [set(), set(), set(), set(), adjacency, adjacency],
-    [set(), set(), set(), set(), set(), bath_kitchen],
-    [set(), set(), set(), set(), set(), set()]]
+tc_src=[[set(), envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
+    [set(),set(), hall_corr , adjacency, adjacency, adjacency , adjacency],
+    [set(),set(), set(), corr_other, corr_other, corr_other, corr_other],
+    [set(), set(), set(), set(), adjacency, adjacency, adjacency],
+    [set(), set(), set(), set(), set(), adjacency, adjacency],
+    [set(), set(), set(), set(), set(), set(), bath_kitchen],
+    [set(), set(), set(), set(), set(), set(), set()]]
 
 # envel_hall | envel_corr | envel_room
 
@@ -283,7 +285,7 @@ def EnumerateScenarios(N):
     #print 3
     return L
 
-# TODO в dmin и dmax надо удалять пару столбцов и пару строк
+# TODO в dmin и dmax надо удалять пару столбцов и пару строк (в новой версии они не должны использоваться)
 def dmin(i, j, scen, dim):
     tmp = copy.deepcopy(scen)
     IAatom = tmp[i/2][j/2].pop()[dim]
@@ -307,32 +309,37 @@ def dmin(i, j, scen, dim):
         dminm = [[1,1],[1,1]]
         return dminm[i%2][j%2]
 
-    dminm = [[0,B,0,1,0,1,0,1,0,1,0,1],
-            [B,0,1,0,1,0,1,0,1,0,1,0],
-            [0,1,0,1,0,0,0,0,0,0,0,0],
-            [1,0,1,0,0,0,0,0,0,0,0,0],
-            [0,1,0,0,0,1,0,0,0,0,0,0],
-            [1,0,0,0,1,0,0,0,0,0,0,0],
-            [0,1,0,0,0,0,0,1,0,0,0,0],
-            [1,0,0,0,0,0,1,0,0,0,0,0],
-            [0,1,0,0,0,0,0,0,0,1,0,0],
-            [1,0,0,0,0,0,0,0,1,0,0,0],
-            [0,1,0,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,0,1,0]]
+    dminm = [[0, B, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+             [B, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+             [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+             [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+             [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+             [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+             [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+             [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]]
     return dminm[i][j]
 
-dmax = [[0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B],
-        [B, 0, B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1],
-        [B - 1, B, 0, B, B - 1, B, B - 1, B, B - 1, B, B-1, B],
-        [B, B - 1, B, 0, B, B-1, B, B-1, B, B-1, B, B-1],
-        [B - 1, B, B - 1, B, 0, B, B - 1, B, B - 1, B, B-1 , B],
-        [B, B - 1, B, B - 1, B, 0, B, B - 1, B, B - 1, B, B-1],
-        [B - 1, B, B - 1, B, B - 1, B, 0, B, B - 1, B, B-1, B],
-        [B, B - 1, B, B - 1, B, B - 1, B, 0, B, B - 1, B, B-1],
-        [B - 1, B, B - 1, B, B - 1, B, B - 1, B, 0, B, B-1, B],
-        [B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, 0, B, B-1],
-        [B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B, 0, B],
-        [B, B - 1, B, B - 1, B, B - 1, B, B - 1, B, B-1, B, 0]]
+
+dmax = [[0, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B],
+        [B, 0, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1],
+        [B-1, B, 0, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B],
+        [B, B-1, B, 0, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1],
+        [B-1, B, B-1, B, 0, B, B-1, B, B-1, B, B-1, B, B-1, B],
+        [B, B-1, B, B-1, B, 0, B, B-1, B, B-1, B, B-1, B, B-1],
+        [B-1, B, B-1, B, B-1, B, 0, B, B-1, B, B-1, B, B-1, B],
+        [B, B-1, B, B-1, B, B-1, B, 0, B, B-1, B, B-1, B, B-1],
+        [B-1, B, B-1, B, B-1, B, B-1, B, 0, B, B-1, B, B-1, B],
+        [B, B-1, B, B-1, B, B-1, B, B-1, B, 0, B, B-1, B, B-1],
+        [B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, 0, B, B-1, B],
+        [B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, 0, B, B-1],
+        [B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, 0, B],
+        [B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, 0]]
 
 # # проверка симметричности таблица мин и макс.
 # for i in range(10):
@@ -628,7 +635,7 @@ def func2(xys):
     res2 = Bx.dot(xys[0:len(Ax[0])]) - sx
     res3 = By.dot(xys[len(Ax[0]):len(Ax[0]) + len(Ay[0])]) - sy
 
-    return 2*np.absolute(res1).dot([1,1,2,1,1.5])+sum(np.absolute(res2))+sum(np.absolute(res3))+sum(np.absolute(s))
+    return 2*np.absolute(res1).dot(rooms_weights)+sum(np.absolute(res2))+sum(np.absolute(res3))+sum(np.absolute(s))
 
 # декодирование размещения из результатов решения уравнения func2==0
 # xlistnew, ylistnew - списки
@@ -641,7 +648,7 @@ def optim_placement(placemnt, xlistnew, ylistnew):
     # xlist.remove(B)
     plac_new = copy.copy(placemnt)
     for i in range(len(placemnt[0])):
-        print i
+        #print i
         plac_new[0][i]=xlistnew[xlist.index(placemnt[0][i])]
 
     ylist = list(set(placemnt[1]))
@@ -693,17 +700,18 @@ def main_size(height, width, scens):
 
 # Поиск топологий
 # Параметры - количество результатов, список комнат
-scens = main_topology(15, ["envelope",  "hall", "corr", "room", "bath", "kitchen"])
+scens = main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
 # Учет ограничений по площади
 # Параметры - ширина, высота, сценарии (топологические)
 optim_scens = main_size(7, 5, scens)
 # Визуализация
 i=0
-for pl in optim_scens:
+for pl in scens:
     if i%9==0:
         fig1 = plt.figure(figsize=(15, 15))
     ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-    visual(pl)
+    visual(quickplacement(pl))
     i+=1
     if (i>30):
         break
+
