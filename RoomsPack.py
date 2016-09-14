@@ -249,7 +249,6 @@ def EnumerateScenarios(N):
         return L # if N is inconsistent, return the empty list
     if IsScenario(N):
         # быстрая проверка на наличие пустот
-        # TODO нужна точная проверка на наличие пустот
         if(withoutgapes(N)):
             L.append(N)
             nres+=1
@@ -483,7 +482,8 @@ def visual(placement_all):
             )
         )
         ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
-                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
+                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i]+ '\n'+
+                 str(round(placement_all[0][2 * i+1]-placement_all[0][2*i],1)) + 'x' + str(round(placement_all[1][2 * i+1]-placement_all[1][2*i],1)))
     # plt.show()
 
 # move walls
@@ -653,9 +653,6 @@ def optim_placement(placemnt, xlistnew, ylistnew):
 
     return plac_new
 
-# TODO рассмотреть такую возможность.
-# При визуализации, можно указать, сколько можно еще добавитть метража для каждой комнаты (при сохранении данной топологии)
-
 # Поиск различных вариантов компоновки (топологий)
 def main_topology(max_results, compartments_list):
     global max_res, compartments, recur_int, nres, stop, fig1
@@ -696,7 +693,7 @@ def main_size(height, width, scens):
 
 # Поиск топологий
 # Параметры - количество результатов, список комнат
-scens = main_topology(10, ["envelope",  "hall", "corr", "room", "bath", "kitchen"])
+scens = main_topology(15, ["envelope",  "hall", "corr", "room", "bath", "kitchen"])
 # Учет ограничений по площади
 # Параметры - ширина, высота, сценарии (топологические)
 optim_scens = main_size(7, 5, scens)
@@ -710,5 +707,3 @@ for pl in optim_scens:
     i+=1
     if (i>30):
         break
-
-# TODO добавить площадь
