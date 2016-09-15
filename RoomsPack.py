@@ -13,7 +13,7 @@ recur_int = 0
 B=5
 H=6
 max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
-
+min_margin = 0.5
 # atomic relations block algebra
 ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
@@ -23,6 +23,7 @@ compartments = ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"]
 rooms_weights = [1, 1, 2, 2, 1, 1.5] # веса комнат, используются для придания ограничений по каждому типу комнат
 areaconstr = [1,1,14,14,3.6,9] # минимальные без оболочки
 areaconstr_opt = [3,1,16,16,4,12] # оптимальные без оболочки
+sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 comp_col = {0: '#F0CCAD',
             1: '#ECA7A7',
             2: '#73DD9B',
@@ -612,10 +613,10 @@ def makeconst(placemnt, discret=True):
     bounds = []
     if (discret):
         matrlist =  [len(Ax[0])-1, len(Ay[0])-1]
-        boundslist = [(0, B), (0, H)]
+        boundslist = [(min_margin, B-min_margin), (min_margin, H-min_margin)]
     else:
         matrlist =  [len(Ax[0])-1, len(Ay[0])-1, len(Ax), len(Bx), len(By)]
-        boundslist = [(0, B), (0, H), (0,B*H), (0.5,B), (0.5,H)]
+        boundslist = [(0, B), (0, H), (0,B*H), (min_margin,B), (min_margin,H)]
     for matr in range(len(matrlist)):
         for i in range(matrlist[matr]):
             bounds.append(boundslist[matr])
@@ -647,6 +648,7 @@ def func2_contin(xys):
     return np.absolute(res1).dot(rooms_weights)+sum(np.absolute(res2))*5+sum(np.absolute(res3))*5+sum(np.absolute(s))
 
 # дискретная ф-я, в т.ч. для ген.алгоритма
+# TODO нарушается топология при оптимизации, т.к. не учитывается взаимное расположение стен разных комнат
 def func2_discret(xy):
     # добавить В и Х в конце векторов у и х
     global Ax
@@ -663,14 +665,17 @@ def func2_discret(xy):
     y = np.append(y, H)
 
     res1 = Ax.dot(x) * Ay.dot(y) - areaconstr
-    res2 = Bx.dot(xy[0:len(Ax[0])-1]) - np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*0.5
-    res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*0.5
+    res2 = Bx.dot(xy[0:len(Ax[0])-1]) - np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
+    res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
+    # ограничение на соотношение сторон
+    res4 = map(lambda d: int((d>=1./3)&(d<=3))-1, Ay.dot(y)/Ax.dot(x))*np.array(sides_ratio)
 
     res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
     res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
     res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
+    res4sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res4))
 
-    return res1sign.dot(rooms_weights) + sum(res2sign)*5 + sum(res3sign)*5
+    return res1sign.dot(rooms_weights) + sum(res2sign)*5 + sum(res3sign)*5 + sum(res4sign)*1
 
 
 # декодирование размещения из результатов решения уравнения func2==0
@@ -756,10 +761,11 @@ for pl in scens:
 optim_scens = main_size(7, 8, scens)
 # Визуализация
 i=0
+n=2
 for pl in optim_scens:
-    if i%9==0:
+    if i%n**2==0:
         fig1 = plt.figure(figsize=(15, 15))
-    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+    ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
     visual(pl)
     i+=1
     if (i>30):
