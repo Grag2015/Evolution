@@ -24,13 +24,13 @@ rooms_weights = [1, 1, 2, 2, 1, 1.5] # веса комнат, использую
 areaconstr = [1,1,14,14,3.6,9] # минимальные без оболочки
 areaconstr_opt = [3,1,16,16,4,12] # оптимальные без оболочки
 sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
-comp_col = {0: '#F0CCAD',
-            1: '#ECA7A7',
-            2: '#73DD9B',
+#цвета для визуализации, без оболочки
+comp_col = {0: '#ECA7A7',
+            1: '#73DD9B',
+            2: '#ACBFEC',
             3: '#ACBFEC',
-            4: '#ACBFEC',
-            5: '#EAE234',
-            6: '#ECA7A7'
+            4: '#EAE234',
+            5: '#ECA7A7'
            }
 
 
@@ -287,7 +287,22 @@ def EnumerateScenarios(N):
     return L
 
 # TODO в dmin и dmax надо удалять пару столбцов и пару строк (в новой версии они не должны использоваться)
+dminm = [[0, B, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+         [B, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+         [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+         [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+         [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+         [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]]
 def dmin(i, j, scen, dim):
+    global dminm
     tmp = copy.deepcopy(scen)
     IAatom = tmp[i/2][j/2].pop()[dim]
     if ((IAatom==8)|(IAatom==4)): #During, вношу сразу пару симметричных значений.
@@ -310,20 +325,6 @@ def dmin(i, j, scen, dim):
         dminm = [[1,1],[1,1]]
         return dminm[i%2][j%2]
 
-    dminm = [[0, B, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-             [B, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-             [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-             [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-             [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-             [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-             [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-             [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]]
     return dminm[i][j]
 
 
@@ -486,7 +487,7 @@ def visual(placement_all):
         ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B), placement_all[1][2*i]/float(H)),   # (x,y)
                                          abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B),          # width
                                          abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H), alpha=0.6, label='test '+str(i),
-                                         facecolor=comp_col[i]
+                                         facecolor=comp_col[i-1]
             )
         )
         ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
@@ -537,7 +538,7 @@ def visual_pl(placement_all):
         ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B), placement_all[1][2*i]/float(H)),   # (x,y)
                                          abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B),          # width
                                          abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H), alpha=0.6, label='test '+str(i),
-                                         facecolor=comp_col[i]
+                                         facecolor=comp_col[i-1]
             )
         )
         ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
@@ -703,9 +704,38 @@ def optim_placement(placemnt, xlistnew, ylistnew):
 
 # Поиск различных вариантов компоновки (топологий)
 def main_topology(max_results, compartments_list):
-    global max_res, compartments, recur_int, nres, stop, fig1
+    global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col
     max_res = max_results
+
+    # подготовка списков и таблиц с ограничениями
+    changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col]
+    new_lists = [[],[],[],[],[]]
+    for i in range(len(compartments[1:])):
+        if (compartments[1:][i] in set(compartments_list)):
+            for j in range(len(changing_lists)):
+                new_lists[j].append(changing_lists[j][i])
+
+    rooms_weights = new_lists[0]
+    areaconstr = new_lists[1]
+    areaconstr_opt = new_lists[2]
+    sides_ratio = new_lists[3]
+    comp_col = new_lists[4]
+
+    k = 0
+    for i in range(len(compartments)):
+        if (not (compartments[i] in set(compartments_list))):
+            # удаляем строку i
+            # print k
+            tc_src.pop(k)
+            # удаляем столбец i
+            for j in range(len(tc_src)):
+                tc_src[j].pop(k)
+            k -= 1
+        k += 1
+
     compartments = compartments_list
+    prepare_tc(tc_src)
+
     # topology
     t1 = time.clock()
     N = copy.deepcopy(tc)
@@ -743,7 +773,7 @@ def main_size(height, width, scens):
 
 # Поиск топологий
 # Параметры - количество результатов, список комнат
-scens = main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
+scens = main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
 
 # Визуализация
 i=0
