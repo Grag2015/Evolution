@@ -18,8 +18,6 @@ B=5
 H=6
 max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
 min_margin = 0.5
-# atomic relations block algebra
-ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
 
 # комнаты
 # TODO удалить лишние элементы в списке (коридор)
@@ -36,51 +34,46 @@ comp_col = {0: '#ECA7A7',
             4: '#EAE234',
             5: '#ECA7A7'
            }
+len_comp=len(compartments)
 
-
-# Ограничения
-all_const = set()
-for i in range(13):
-    for j in range(13):
-        all_const.add(ARelBA[i][j])
 
 
 # часть общей стены + минимум одна смежная стена
-partcommon_adjacency = {(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1)}
+partcommon_adjacency = [(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1)]
 # часть общей стены
-partcommon = partcommon_adjacency | {(1,2),(1,4),(1,8),(1,10),(2,1),(4,1),(8,1),(10,1), (11,6),(6,11)}
+partcommon = list(set(partcommon_adjacency) | set([(1,2),(1,4),(1,8),(1,10),(2,1),(4,1),(8,1),(10,1), (11,6),(6,11)]))
 # А содержит В и есть 1,2 общая часть стены
-inclusion_partcommon = {(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,9),(6,9),(6,10)}
+inclusion_partcommon = [(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,9),(6,9),(6,10)]
 
 # смежные
-adjacency = {ARelBA[1][1], ARelBA[2][1],ARelBA[3][1], ARelBA[4][1],ARelBA[5][1],ARelBA[6][1],ARelBA[6][11],ARelBA[7][1],ARelBA[8][1],ARelBA[9][1],ARelBA[10][1],ARelBA[11][1], \
-        ARelBA[1][2], ARelBA[1][3], ARelBA[1][4], ARelBA[1][5], ARelBA[1][6], ARelBA[1][7], ARelBA[1][8], ARelBA[1][9], ARelBA[1][10], ARelBA[11][6],
-        ARelBA[0][1], ARelBA[0][2], ARelBA[0][3], ARelBA[0][4], ARelBA[0][5],ARelBA[0][6], ARelBA[0][7],ARelBA[0][8], ARelBA[0][9], ARelBA[0][10], ARelBA[0][11],
-        ARelBA[1][0], ARelBA[2][0], ARelBA[3][0], ARelBA[4][0], ARelBA[5][0], ARelBA[6][0], ARelBA[7][0], ARelBA[8][0], ARelBA[9][0], ARelBA[10][0], ARelBA[11][0]}
+adjacency = [(1, 1), (2, 1),(3, 1), (4, 1),(5, 1),(6, 1),(6, 11),(7, 1),(8, 1),(9, 1),(10, 1),(11,1),
+			(1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (11, 6),
+			(0, 1), (0, 2), (0, 3), (0, 4), (0, 5),(0, 6), (0, 7),(0, 8), (0, 9), (0, 10), (0, 11),
+			(1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0), (11, 0)]
 
 def inverse(noatomicBArel):
-    res=set()
+    res=[]
     for elem in noatomicBArel:
-        res.add((12-elem[0],12-elem[1]))
+        res.append((12-elem[0],12-elem[1]))
     return res
 
 envel_hall = inclusion_partcommon
 envel_room = inclusion_partcommon #- {(7, 8), (8, 7), (8, 9), (9, 8)}
 bath_kitchen = partcommon_adjacency
 # hall_other = partcommon #Для случая без коридора
-hall_corr = partcommon - {(1,6),(6,1)} #Для случая c коридор
-envel_corr = inclusion_partcommon | {(8,8)}
-corr_other = partcommon | inverse(partcommon)
+hall_corr = list(set(partcommon) - set([(1,6),(6,1)])) #Для случая c коридор
+envel_corr = list(set(inclusion_partcommon) | set([(8,8)]))
+corr_other = list(set(partcommon) | set(inverse(partcommon)))
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src=[[set(), envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
-    [set(),set(), hall_corr , adjacency, adjacency, adjacency , adjacency],
-    [set(),set(), set(), corr_other, corr_other, corr_other, corr_other],
-    [set(), set(), set(), set(), adjacency, adjacency, adjacency],
-    [set(), set(), set(), set(), set(), adjacency, adjacency],
-    [set(), set(), set(), set(), set(), set(), bath_kitchen],
-    [set(), set(), set(), set(), set(), set(), set()]]
+tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
+    [[],[], hall_corr , adjacency, adjacency, adjacency , adjacency],
+    [[],[], [], corr_other, corr_other, corr_other, corr_other],
+    [[], [], [], [], adjacency, adjacency, adjacency],
+    [[], [], [], [], [], adjacency, adjacency],
+    [[], [], [], [], [], [], bath_kitchen],
+    [[], [], [], [], [], [], []]]
 
 # envel_hall | envel_corr | envel_room
 
@@ -90,12 +83,12 @@ def prepare_tc(tc_src):
     tc = copy.deepcopy(tc_src)
     # верхний треугольник оставляем без изменений
     # диагональ заполняем значением (6,6)
-    for i in range(len(compartments)):
-        tc[i][i].add((6,6))
+    for i in range(len_comp):
+        tc[i][i].append((6,6))
 
     # нижний треугольник заполняем симметричными элементами преобразованными ф-ей inverse
-    for i in range(0,len(compartments)): # go along rows
-        for j in range(i+1, len(compartments)): # go along columns
+    for i in range(0,len_comp): # go along rows
+        for j in range(i+1, len_comp): # go along columns
             tc[j][i] = inverse(tc[i][j])
     return tc
 
@@ -103,7 +96,7 @@ def prepare_tc(tc_src):
 tc = prepare_tc(tc_src)
 
 # interval algebra composition matrix
-
+# TODO пока оставляем множеством
 IAcomp = [[{0}, {0}, {0}, {0}, {0, 1, 2, 3, 4}, {0, 1, 2, 3, 4}, {0}, {0}, {0}, {0}, {0, 1, 2, 3, 4}, {0, 1, 2, 3, 4},
            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}],
           [{0}, {0}, {0}, {1}, {2, 3, 4}, {2, 3, 4}, {1}, {0}, {0}, {1}, {0, 1, 2, 3, 4}, {5, 6, 7},
@@ -133,86 +126,85 @@ def atomicIAcomp(IArel1, IArel2):
 
 # декартово произведение множеств
 def cartesProduct(set1, set2):
-    cp=set()
+    cp=[]
     for i in set1:
         for j in set2:
-            cp.add((i,j))
+            cp.append((i,j))
     return cp
 
 # композиция атомарных элементов блочной алгебры
 def atomicBAcomp(atomicBArel1, atomicBArel2):
     return cartesProduct(atomicIAcomp(atomicBArel1[0],atomicBArel2[0]),atomicIAcomp(atomicBArel1[1],atomicBArel2[1]))
 
+# TODO оставил пока множество
 # композиция НЕатомарных элементов блочной алгебры
 def noatomicBAcomp(noatomicBArel1, noatomicBArel2):
-    res=set()
+    res=[]
     for i in noatomicBArel1:
         for j in noatomicBArel2:
-            res= res | atomicBAcomp(i,j)
-    return res
+            res+=atomicBAcomp(i,j)
+    return list(set(res))
 
 # ищем пути из i в j xthtp 3-ю точку, но не k
 def Paths(i,j,k):
-    ls = range(len(compartments))
+    ls = range(len_comp)
     ls.remove(k)
     ls.remove(i)
     ls.remove(j)
-    res=set()
+    res=[]
     for elem in ls:
-        res.add((i,j,elem))
+        res.append((i,j,elem))
     return res
 
 # Функция поиска допустимых подмножеств
 def PathConsistency(C):
-    LPathsToVisit = set()
+    LPathsToVisit = []
     NPathsChecked = 0
     NChanges = 0
 
     # begin first loop
-    samples_3 = set(itertools.permutations(range(len(compartments)),3))
+    samples_3 = itertools.permutations(range(len_comp),3)
     for elem in samples_3:
         NPathsChecked+=1
         if (elem in LPathsToVisit):
             LPathsToVisit.remove(elem)
-        TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
+        TmpCij = list(set(C[elem[0]][elem[1]]) & set(noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])))
         if (len(TmpCij)==0):
             # print C[elem[0]][elem[1]]
             # print noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
-            return (elem, C, NPathsChecked, NChanges)
-        if (TmpCij != C[elem[0]][elem[1]]):
+            return (elem, NPathsChecked, NChanges)
+        if (len(TmpCij) != len(C[elem[0]][elem[1]])):
             NChanges += 1
             # print C[elem[0]][elem[1]]
             # print TmpCij
             C[elem[0]][elem[1]] = TmpCij
             C[elem[1]][elem[0]] = inverse(TmpCij)
             # print 'union',  C[elem[0]][elem[1]]
-            LPathsToVisit = LPathsToVisit | Paths(elem[0],elem[1],elem[2])
+            LPathsToVisit = list(set(LPathsToVisit) | set(Paths(elem[0],elem[1],elem[2])))
     # end first loop
-
     # begin second loop
     while len(LPathsToVisit)>0:
         NPathsChecked += 1
-        (i, j, k) = LPathsToVisit.pop()
+        [i, j, k] = LPathsToVisit.pop()
 
-        TmpCij = C[elem[0]][elem[1]] & noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
+        TmpCij = list(set(C[elem[0]][elem[1]]) & set(noatomicBAcomp(C[elem[0]][elem[2]], C[elem[2]][elem[1]])))
         if (len(TmpCij)==0):
-            return (elem, C, NPathsChecked, NChanges)
-        if (TmpCij != C[elem[0]][elem[1]]):
+            return (elem, NPathsChecked, NChanges)
+        if (len(TmpCij)!= len(C[elem[0]][elem[1]])):
             NChanges += 1
             # print C[elem[0]][elem[1]]
             # print TmpCij
             C[elem[0]][elem[1]] = TmpCij
             C[elem[1]][elem[0]] = inverse(TmpCij)
             # print 'union', C[elem[0]][elem[1]]
-            LPathsToVisit = LPathsToVisit | Paths(elem[0],elem[1],elem[2])
+            LPathsToVisit = list(set(LPathsToVisit) | set(Paths(elem[0], elem[1], elem[2])))
     # end second loop
-
-    return ((0, 0, 0), C, NPathsChecked, NChanges) #
+    return ((0, 0, 0), NPathsChecked, NChanges) #
 
 #
 def IsScenario(N):
-    for i in range(0,len(compartments)): # go along rows
-        for j in range(i+1, len(compartments)): # go along columns
+    for i in range(0,len_comp): # go along rows
+        for j in range(i+1, len_comp): # go along columns
             if (len(N[i][j])!=1):
                 return False
     return True
@@ -220,36 +212,29 @@ def IsScenario(N):
 # ctrl+j - insert template
 # ctrl+K - commit
 
-t1=time.clock()
-IsScenario(scens[0])
 
-t2=time.clock()
-print t2-t1
-
+# TODO см. стр. 368 про эвристики, как выбирать next relations
 def AssignNextRelFirst(TmpN):
-    tmp=set()
-    for i in range(0,len(compartments)): # go along rows
-        for j in range(i+1, len(compartments)): # go along columns
+    for i in range(0,len_comp): # go along rows
+        for j in range(i+1, len_comp): # go along columns
             if (len(TmpN[i][j])>1):
                 # удалить некоторый элемент из множества
-                tmp.add(copy.copy(TmpN[i][j]).pop())  # кусок быдло-кода
-                TmpN[i][j] = tmp
-                tmp2 = copy.copy(tmp)
-                tt = tmp2.pop()
-                tmp2.add((12-tt[0], 12-tt[1]))
-                TmpN[j][i] = tmp2
-                return TmpN
+                TmpN[i][j] = [TmpN[i][j][0]]
+                TmpN[j][i] = [(12-TmpN[i][j][0][0], 12-TmpN[i][j][0][1])]
 
 def AssignNextRelRest(TmpN):
     tmp=set()
-    for i in range(0,len(compartments)): # go along rows
-        for j in range(i+1, len(compartments)): # go along columns
+    for i in range(0,len_comp): # go along rows
+        for j in range(i+1, len_comp): # go along columns
             if (len(TmpN[i][j])>1):
                 # удалить некоторый элемент из множества
-                tmp = copy.copy(TmpN[i][j])
-                tmp.pop()
-                TmpN[i][j] = tmp
-                TmpN[j][i] = inverse(tmp)
+                #tmp = copy.copy(TmpN[i][j])
+                #tmp.pop()
+                #TmpN[i][j] = tmp
+                #TmpN[j][i] = inverse(tmp)
+                # TODO 2 строки ниже предполагают, что симметричные элементы имеют одинаковые порядковые номера
+                TmpN[i][j] = TmpN[i][j][1:]
+                TmpN[j][i] = TmpN[j][i][1:]
                 return TmpN
 
 
@@ -266,7 +251,7 @@ def EnumerateScenarios(N):
     if (stop):
         return L
 
-    ((i, j, k), N, NPathsChecked, NChanges) = PathConsistency(N)
+    (i, j, k) = PathConsistency(N)
 
     # begin base cases
     if ((i!=0)|(j!=0)):
@@ -279,7 +264,7 @@ def EnumerateScenarios(N):
             nres+=1
             if (nres>=max_res):
                 stop = True
-        #print 2
+        print 2
         return L # if N is a scenario, return a list only with N
     # end base cases
 
@@ -290,7 +275,7 @@ def EnumerateScenarios(N):
 
     # begin recursive case 1
     TmpN = copy.deepcopy(N)
-    TmpN = AssignNextRelFirst(TmpN) #assign next relation
+    AssignNextRelFirst(TmpN) #assign next relation
     TmpL = EnumerateScenarios(TmpN) # recursive call
     #print TmpL
     if (len(TmpL)!=0):
@@ -371,25 +356,26 @@ dmax = [[0, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B],
 #         if dmin[i][j]!=dmin[j][i]:
 #             print i,j
 
+matr = [[[0, 0], [0, 0]],
+        [[0, 0], [-1, 0]],
+        [[0, 0], [1, 0]],
+        [[-1, 0], [1, 0]],
+        [[1, 0], [1, 0]],
+        [[1, 0], [1, -1]],
+        [[-1, 0], [1, -1]],
+        [[0, 0], [1, -1]],
+        [[0, 0], [1, 1]],
+        [[-1, 0], [1, 1]],
+        [[1, 0], [1, 1]],
+        [[1, -1], [1, 1]],
+        [[1, 1], [1, 1]]]
+
 def AfterTo(j,k, scen, dim):
     # возвращает -1, если стены совпадают, 1 - если j правее k, и 0 - если j левее k
     if ((j/2 == k/2) & (abs(j - k) == 1)):
         return j%2
-    tmp = copy.deepcopy(scen)
-    IAatom = tmp[j/2][k/2].pop()[dim] #проверить редактируется ли оригинал scen
-    matr = [[[0,0],[0,0]],
-            [[0,0],[-1,0]],
-            [[0,0],[1,0]],
-            [[-1,0],[1,0]],
-            [[1,0],[1,0]],
-            [[1,0],[1,-1]],
-            [[-1,0],[1,-1]],
-            [[0, 0], [1, -1]],
-            [[0, 0], [1, 1]],
-            [[-1, 0], [1, 1]],
-            [[1, 0], [1, 1]],
-            [[1, -1], [1, 1]],
-            [[1,1],[1,1]]]
+    IAatom = scen[j/2][k/2][0][dim] #проверить редактируется ли оригинал scen
+
     return matr[IAatom][j%2][k%2] # остаток от деления на 2 указывает правая ли стена
 
 
@@ -397,9 +383,9 @@ def AfterTo(j,k, scen, dim):
 def quickplacement(scen):
     BH=[B,H]
     def quickplacementdim(dim, dmin, dmax, scen):
-        matr=np.zeros(((len(compartments)) * 2,(len(compartments)) * 2))
-        for i in range(1,len(compartments)*2):
-            for j in range(i+1,len(compartments)*2):
+        matr=np.zeros(((len_comp) * 2,(len_comp) * 2))
+        for i in range(1,len_comp*2):
+            for j in range(i+1,len_comp*2):
                 tmp = AfterTo(i, j, scen, dim)
                 if(tmp==1):
                     matr[i][j] += 1
@@ -415,7 +401,7 @@ def quickplacement(scen):
 def placement(dim, dmin, dmax, scen):
     done = False
     # для оболочки сразу задаем координаты стен - 0 и 10
-    p = [0,10]+[0]*(len(compartments)-1)*2 # координаты одной размерности, левая стена i-го помещения, правая стена i-го помещения, i=[0,n]
+    p = [0,10]+[0]*(len_comp-1)*2 # координаты одной размерности, левая стена i-го помещения, правая стена i-го помещения, i=[0,n]
     # [0,10,0,2,2,10,0,2,2,10]
     # tt=0
     while (not(done)):
@@ -423,8 +409,8 @@ def placement(dim, dmin, dmax, scen):
         done = True
         # tt+=1
         # print tt
-        for j in range(2*len(compartments)):
-            for k in range(j+1, 2*len(compartments)):
+        for j in range(2*len_comp):
+            for k in range(j+1, 2*len_comp):
                 # print 'j, k', j, k
                 # print 'AfterTo', AfterTo(j,k, scen, dim), AfterTo(k,j, scen, dim)
                 if ((AfterTo(j,k, scen, dim)==-1)): # walls j and k are coincident
@@ -474,8 +460,8 @@ def withoutgapes(N):
 
     s = 0
     st = set()
-    for t in range(1, len(compartments)):
-        st = st | (N[0][t])
+    for t in range(1, len_comp):
+        st = st | set(N[0][t]) # TODO тут возможно ошибка
     for t in range(len(dct)):
         if dct[t] in st:
             s += korner[t]
@@ -487,7 +473,7 @@ def withoutgapes(N):
 # проверяет содержит ли планировка пустоты
 def withoutgapes2(plac_all): #[[0, 10, 0, 1, 1, 2, 3, 10, 2, 3], [0, 10, 0, 10, 0, 10, 0, 10, 0, 10]]
     s=0
-    for i in range(1,len(compartments)):
+    for i in range(1,len_comp):
        s+=(plac_all[0][2*i+1] - plac_all[0][2*i])*(plac_all[1][2*i+1] - plac_all[1][2*i])
     if (abs(s-H*B)<0.001):
         return True
@@ -524,7 +510,7 @@ def movewalls(playsments_a):
     newplas=[]
     for dim in [0,1]:
         ls=[]
-        for i in range(len(compartments)*2):
+        for i in range(len_comp*2):
             if (i%2==1):
                 ls.append(playsments_all[dim][i])
                 st = set(ls)
@@ -535,7 +521,7 @@ def movewalls(playsments_a):
         ls2.sort()
         # print ls2
         newplasit=playsments_all[dim]
-        for i in range(len(compartments)*2):
+        for i in range(len_comp*2):
             if ((playsments_all[dim][i]!=0) & (playsments_all[dim][i]!= dm[dim])):
                 newplasit[i]=l*(ls2.index(playsments_all[dim][i])+1)
         newplas.append(newplasit)
@@ -596,8 +582,8 @@ def makeconst(placemnt, discret=True):
         #ylist.remove(H)
 
         # ограничение по площади
-        Ax = np.zeros((len(compartments) - 1, len(xlist)))
-        Ay = np.zeros((len(compartments) - 1, len(ylist)))
+        Ax = np.zeros((len_comp - 1, len(xlist)))
+        Ay = np.zeros((len_comp - 1, len(ylist)))
 
         # ограничение по взаимному расположению
         Bx = np.zeros((len(xlist) - 2, len(xlist)-1))
@@ -611,7 +597,7 @@ def makeconst(placemnt, discret=True):
             By[i,i] = -1
             By[i,i+1] = 1
 
-        for i in range(len(compartments)-1):
+        for i in range(len_comp-1):
             for xl in range(len(xlist)):
                 # если стенка левая
                 if (placemnt[0][2*i]==xlist[xl]):
@@ -726,7 +712,7 @@ def optim_placement(placemnt, xlistnew, ylistnew):
 
 # Поиск различных вариантов компоновки (топологий)
 def main_topology(max_results, compartments_list):
-    global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col
+    global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp
     max_res = max_results
 
     # подготовка списков и таблиц с ограничениями
@@ -756,6 +742,7 @@ def main_topology(max_results, compartments_list):
         k += 1
 
     compartments = compartments_list
+    len_comp = len(compartments)
     prepare_tc(tc_src)
 
     # topology
@@ -796,7 +783,7 @@ def main_size(height, width, scens):
 # Поиск топологий
 # Параметры - количество результатов, список комнат
 scens = main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
-
+recur_int
 pr = cProfile.Profile()
 pr.enable()
 main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
@@ -835,3 +822,6 @@ t1=time.clock()
 atomicIAcomp(0,2)
 t2=time.clock()
 t2-t1
+
+PathConsistency(tc)
+tc[0][0]
