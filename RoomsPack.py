@@ -220,11 +220,6 @@ def IsScenario(N):
 # ctrl+j - insert template
 # ctrl+K - commit
 
-t1=time.clock()
-IsScenario(scens[0])
-
-t2=time.clock()
-print t2-t1
 
 def AssignNextRelFirst(TmpN):
     tmp=set()
@@ -372,6 +367,7 @@ dmax = [[0, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B, B-1, B],
 #             print i,j
 
 def AfterTo(j,k, scen, dim):
+
     # возвращает -1, если стены совпадают, 1 - если j правее k, и 0 - если j левее k
     if ((j/2 == k/2) & (abs(j - k) == 1)):
         return j%2
@@ -835,3 +831,9 @@ t1=time.clock()
 atomicIAcomp(0,2)
 t2=time.clock()
 t2-t1
+
+s = [[str(e) for e in row] for row in scens[0]]
+lens = [max(map(len, col)) for col in zip(*s)]
+fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+table = [fmt.format(*row) for row in s]
+print '\n'.join(table)
