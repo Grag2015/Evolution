@@ -752,7 +752,7 @@ def main_topology(max_results, compartments_list):
         k += 1
 
     compartments = compartments_list
-    prepare_tc(tc_src)
+    tc=prepare_tc(tc_src)
 
     # topology
     t1 = time.clock()
