@@ -123,13 +123,12 @@ IAcomp = [[{0}, {0}, {0}, {0}, {0, 1, 2, 3, 4}, {0, 1, 2, 3, 4}, {0}, {0}, {0}, 
 def atomicIAcomp(IArel1, IArel2):
     return IAcomp[IArel1][IArel2]
 
+# tt=itertools.product([1,2,3],[4,5,6])
+
 # декартово произведение множеств
 def cartesProduct(set1, set2):
-    cp=[]
-    for i in set1:
-        for j in set2:
-            cp.append((i,j))
-    return cp
+    #return list(((x, y) for x in set1 for y in set2))
+    return list(itertools.product(set1,set2))
 
 # композиция атомарных элементов блочной алгебры
 def atomicBAcomp(atomicBArel1, atomicBArel2):
@@ -910,13 +909,16 @@ def main_size(height, width, scens):
     optim_scens=[]
     res_x=[]
     for i in range(len(scens)):
-        makeconst(quickplacement(scens[i]))
-        res = opt.differential_evolution(func2_discret, bounds)
-        xlistnew = list(res.x[0:len(Ax[0]) - 1])
-        ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
-        #print i
-        optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
-        res_x.append(res.fun)
+        try:
+            makeconst(quickplacement(scens[i]))
+            res = opt.differential_evolution(func2_discret, bounds)
+            xlistnew = list(res.x[0:len(Ax[0]) - 1])
+            ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
+            #print i
+            optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+            res_x.append(res.fun)
+        except ValueError:
+            print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
 
