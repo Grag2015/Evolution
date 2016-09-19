@@ -136,7 +136,6 @@ def cartesProduct(set1, set2):
 def atomicBAcomp(atomicBArel1, atomicBArel2):
     return cartesProduct(atomicIAcomp(atomicBArel1[0],atomicBArel2[0]),atomicIAcomp(atomicBArel1[1],atomicBArel2[1]))
 
-# TODO оставил пока множество
 # композиция НЕатомарных элементов блочной алгебры
 def noatomicBAcomp(noatomicBArel1, noatomicBArel2):
     res=[]
@@ -743,7 +742,7 @@ def main_topology(max_results, compartments_list):
 
     compartments = compartments_list
     len_comp = len(compartments)
-    prepare_tc(tc_src)
+    tc = prepare_tc(tc_src)
 
     # topology
     t1 = time.clock()
