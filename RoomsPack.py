@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import itertools
 import numpy as np
 import time
@@ -92,8 +93,6 @@ def prepare_tc(tc_src):
             tc[j][i] = inverse(tc[i][j])
     return tc
 
-# Подготовка матрицы ограничений tc_src
-tc = prepare_tc(tc_src)
 
 # interval algebra composition matrix
 # TODO пока оставляем множеством
@@ -134,6 +133,16 @@ def cartesProduct(set1, set2):
 
 # композиция атомарных элементов блочной алгебры
 def atomicBAcomp(atomicBArel1, atomicBArel2):
+    """
+    >>> atomicBAcomp((1,2),(1,2))
+    [(0, 0), (0, 1), (0, 2)]
+    >>> atomicBAcomp((6,6),(1,2))
+    [(1, 2)]
+    >>> atomicBAcomp((1,2),(2,1))
+    [(0, 0)]
+    >>> atomicBAcomp((1,3),(3,1))
+    [(1, 0)]
+    """
     return cartesProduct(atomicIAcomp(atomicBArel1[0],atomicBArel2[0]),atomicIAcomp(atomicBArel1[1],atomicBArel2[1]))
 
 # композиция НЕатомарных элементов блочной алгебры
@@ -146,6 +155,23 @@ def noatomicBAcomp(noatomicBArel1, noatomicBArel2):
 
 # ищем пути из i в j xthtp 3-ю точку, но не k
 def Paths(i,j,k):
+    """
+    >>> Paths(0,1,2)
+    [(0, 1, 3), (0, 1, 4), (0, 1, 5), (0, 1, 6)]
+    >>> Paths(1,1,1)
+    Traceback (most recent call last):
+      File "D:\Program Files\Anaconda2\lib\site-packages\IPython\core\interactiveshell.py", line 2885, in run_code
+        exec(code_obj, self.user_global_ns, self.user_ns)
+      File "<ipython-input-105-55c139226b39>", line 1, in <module>
+        Paths(1,1,1)
+      File "<ipython-input-71-c4c31cde3b6d>", line 131, in Paths
+        ls.remove(i)
+    ValueError: list.remove(x): x not in list
+    >>> Paths(0,2,len(compartments)-1)
+    [(0, 2, 1), (0, 2, 3), (0, 2, 4), (0, 2, 5)]
+    >>> Paths(2,0,len(compartments)-1)
+    [(2, 0, 1), (2, 0, 3), (2, 0, 4), (2, 0, 5)]
+    """
     ls = range(len_comp)
     ls.remove(k)
     ls.remove(i)
@@ -157,6 +183,34 @@ def Paths(i,j,k):
 
 # Функция поиска допустимых подмножеств
 def PathConsistency(C):
+    """
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> PathConsistency(sc)[0]
+    (0, 0, 0)
+    >>> PathConsistency(sc)[2]
+    210
+    >>> PathConsistency(sc)[3]
+    0
+    >>> PathConsistency(sc)[3]
+    0
+    """
+    # >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    # ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    # ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    # ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    # ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 0)]],
+    # ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    # ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    # >>> PathConsistency(sc)[0]
+    # (4, 6, 1)
+    # >>> PathConsistency(sc)[2]
+    # 31
     LPathsToVisit = []
     NPathsChecked = 0
     NChanges = 0
@@ -171,7 +225,7 @@ def PathConsistency(C):
         if (len(TmpCij)==0):
             # print C[elem[0]][elem[1]]
             # print noatomicBAcomp(C[elem[0]][elem[2]],C[elem[2]][elem[1]])
-            return (elem, NPathsChecked, NChanges)
+            return (elem, C, NPathsChecked, NChanges)
         if (len(TmpCij) != len(C[elem[0]][elem[1]])):
             NChanges += 1
             # print C[elem[0]][elem[1]]
@@ -188,7 +242,7 @@ def PathConsistency(C):
 
         TmpCij = list(set(C[elem[0]][elem[1]]) & set(noatomicBAcomp(C[elem[0]][elem[2]], C[elem[2]][elem[1]])))
         if (len(TmpCij)==0):
-            return (elem, NPathsChecked, NChanges)
+            return (elem, C, NPathsChecked, NChanges)
         if (len(TmpCij)!= len(C[elem[0]][elem[1]])):
             NChanges += 1
             # print C[elem[0]][elem[1]]
@@ -198,10 +252,30 @@ def PathConsistency(C):
             # print 'union', C[elem[0]][elem[1]]
             LPathsToVisit = list(set(LPathsToVisit) | set(Paths(elem[0], elem[1], elem[2])))
     # end second loop
-    return ((0, 0, 0), NPathsChecked, NChanges) #
+    return ((0, 0, 0), C, NPathsChecked, NChanges) #
 
 #
 def IsScenario(N):
+    """
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> IsScenario(sc)
+    True
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7),(3, 6)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> IsScenario(sc)
+    False
+    """
     for i in range(0,len_comp): # go along rows
         for j in range(i+1, len_comp): # go along columns
             if (len(N[i][j])!=1):
@@ -214,14 +288,37 @@ def IsScenario(N):
 
 # TODO см. стр. 368 про эвристики, как выбирать next relations
 def AssignNextRelFirst(TmpN):
+    # """
+    # >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    # ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1),(9, 3)], [(9, 0)], [(7, 1)]],
+    # ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    # ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    # ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    # ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    # ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    # >>> AssignNextRelFirst(sc)[1][4]
+    # [(9, 3)]
+    # """
     for i in range(0,len_comp): # go along rows
         for j in range(i+1, len_comp): # go along columns
             if (len(TmpN[i][j])>1):
                 # удалить некоторый элемент из множества
                 TmpN[i][j] = [TmpN[i][j][0]]
                 TmpN[j][i] = [(12-TmpN[i][j][0][0], 12-TmpN[i][j][0][1])]
+                return TmpN
 
 def AssignNextRelRest(TmpN):
+    """
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1),(9, 3)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> AssignNextRelRest(sc)[1][4]
+    [(9, 3)]
+    """
     tmp=set()
     for i in range(0,len_comp): # go along rows
         for j in range(i+1, len_comp): # go along columns
@@ -250,7 +347,7 @@ def EnumerateScenarios(N):
     if (stop):
         return L
 
-    (i, j, k) = PathConsistency(N)
+    (i, j, k) = PathConsistency(N)[0]
 
     # begin base cases
     if ((i!=0)|(j!=0)):
@@ -263,7 +360,7 @@ def EnumerateScenarios(N):
             nres+=1
             if (nres>=max_res):
                 stop = True
-        print 2
+        #print 2
         return L # if N is a scenario, return a list only with N
     # end base cases
 
@@ -370,6 +467,17 @@ matr = [[[0, 0], [0, 0]],
         [[1, 1], [1, 1]]]
 
 def AfterTo(j,k, scen, dim):
+    """
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> (AfterTo(0,1, sc, 0), AfterTo(7,5, sc, 1), AfterTo(9,8, sc, 1))
+    (0, -1, 1)
+    """
     # возвращает -1, если стены совпадают, 1 - если j правее k, и 0 - если j левее k
     if ((j/2 == k/2) & (abs(j - k) == 1)):
         return j%2
@@ -380,6 +488,17 @@ def AfterTo(j,k, scen, dim):
 
 # функция используется для быстрой оценки наличия пустот
 def quickplacement(scen):
+    """
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> quickplacement(sc)[0]
+    [0.0, 5.0, 0.0, 5.0, 2.0, 3.5, 0.0, 2.0, 0.0, 2.0, 0.0, 3.5, 3.5, 5.0]
+    """
     BH=[B,H]
     def quickplacementdim(dim, dmin, dmax, scen):
         matr=np.zeros(((len_comp) * 2,(len_comp) * 2))
@@ -451,6 +570,26 @@ def placement(dim, dmin, dmax, scen):
 
 # Проверяет содержит ли сценарий (т.е. топология) пустоты
 def withoutgapes(N):
+    """
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> withoutgapes(sc)
+    True
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 0)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> withoutgapes(sc)
+    False
+    """
 
 # Неточная проверка на наличие пустот
     # вначале проверяем эвристикой, и если она не дает результата, то делаем точную проверку.
@@ -471,6 +610,12 @@ def withoutgapes(N):
 
 # проверяет содержит ли планировка пустоты
 def withoutgapes2(plac_all): #[[0, 10, 0, 1, 1, 2, 3, 10, 2, 3], [0, 10, 0, 10, 0, 10, 0, 10, 0, 10]]
+    """
+    >>> pl = [[0.0, 5.0, 0.0, 5.0, 2.0, 3.5, 0.0, 2.0, 0.0, 2.0, 0.0, 3.5, 3.5, 5.0],
+    ... [0.0, 6.0, 0.0, 0.6, 0.6, 4.0, 3.0, 4.0, 0.6, 3.0, 4.0, 6.0, 0.6, 6.0]]
+    >>> withoutgapes2(pl)
+    True
+    """
     s=0
     for i in range(1,len_comp):
        s+=(plac_all[0][2*i+1] - plac_all[0][2*i])*(plac_all[1][2*i+1] - plac_all[1][2*i])
@@ -778,49 +923,121 @@ def main_size(height, width, scens):
     return optim_scens
 
 
+def main2():
+    # Поиск топологий
+    # Параметры - количество результатов, список комнат
+    scens = main_topology(20, ["envelope",  "hall", "room", "bath", "kitchen"])
+    recur_int
+    pr = cProfile.Profile()
+    pr.enable()
+    main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
+    pr.disable()
+    pr.print_stats(sort='time')
 
-# Поиск топологий
-# Параметры - количество результатов, список комнат
-scens = main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
-recur_int
-pr = cProfile.Profile()
-pr.enable()
-main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
-pr.disable()
-pr.print_stats(sort='time')
+    # Визуализация
+    i=0
+    for pl in scens:
+        if i%9==0:
+            fig1 = plt.figure(figsize=(15, 15))
+        ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
+        visual(quickplacement(pl))
+        i+=1
+        if (i>30):
+            break
 
-# Визуализация
-i=0
-for pl in scens:
-    if i%9==0:
-        fig1 = plt.figure(figsize=(15, 15))
-    ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-    visual(quickplacement(pl))
-    i+=1
-    if (i>30):
-        break
-
-# Учет ограничений по площади
-# Параметры - ширина, высота, сценарии (топологические)
-optim_scens = main_size(7, 8, scens)
-# Визуализация
-i=0
-n=2
-for pl in optim_scens:
-    if i%n**2==0:
-        fig1 = plt.figure(figsize=(15, 15))
-    ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-    visual(pl)
-    i+=1
-    if (i>30):
-        break
+    # Учет ограничений по площади
+    # Параметры - ширина, высота, сценарии (топологические)
+    optim_scens = main_size(7, 8, scens)
+    # Визуализация
+    i=0
+    n=2
+    for pl in optim_scens:
+        if i%n**2==0:
+            fig1 = plt.figure(figsize=(15, 15))
+        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+        visual(pl)
+        i+=1
+        if (i>30):
+            break
 
 
-t1=time.clock()
-#PathConsistency(tc)
-atomicIAcomp(0,2)
-t2=time.clock()
-t2-t1
+    t1=time.clock()
+    #PathConsistency(tc)
+    atomicIAcomp(0,2)
+    t2=time.clock()
+    t2-t1
 
-PathConsistency(tc)
-tc[0][0]
+    PathConsistency(tc)
+    tc[0][0]
+
+#  ----------------------------------------- ТЕСТИРОВАНИЕ
+if __name__ == "__main__":
+    timeout = 15
+    depth_recurs = 10000
+    recur_int = 0
+    B=5
+    H=6
+    max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
+    min_margin = 0.5
+    # atomic relations block algebra
+    ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
+
+    # комнаты
+    # TODO удалить лишние элементы в списке (коридор)
+    compartments = ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"]
+    rooms_weights = [1, 1, 2, 2, 1, 1.5] # веса комнат, используются для придания ограничений по каждому типу комнат
+    areaconstr = [1,1,14,14,3.6,9] # минимальные без оболочки
+    areaconstr_opt = [3,1,16,16,4,12] # оптимальные без оболочки
+    sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
+    #цвета для визуализации, без оболочки
+    comp_col = {0: '#ECA7A7',
+                1: '#73DD9B',
+                2: '#ACBFEC',
+                3: '#ACBFEC',
+                4: '#EAE234',
+                5: '#ECA7A7'
+               }
+
+
+    # Ограничения
+    all_const = set()
+    for i in range(13):
+        for j in range(13):
+            all_const.add(ARelBA[i][j])
+
+    # часть общей стены + минимум одна смежная стена
+    partcommon_adjacency = [(1, 3), (1, 5), (1, 6), (1, 7), (1, 9), (3, 1), (5, 1), (6, 1), (7, 1), (9, 1)]
+    # часть общей стены
+    partcommon = list(set(partcommon_adjacency) | set(
+        [(1, 2), (1, 4), (1, 8), (1, 10), (2, 1), (4, 1), (8, 1), (10, 1), (11, 6), (6, 11)]))
+    # А содержит В и есть 1,2 общая часть стены
+    inclusion_partcommon = [(9, 6), (9, 7), (9, 8), (9, 9), (7, 6), (7, 7), (7, 8), (7, 9), (8, 6), (8, 7), (8, 9),
+                            (6, 9), (6, 10)]
+
+    # смежные
+    adjacency = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (6, 11), (7, 1), (8, 1), (9, 1), (10, 1), (11, 1),
+                 (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (11, 6),
+                 (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10), (0, 11),
+                 (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0), (11, 0)]
+
+    envel_hall = inclusion_partcommon
+    envel_room = inclusion_partcommon  # - {(7, 8), (8, 7), (8, 9), (9, 8)}
+    bath_kitchen = partcommon_adjacency
+    # hall_other = partcommon #Для случая без коридора
+    hall_corr = list(set(partcommon) - set([(1, 6), (6, 1)]))  # Для случая c коридор
+    envel_corr = list(set(inclusion_partcommon) | set([(8, 8)]))
+    corr_other = list(set(partcommon) | set(inverse(partcommon)))
+
+    tc_src = [[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
+              [[], [], hall_corr, adjacency, adjacency, adjacency, adjacency],
+              [[], [], [], corr_other, corr_other, corr_other, corr_other],
+              [[], [], [], [], adjacency, adjacency, adjacency],
+              [[], [], [], [], [], adjacency, adjacency],
+              [[], [], [], [], [], [], bath_kitchen],
+              [[], [], [], [], [], [], []]]
+    tc =  prepare_tc(tc_src)
+
+    import doctest
+    doctest.testmod()
+
+#  ----------------------------------------- / ТЕСТИРОВАНИЕ
