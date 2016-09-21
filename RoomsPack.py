@@ -69,8 +69,8 @@ corr_other = list(set(partcommon) | set(inverse(partcommon)))
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
 tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
-    [[],[], hall_corr , adjacency, adjacency, adjacency , adjacency],
-    [[],[], [], corr_other, corr_other, corr_other, corr_other],
+    [[],[], hall_corr , corr_other, adjacency, corr_other , corr_other],
+    [[],[], [], corr_other, adjacency, corr_other, corr_other],
     [[], [], [], [], adjacency, adjacency, adjacency],
     [[], [], [], [], [], adjacency, adjacency],
     [[], [], [], [], [], [], bath_kitchen],
@@ -617,7 +617,7 @@ def withoutgapes2(plac_all): #[[0, 10, 0, 1, 1, 2, 3, 10, 2, 3], [0, 10, 0, 10, 
     """
     s=0
     for i in range(1,len_comp):
-       s+=(plac_all[0][2*i+1] - plac_all[0][2*i])*(plac_all[1][2*i+1] - plac_all[1][2*i])
+        s+=(plac_all[0][2*i+1] - plac_all[0][2*i])*(plac_all[1][2*i+1] - plac_all[1][2*i])
     if (abs(s-H*B)<0.001):
         return True
     else:
@@ -829,7 +829,6 @@ def func2_discret(xy):
 
     return res1sign.dot(rooms_weights) + sum(res2sign)*5 + sum(res3sign)*5 + sum(res4sign)*1
 
-
 # декодирование размещения из результатов решения уравнения func2==0
 # xlistnew, ylistnew - списки
 def optim_placement(placemnt, xlistnew, ylistnew):
@@ -854,7 +853,11 @@ def optim_placement(placemnt, xlistnew, ylistnew):
     return plac_new
 
 # Поиск различных вариантов компоновки (топологий)
-def main_topology(max_results, compartments_list):
+def main_topology(max_results, compartments_list, printres = True):
+    """
+    >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
+    [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
+    """
     global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp
     max_res = max_results
 
@@ -896,7 +899,8 @@ def main_topology(max_results, compartments_list):
     stop = False
     scens = EnumerateScenarios(N)
     t2 = time.clock()
-    print "Найдено " + str(len(scens)) + " вариантов размещения комнат" + '\n' + "Время выполнения программы sec.- " + str(t2-t1)
+    if printres:
+        print "Найдено " + str(len(scens)) + " вариантов размещения комнат" + '\n' + "Время выполнения программы sec.- " + str(t2-t1)
 
     return scens
 
@@ -928,7 +932,7 @@ def main_size(height, width, scens):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(20, ["envelope",  "hall", "room", "bath", "kitchen"])
+    scens = main_topology(10, ["envelope",  "hall", "room", "bath", "kitchen"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
@@ -1030,6 +1034,7 @@ if __name__ == "__main__":
     envel_corr = list(set(inclusion_partcommon) | set([(8, 8)]))
     corr_other = list(set(partcommon) | set(inverse(partcommon)))
 
+    len_comp = len(compartments)
     tc_src = [[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
               [[], [], hall_corr, adjacency, adjacency, adjacency, adjacency],
               [[], [], [], corr_other, corr_other, corr_other, corr_other],
