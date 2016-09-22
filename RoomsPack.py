@@ -60,18 +60,21 @@ def inverse(noatomicBArel):
         res.append((12-elem[0],12-elem[1]))
     return res
 
-envel_hall = list(set(inclusion_partcommon) - {(6, 9), (9, 6), (9, 8)})
+envel_hall = list(set(inclusion_partcommon) - {(6, 9), (9, 6), (9, 8)}) #
 envel_room = inclusion_partcommon #- {(7, 8), (8, 7), (8, 9), (9, 8)}
 bath_kitchen = partcommon_adjacency
 # hall_other = partcommon #Для случая без коридора
 hall_corr = list(set(partcommon) - set([(1,6),(6,1)])) #Для случая c коридор
 envel_corr = list((set(inclusion_partcommon)- {(6, 9), (9, 6)}) | set([(8,8)]))
 corr_other = list(set(partcommon) | set(inverse(partcommon)))
+hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12)}) # используем для случая с коридором
+
+# Если нет коридора, то hall_other:=corr_other - это надо вынести в ф-ю main
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
 tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
-    [[],[], hall_corr , corr_other, adjacency, corr_other , corr_other],
+    [[],[], hall_corr , hall_other, adjacency, hall_other , hall_other],
     [[],[], [], corr_other, adjacency, corr_other, corr_other],
     [[], [], [], [], adjacency, adjacency, adjacency],
     [[], [], [], [], [], adjacency, adjacency],
@@ -320,7 +323,6 @@ def AssignNextRelRest(TmpN):
     >>> AssignNextRelRest(sc)[1][4]
     [(9, 3)]
     """
-    tmp=set()
     for i in range(0,len_comp): # go along rows
         for j in range(i+1, len_comp): # go along columns
             if (len(TmpN[i][j])>1):
@@ -334,6 +336,15 @@ def AssignNextRelRest(TmpN):
                 TmpN[j][i] = TmpN[j][i][1:]
                 return TmpN
 
+def AssignNextRel(TmpN1,TmpN2):
+    for i in range(0,len_comp): # go along rows
+        for j in range(i+1, len_comp): # go along columns
+            if (len(TmpN1[i][j])>1):
+                TmpN1[i][j] = [TmpN1[i][j][0]]
+                TmpN1[j][i] = [(12-TmpN1[i][j][0][0], 12-TmpN1[i][j][0][1])]
+                TmpN2[i][j] = TmpN2[i][j][1:]
+                TmpN2[j][i] = TmpN2[j][i][1:]
+                return (TmpN1,TmpN2)
 
 nres = 0
 stop = False
@@ -371,9 +382,9 @@ def EnumerateScenarios(N):
         return L
 
     # begin recursive case 1
-    TmpN = copy.deepcopy(N)
-    AssignNextRelFirst(TmpN) #assign next relation
-    TmpL = EnumerateScenarios(TmpN) # recursive call
+    (TmpN1,TmpN2) = (copy.deepcopy(N),copy.deepcopy(N))
+    AssignNextRel(TmpN1,TmpN2) #assign next relation
+    TmpL = EnumerateScenarios(TmpN1) # recursive call
     #print TmpL
     if (len(TmpL)!=0):
         L+=TmpL
@@ -381,9 +392,7 @@ def EnumerateScenarios(N):
     # end recursive case 1
 
     # begin recursive case 1
-    TmpN = copy.deepcopy(N)
-    TmpN = AssignNextRelRest(TmpN) #rest of the assignments
-    TmpL = EnumerateScenarios(TmpN)  # recursive call
+    TmpL = EnumerateScenarios(TmpN2)  # recursive call
     if (len(TmpL)!=0):
         L+=TmpL
     # end recursive case 2
@@ -929,7 +938,7 @@ def main_topology(max_results, compartments_list, printres = True):
     global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp
     max_res = max_results
 
-    # подготовка списков и таблиц с ограничениями
+    # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
     changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col]
     new_lists = [[],[],[],[],[]]
     for i in range(len(compartments[1:])):
@@ -1007,7 +1016,7 @@ def main_size(height, width, scens):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(27, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
+    scens = main_topology(1, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
