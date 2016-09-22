@@ -13,7 +13,7 @@ import cProfile
 
 # настройки алгоритма
 timeout = 15
-depth_recurs = 10000
+depth_recurs = 100000
 recur_int = 0
 B=5
 H=6
@@ -60,12 +60,12 @@ def inverse(noatomicBArel):
         res.append((12-elem[0],12-elem[1]))
     return res
 
-envel_hall = inclusion_partcommon
+envel_hall = list(set(inclusion_partcommon) - {(6, 9), (9, 6), (9, 8)})
 envel_room = inclusion_partcommon #- {(7, 8), (8, 7), (8, 9), (9, 8)}
 bath_kitchen = partcommon_adjacency
 # hall_other = partcommon #Для случая без коридора
 hall_corr = list(set(partcommon) - set([(1,6),(6,1)])) #Для случая c коридор
-envel_corr = list(set(inclusion_partcommon) | set([(8,8)]))
+envel_corr = list((set(inclusion_partcommon)- {(6, 9), (9, 6)}) | set([(8,8)]))
 corr_other = list(set(partcommon) | set(inverse(partcommon)))
 
 # topologic constraints
@@ -1007,7 +1007,7 @@ def main_size(height, width, scens):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(9, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
+    scens = main_topology(27, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
