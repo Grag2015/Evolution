@@ -18,13 +18,15 @@ recur_int = 0
 B=5
 H=6
 max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
-min_margin = 0.5
+min_margin = 1.2
 
 # комнаты
 # TODO удалить лишние элементы в списке (коридор)
 compartments = ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"]
 rooms_weights = [1, 1, 2, 2, 1, 1.5] # веса комнат, используются для придания ограничений по каждому типу комнат
 areaconstr = [1,1,14,14,3.6,9] # минимальные без оболочки
+widthconstrmin = [1.4,1.2,3,3,1.5,2.3] # минимальные без оболочки
+widthconstrmax = [B+H,1.5,1.5,B+H,B+H,B+H] # максимальные без оболочки
 areaconstr_opt = [3,1,16,16,4,12] # оптимальные без оболочки
 sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
@@ -646,6 +648,23 @@ def visual(placement_all):
                  str(round(placement_all[0][2 * i+1]-placement_all[0][2*i],1)) + 'x' + str(round(placement_all[1][2 * i+1]-placement_all[1][2*i],1)))
     # plt.show()
 
+# visual without sizes
+def visual2(placement_all):
+    # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
+    # fig1 = plt.figure(figsize=(10,10) )
+    # plt.axis([-0.1, 1.1, -0.1, 1.1])
+    # ax1 = fig1.add_subplot(111, aspect='equal')
+    for i in range(1, len(placement_all[0])/2): # объединяющий прямоугольник не отрисовываем
+        ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B), placement_all[1][2*i]/float(H)),   # (x,y)
+                                         abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B),          # width
+                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H), alpha=0.6, label='test '+str(i),
+                                         facecolor=comp_col[i-1]
+            )
+        )
+        ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
+                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
+    # plt.show()
+
 # move walls
 def movewalls(playsments_a):
     playsments_all=copy.deepcopy(playsments_a)
@@ -706,7 +725,8 @@ import scipy.optimize as opt
 # функция формирует матрицы для целевой функции
 
 def makeconst(placemnt, discret=True):
-    global Ax, Ay, Bx, By, bounds
+    global Ax, Ay, Bx, By, bx, by, bounds
+    # создаем матрицу для целевой функции
     def makematr(placemnt):
 
         global Ax, Ay, Bx, By
@@ -817,17 +837,65 @@ def func2_discret(xy):
     y = np.append(y, H)
 
     res1 = Ax.dot(x) * Ay.dot(y) - areaconstr
-    res2 = Bx.dot(xy[0:len(Ax[0])-1]) - np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
-    res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
+    res2 = Bx.dot(xy[0:len(Ax[0])-1]) - [min_margin]*len(Bx)#np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
+    res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - [min_margin]*len(By) #- np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
     # ограничение на соотношение сторон
     res4 = map(lambda d: int((d>=1./3)&(d<=3))-1, Ay.dot(y)/Ax.dot(x))*np.array(sides_ratio)
+    # ограничение на минимальную ширину
+    res5 = Ax.dot(x) - widthconstrmin
+    res6 = Ay.dot(y) - widthconstrmin
+
+    # ограничение на максимальную ширину
+    res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(x),Ay.dot(y))))
 
     res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
     res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
     res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
     res4sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res4))
+    res5sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res5))
+    res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
+    res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
 
-    return res1sign.dot(rooms_weights) + sum(res2sign)*5 + sum(res3sign)*5 + sum(res4sign)*1
+    return res1sign.dot(rooms_weights) + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign)*1 + sum(res5sign)*1 + sum(res6sign)*1+ sum(res7sign)*1
+
+def func2_discret_results(xy):
+    # добавить В и Х в конце векторов у и х
+    global Ax
+    global Ay
+    global Bx
+    global By
+    global areaconstr
+
+    #print xys
+
+    x = xy[0:len(Ax[0]) - 1]
+    x = np.append(x, B)
+    y = xy[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2]
+    y = np.append(y, H)
+
+    res1 = Ax.dot(x) * Ay.dot(y) - areaconstr
+    res2 = Bx.dot(xy[0:len(Ax[0])-1]) - np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
+    res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
+    # ограничение на соотношение сторон
+    res4 = map(lambda d: int((d>=1./3)&(d<=3))-1, Ay.dot(y)/Ax.dot(x))*np.array(sides_ratio)
+    res5 = Ax.dot(x) - widthconstrmin
+    res6 = Ay.dot(y) - widthconstrmin
+
+    res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
+    res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
+    res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
+    res4sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res4))
+    res5sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res5))
+    res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
+
+    listres = ["areas", "dist_neib_x", "dist_neib_y", "ratio", "width"]
+    res_vec = [sum(res1sign), sum(res2sign), sum(res3sign), sum(res4sign), sum(res5sign), sum(res6sign)]
+    res = ''
+    for i in range(len(listres)):
+        if res_vec[i] > 0:
+            res+=listres[i]+" "
+
+    return res
 
 # декодирование размещения из результатов решения уравнения func2==0
 # xlistnew, ylistnew - списки
@@ -875,6 +943,13 @@ def main_topology(max_results, compartments_list, printres = True):
     sides_ratio = new_lists[3]
     comp_col = new_lists[4]
 
+    # есть есть коридора, то с прихожей снимается требование "смежность со всеми комнатами"
+    if ("corr" in compartments_list):
+        tc_src[1][3] = adjacency
+        tc_src[1][4] = adjacency
+        tc_src[1][5] = adjacency
+        tc_src[1][6] = adjacency
+
     k = 0
     for i in range(len(compartments)):
         if (not (compartments[i] in set(compartments_list))):
@@ -915,12 +990,12 @@ def main_size(height, width, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds)
+            res = opt.differential_evolution(func2_discret, bounds, maxiter=10000)
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
             optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
-            res_x.append(res.fun)
+            res_x.append(func2_discret_results(res.x))
         except ValueError:
             print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
@@ -932,7 +1007,7 @@ def main_size(height, width, scens):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(10, ["envelope",  "hall", "room", "bath", "kitchen"])
+    scens = main_topology(9, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
@@ -946,14 +1021,14 @@ def main2():
         if i%9==0:
             fig1 = plt.figure(figsize=(15, 15))
         ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-        visual(quickplacement(pl))
+        visual2(quickplacement(pl))
         i+=1
         if (i>30):
             break
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(7, 8, scens)
+    optim_scens = main_size(8, 8, scens)
     # Визуализация
     i=0
     n=2
