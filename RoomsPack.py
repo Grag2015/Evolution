@@ -60,7 +60,7 @@ def inverse(noatomicBArel):
         res.append((12-elem[0],12-elem[1]))
     return res
 
-envel_hall = list(set(inclusion_partcommon) - {(6, 9), (9, 6), (9, 8)}) #
+envel_hall = [(9, 9), (9, 8)]#list(set(inclusion_partcommon) - {(6, 9), (9, 6)}) # TODO - убираешь (9, 8) и сразу время работы вырастает в десять раз
 envel_room = inclusion_partcommon #- {(7, 8), (8, 7), (8, 9), (9, 8)}
 bath_kitchen = partcommon_adjacency
 # hall_other = partcommon #Для случая без коридора
@@ -218,6 +218,9 @@ def PathConsistency(C):
     LPathsToVisit = []
     NPathsChecked = 0
     NChanges = 0
+
+    if not(withoutgapes3(C)):
+        return ((1,2,2), C, 0, 0)
 
     # begin first loop
     samples_3 = itertools.permutations(range(len_comp),3)
@@ -613,7 +616,7 @@ def withoutgapes(N):
     for t in range(len(dct)):
         if dct[t] in st:
             s += korner[t]
-    if s == 4:
+    if s >= 4:
         return withoutgapes2(quickplacement(N))
     else:
         return False
@@ -929,6 +932,46 @@ def optim_placement(placemnt, xlistnew, ylistnew):
 
     return plac_new
 
+def withoutgapes3(N):
+    """
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 3)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> withoutgapes(sc)
+    True
+    >>> sc = [[[(6, 6)], [(6, 9)], [(8, 8)], [(9, 8)], [(9, 8)], [(9, 7)], [(7, 7)]],
+    ... [[(6, 3)], [(6, 6)], [(8, 1)], [(9, 0)], [(9, 1)], [(9, 0)], [(7, 1)]],
+    ... [[(4, 4)], [(4, 11)], [(6, 6)], [(11, 7)], [(11, 9)], [(5, 1)], [(1, 3)]],
+    ... [[(3, 4)], [(3, 12)], [(1, 5)], [(6, 6)], [(6, 11)], [(3, 1)], [(0, 4)]],
+    ... [[(3, 4)], [(3, 11)], [(1, 3)], [(6, 1)], [(6, 6)], [(3, 0)], [(0, 0)]],
+    ... [[(3, 5)], [(3, 12)], [(7, 11)], [(9, 11)], [(9, 12)], [(6, 6)], [(1, 5)]],
+    ... [[(5, 5)], [(5, 11)], [(11, 9)], [(12, 8)], [(12, 9)], [(11, 7)], [(6, 6)]]]
+    >>> withoutgapes(sc)
+    False
+    """
+
+# Неточная проверка на наличие пустот
+    # вначале проверяем эвристикой, и если она не дает результата, то делаем точную проверку.
+    dct = [(6, 9), (6, 10), (7, 6), (7, 7), (7, 8), (7, 9), (8, 6), (8, 7), (8, 8), (8, 9), (9, 6), (9, 7), (9, 8), (9, 9)]
+    korner =[2, 0, 2, 1, 0, 1, 0, 0, 0, 0, 2, 1, 0, 1]
+
+    s = 0
+    st = []
+    for t in range(1, len_comp):
+        st = st + N[0][t] # TODO тут возможно ошибка
+    st = set(st)
+    for t in range(len(dct)):
+        if dct[t] in st:
+            s += korner[t]
+    if s >= 4:
+        return True
+    else:
+        return False
+
 # Поиск различных вариантов компоновки (топологий)
 def main_topology(max_results, compartments_list, printres = True):
     """
@@ -1016,7 +1059,7 @@ def main_size(height, width, scens):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(1, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
+    scens = main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
