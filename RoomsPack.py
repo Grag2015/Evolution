@@ -30,7 +30,7 @@ widthconstrmax = [B+H,1.5,B+H,B+H,1.5,B+H] # максимальные без о�
 areaconstr_opt = [3,1,4,12,16,16] # оптимальные без оболочки
 sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
-comp_col = {0: '#ECA7A7',
+comp_col = {0: '#73DD9B',
             1: '#73DD9B',
             2: '#EAE234',
             3: '#ECA7A7',
@@ -61,12 +61,12 @@ def inverse(noatomicBArel):
     return res
 
 envel_hall = [(9, 9), (9, 8)]#list(set(inclusion_partcommon) - {(6, 9), (9, 6)}) # TODO - убираешь (9, 8) и сразу время работы вырастает в десять раз
-envel_room = inclusion_partcommon #- {(7, 8), (8, 7), (8, 9), (9, 8)}
+envel_room = list(set(inclusion_partcommon) - {(9, 6)}) #(8, 7), (8, 9), (9, 8)}
 bath_kitchen = partcommon_adjacency
 # hall_other = partcommon #Для случая без коридора
-hall_corr = list(set(partcommon) - set([(1,6),(6,1)])) #Для случая c коридор
+hall_corr = list((set(partcommon))- set([(1,6),(6,1),(10,1),(5,1),(4,1),(11,6)])) #Для случая c коридор  - set([(7,1),(10,1),(5,1),(4,1),(11,6)])
 envel_corr = list((set(inclusion_partcommon)- {(6, 9), (9, 6)}) | set([(8,8)]))
-corr_other = list(set(partcommon) | set(inverse(partcommon)))
+corr_other = list((set(partcommon) | set(inverse(partcommon))) - set([(11,2), (11,3), (11,4)])) # -
 hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12)}) # используем для случая с коридором
 
 # Если нет коридора, то hall_other:=corr_other - это надо вынести в ф-ю main
@@ -1059,7 +1059,7 @@ def main_size(height, width, scens):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(5, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
+    scens = main_topology(10, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
