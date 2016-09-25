@@ -22,20 +22,20 @@ min_margin = 1.2
 
 # комнаты
 # TODO удалить лишние элементы в списке (коридор)
-compartments = ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"]
-rooms_weights = [1, 1, 2, 2, 1, 1.5] # веса комнат, используются для придания ограничений по каждому типу комнат
-areaconstr = [1,1,14,14,3.6,9] # минимальные без оболочки
-widthconstrmin = [1.4,1.2,3,3,1.5,2.3] # минимальные без оболочки
-widthconstrmax = [B+H,1.5,1.5,B+H,B+H,B+H] # максимальные без оболочки
-areaconstr_opt = [3,1,16,16,4,12] # оптимальные без оболочки
+compartments = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
+rooms_weights = [1, 1, 1, 1.5, 2, 2] # веса комнат, используются для придания ограничений по каждому типу комнат
+areaconstr = [1,1,3.6,9,14,14] # минимальные без оболочки
+widthconstrmin = [1.4,1.2,1.5,2.3,3,3] # минимальные без оболочки
+widthconstrmax = [B+H,1.5,B+H,B+H,1.5,B+H] # максимальные без оболочки
+areaconstr_opt = [3,1,4,12,16,16] # оптимальные без оболочки
 sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
 comp_col = {0: '#ECA7A7',
             1: '#73DD9B',
-            2: '#ACBFEC',
-            3: '#ACBFEC',
-            4: '#EAE234',
-            5: '#ECA7A7'
+            2: '#EAE234',
+            3: '#ECA7A7',
+            4: '#ACBFEC',
+            5: '#ACBFEC'
            }
 len_comp=len(compartments)
 
@@ -74,11 +74,11 @@ hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
 tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
-    [[],[], hall_corr , hall_other, adjacency, hall_other , hall_other],
-    [[],[], [], corr_other, adjacency, corr_other, corr_other],
-    [[], [], [], [], adjacency, adjacency, adjacency],
+    [[],[], hall_corr , hall_other , hall_other, hall_other, adjacency],
+    [[],[], [], corr_other, corr_other, corr_other, adjacency],
+    [[], [], [], [],  bath_kitchen, adjacency, adjacency],
     [[], [], [], [], [], adjacency, adjacency],
-    [[], [], [], [], [], [], bath_kitchen],
+    [[], [], [], [], [], [], adjacency],
     [[], [], [], [], [], [], []]]
 
 # envel_hall | envel_corr | envel_room
@@ -1059,7 +1059,7 @@ def main_size(height, width, scens):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"])
+    scens = main_topology(5, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
@@ -1080,7 +1080,7 @@ def main2():
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(8, 8, scens)
+    optim_scens = main_size(10, 10, scens)
     # Визуализация
     i=0
     n=2
