@@ -977,7 +977,7 @@ def withoutgapes3(N):
 # Поиск различных вариантов компоновки (топологий)
 def main_topology(max_results, compartments_list, printres = True):
     """
-    >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
+    >>> main_topology(10, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
     """
     global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp
@@ -1051,6 +1051,7 @@ def main_size(height, width, scens):
     optim_scens=[]
     res_x=[]
     resd={}
+    locdres = {}
     for i in range(len(scens)):
         try:
             tmp = quickplacement(scens[i])
@@ -1063,14 +1064,16 @@ def main_size(height, width, scens):
             tt[0] = map(lambda x: round(x,2),tt[0])
             tt[1] = map(lambda x: round(x,2),tt[1])
             newres = []
+            locd = {}
+            locd_room = []
+
             for t in range(len(tt[0])/2):
                 newres.append([tt[0][2*t],tt[1][2*t],tt[0][2*t+1],tt[1][2*t+1]])
-            res_x.append(newres)
-            # locd={}
-            # locd['x']=tt[0]
-            # locd['y']=tt[1]
-            # locd['opt']= func2_discret_results(res.x)
-            # resd['res'+str(i)] = locd
+                locd_room.append({'room': {'name': compartments[t+1],'x1': tt[0][2*t], 'y1':tt[1][2*t], 'x2':tt[0][2*t+1], 'y2':tt[1][2*t+1]}})
+
+            locdres['flat'] = locd_room
+            res_x.append(locdres)
+
         except ValueError:
             print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
