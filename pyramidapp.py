@@ -10,6 +10,7 @@ import copy
 # import matplotlib.patches as mpatches
 import re
 import json
+import urllib2
 
 
 # настройки алгоритма
@@ -1049,6 +1050,8 @@ def main_size(height, width, scens):
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
             tt = optim_placement(quickplacement(scens[i]), xlistnew, ylistnew)
+            tt[0] = map(lambda x: round(x,2),tt[0])
+            tt[1] = map(lambda x: round(x,2),tt[1])
             locd={}
             locd['x']=tt[0]
             locd['y']=tt[1]
