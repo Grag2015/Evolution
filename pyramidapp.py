@@ -983,6 +983,15 @@ def main_topology(max_results, compartments_list, printres = True):
     global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp
     max_res = max_results
 
+    scens = [[[[(6, 6)], [(9, 9)], [(9, 8)], [(8, 9)], [(8, 9)], [(9, 7)], [(7, 6)]],
+              [[(3, 3)], [(6, 6)], [(3, 1)], [(1, 6)], [(0, 6)], [(3, 0)], [(0, 3)]],
+              [[(3, 4)], [(9, 11)], [(6, 6)], [(8, 11)], [(7, 11)], [(6, 1)], [(1, 4)]],
+              [[(4, 3)], [(11, 6)], [(4, 1)], [(6, 6)], [(1, 6)], [(4, 0)], [(0, 3)]],
+              [[(4, 3)], [(12, 6)], [(5, 1)], [(11, 6)], [(6, 6)], [(5, 0)], [(1, 3)]],
+              [[(3, 5)], [(9, 12)], [(6, 11)], [(8, 12)], [(7, 12)], [(6, 6)], [(1, 5)]],
+              [[(5, 6)], [(12, 9)], [(11, 8)], [(12, 9)], [(11, 9)], [(11, 7)], [(6, 6)]]]]
+    return scens
+
     # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
     changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col]
     new_lists = [[],[],[],[],[]]
@@ -1044,25 +1053,30 @@ def main_size(height, width, scens):
     resd={}
     for i in range(len(scens)):
         try:
-            makeconst(quickplacement(scens[i]))
+            tmp = quickplacement(scens[i])
+            makeconst(tmp)
             res = opt.differential_evolution(func2_discret, bounds, maxiter=10000)
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
-            tt = optim_placement(quickplacement(scens[i]), xlistnew, ylistnew)
+            tt = optim_placement(tmp, xlistnew, ylistnew)
             tt[0] = map(lambda x: round(x,2),tt[0])
             tt[1] = map(lambda x: round(x,2),tt[1])
-            locd={}
-            locd['x']=tt[0]
-            locd['y']=tt[1]
-            locd['res']= func2_discret_results(res.x)
-            resd['res'+str(i)] = locd
+            newres = []
+            for t in range(len(tt[0])/2):
+                newres.append([tt[0][2*t],tt[1][2*t],tt[0][2*t+1],tt[1][2*t+1]])
+            res_x.append(newres)
+            # locd={}
+            # locd['x']=tt[0]
+            # locd['y']=tt[1]
+            # locd['opt']= func2_discret_results(res.x)
+            # resd['res'+str(i)] = locd
         except ValueError:
             print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
 
-    return resd
+    return res_x
 
 
 def main2():
@@ -1114,7 +1128,7 @@ def main2():
 
 def calculate(res, width, height):
     scens = main_topology(res, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
-    optim_scens = main_size(width, height, scens)
+    optim_scens = main_size(height, width, scens)
     return optim_scens
 
 # http://localhost:8888/hello/1
