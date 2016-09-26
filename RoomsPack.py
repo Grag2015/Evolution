@@ -972,6 +972,28 @@ def withoutgapes3(N):
     else:
         return False
 
+def rotate90(pl):
+    """
+    >>> pl = [[0.0, 5.0, 0.0, 1.3636363636363635, 0.0, 3.1818181818181817, 1.3636363636363635, 2.2727272727272729,
+    ... 2.2727272727272729, 3.1818181818181817, 0.0, 3.1818181818181817, 3.1818181818181817, 5.0],
+    ... [0.0, 6.0, 0.0, 2.3999999999999999, 2.3999999999999999, 4.7999999999999998, 0.0, 2.3999999999999999, 0.0,
+    ... 2.3999999999999999, 4.7999999999999998, 6.0, 0.0, 6.0]]
+    >>> (rotate90(pl)[0][0],rotate90(pl)[0][5],rotate90(pl)[1][4],rotate90(pl)[1][6])
+    (0.0, 3.0, 0.0, 1.6363636363636362)
+    """
+
+    pln=[[],[]]
+    pln[1] = map(lambda x: (x/float(B))*H, pl[0])
+    pln[0] = map(lambda y: (B-(y/float(H))*B), pl[1])
+    for i in range(len(pl[0])/2):
+        b1=min(pln[0][2*i],pln[0][2 * i+1])
+        b2=max(pln[0][2*i],pln[0][2 * i+1])
+        pln[0][2*i]=b1
+        pln[0][2*i+1]=b2
+    return pln
+pl = quickplacement(scens[0])
+pln=rotate90(pl)
+visual_pl(pln)
 # Поиск различных вариантов компоновки (топологий)
 def main_topology(max_results, compartments_list, printres = True):
     """
@@ -979,7 +1001,7 @@ def main_topology(max_results, compartments_list, printres = True):
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
     """
     global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp
-    max_res = max_results
+    max_res = max_results/2 + max_results%2
 
     # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
     changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col]
@@ -1027,9 +1049,11 @@ def main_topology(max_results, compartments_list, printres = True):
     scens = EnumerateScenarios(N)
     t2 = time.clock()
     if printres:
-        print "Найдено " + str(len(scens)) + " вариантов размещения комнат" + '\n' + "Время выполнения программы sec.- " + str(t2-t1)
-
-    return scens
+        print "Найдено " + str(min(len(scens)*2,max_results)) + " вариантов размещения комнат" + '\n' + "Время выполнения программы sec.- " + str(t2-t1)
+    tmp = map(quickplacement, scens)
+    rotatepl = map(rotate90, tmp)
+    tmp += rotatepl
+    return tmp[0:max_results]
 
 # Учет ограничений по площади/длине
 def main_size(height, width, scens):
@@ -1041,12 +1065,12 @@ def main_size(height, width, scens):
     res_x=[]
     for i in range(len(scens)):
         try:
-            makeconst(quickplacement(scens[i]))
+            makeconst(scens[i])
             res = opt.differential_evolution(func2_discret, bounds, maxiter=10000)
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
-            optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+            optim_scens.append(optim_placement(scens[i], xlistnew, ylistnew))
             res_x.append(func2_discret_results(res.x))
         except ValueError:
             print('Планировка '+str(i)+' не была рассчитана!')
@@ -1073,7 +1097,7 @@ def main2():
         if i%9==0:
             fig1 = plt.figure(figsize=(15, 15))
         ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-        visual2(quickplacement(pl))
+        visual2(pl)
         i+=1
         if (i>30):
             break
