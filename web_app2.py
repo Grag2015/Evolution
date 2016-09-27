@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import socket
 import StringIO
 import sys
@@ -31,6 +32,7 @@ class WSGIServer(object):
     def set_app(self, application):
         self.application = application
 
+# The serve_forever() method will keep serving requests until Ctrl-C is used to stop the server.
     def serve_forever(self):
         listen_socket = self.listen_socket
         while True:
@@ -38,6 +40,7 @@ class WSGIServer(object):
             self.client_connection, client_address = listen_socket.accept()
             # Handle one request and close the client connection. Then
             # loop over to wait for another client connection
+            # пока объект класса WSGIServer существует, он обрабатывает запросы
             self.handle_one_request()
 
     def handle_one_request(self):
@@ -80,6 +83,7 @@ class WSGIServer(object):
         env['wsgi.version']      = (1, 0)
         env['wsgi.url_scheme']   = 'http'
         env['wsgi.input']        = StringIO.StringIO(self.request_data)
+        print StringIO.StringIO(self.request_data)
         env['wsgi.errors']       = sys.stderr
         env['wsgi.multithread']  = False
         env['wsgi.multiprocess'] = False
