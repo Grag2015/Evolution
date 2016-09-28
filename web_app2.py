@@ -2,6 +2,7 @@
 import socket
 import StringIO
 import sys
+import json
 
 
 class WSGIServer(object):
@@ -66,12 +67,16 @@ class WSGIServer(object):
     def parse_request(self, text):
         print "print text:" + text
         request_line = text.splitlines()[0]
+        request_line2 = text.splitlines()[2]
         request_line = request_line.rstrip('\r\n')
+        request_line2 = request_line2.rstrip('\r\n')
         # Break down the request line into components
         (self.request_method,  # GET
          self.path,            # /hello
          self.request_version  # HTTP/1.1
          ) = request_line.split()
+        self.content_length = int(request_line2.replace("Content-Length: ", ""))
+        self.data = text[-self.content_length:]
 
     def get_environ(self):
         env = {}
@@ -83,16 +88,17 @@ class WSGIServer(object):
         env['wsgi.version']      = (1, 0)
         env['wsgi.url_scheme']   = 'http'
         env['wsgi.input']        = StringIO.StringIO(self.request_data)
-        print StringIO.StringIO(self.request_data)
         env['wsgi.errors']       = sys.stderr
         env['wsgi.multithread']  = False
         env['wsgi.multiprocess'] = False
         env['wsgi.run_once']     = False
         # Required CGI variables
+        env['CONTENT_LENGTH']    = self.content_length    # GET
         env['REQUEST_METHOD']    = self.request_method    # GET
         env['PATH_INFO']         = self.path              # /hello
         env['SERVER_NAME']       = self.server_name       # localhost
         env['SERVER_PORT']       = str(self.server_port)  # 8888
+        env['data']       = self.data  # 8888
         return env
 
     def start_response(self, status, response_headers, exc_info=None):
