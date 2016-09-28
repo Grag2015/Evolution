@@ -1051,7 +1051,10 @@ def main_size(height, width, scens):
     optim_scens=[]
     res_x=[]
     resd={}
-    locdres = {}
+    locdres = []
+    positionx=0
+    positiony=0
+    fzone_id = 0
     for i in range(len(scens)):
         try:
             tmp = quickplacement(scens[i])
@@ -1061,18 +1064,10 @@ def main_size(height, width, scens):
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
             tt = optim_placement(tmp, xlistnew, ylistnew)
-            tt[0] = map(lambda x: round(x,2),tt[0])
-            tt[1] = map(lambda x: round(x,2),tt[1])
-            newres = []
-            locd = {}
-            locd_room = []
+            # tt[0] = map(lambda x: round(x,2),tt[0])
+            # tt[1] = map(lambda x: round(x,2),tt[1])
 
-            for t in range(len(tt[0])/2):
-                newres.append([tt[0][2*t],tt[1][2*t],tt[0][2*t+1],tt[1][2*t+1]])
-                locd_room.append({'room': {'name': compartments[t+1],'x1': tt[0][2*t], 'y1':tt[1][2*t], 'x2':tt[0][2*t+1], 'y2':tt[1][2*t+1]}})
-
-            locdres['flat'] = locd_room
-            res_x.append(locdres)
+            res_x.append(interface2.pl2json(tt,compartments))
 
         except ValueError:
             print('Планировка '+str(i)+' не была рассчитана!')
@@ -1080,6 +1075,7 @@ def main_size(height, width, scens):
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
 
     return res_x
+
 
 
 def main2():
