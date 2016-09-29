@@ -11,6 +11,7 @@ import fileinput
 import cProfile
 import json
 from interface2 import pl2json
+from interface2 import pl2json, json2params
 
 # настройки алгоритма
 timeout = 15
@@ -929,7 +930,6 @@ def optim_placement(placemnt, xlistnew, ylistnew):
     # xlist.remove(B)
     plac_new = copy.copy(placemnt)
     for i in range(len(placemnt[0])):
-        #print i
         plac_new[0][i]=xlistnew[xlist.index(placemnt[0][i])]
 
     ylist = list(set(placemnt[1]))
@@ -1066,10 +1066,28 @@ def main_size(height, width, scens):
     return optim_scens
 
 
-def calculation(JsonData):
+def calculation(json_string):
     # функция получает JSON с размерами функ.зон, рассчитывает для каждой уникальной пары размеров планировку
     # и возвращает обратно JSON с планировками для каждой функциональной зоны
-    data = json.loads(JsonData)
+    print "beforerroe"
+    data = json.loads(json_string)
+    print "aftererroe"
+    Sizes, StartPosId = json2params(data)
+    # Расчет топологий
+    scens = main_topology(1, ["envelope", "hall", "corr", "bath", "kitchen", "room", "room2"])
+
+    # Расчитываем планировки для каждого элемента из списка (Для каждой топологии)
+    SizesUnique = list(set(Sizes))
+    optim_scens = []
+    for bh in SizesUnique:
+        # Беру первую рассчитанную планировку (в дальнейшем их сортируем в порядке возр. кол-ва нарушенных ограничений)
+        tmp = main_size(bh[0], bh[1], scens)[0]
+        optim_scens.append([tmp[0][2:], tmp[1][2:]])  # exclude envelop
+
+    # Готовим список с планировками и отправляем его в pl2json вместе с StartPosId
+    plac_ls = map(lambda x: optim_scens[SizesUnique.index(x)], Sizes)
+    newres = pl2json(plac_ls, compartments, StartPosId)
+    return newres
 
 def main2():
     # Поиск топологий

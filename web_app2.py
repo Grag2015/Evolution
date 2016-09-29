@@ -45,7 +45,7 @@ class WSGIServer(object):
             self.handle_one_request()
 
     def handle_one_request(self):
-        self.request_data = request_data = self.client_connection.recv(1024)#.decode('utf-8')
+        self.request_data = request_data = self.client_connection.recv(100000)#.decode('utf-8')
         # Print formatted request data a la 'curl -v'
         print(''.join(
             '< {line}\n'.format(line=line)

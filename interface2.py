@@ -1,6 +1,7 @@
-
-
-def pl2json(list_pl, compartments, posx_ls, posy_ls, id_ls):
+# -*- coding: utf-8 -*-
+# Найденные планировки в JSON
+import json
+def pl2json(list_pl, compartments,  StartPosId):
 
     """
     >>> compartments = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
@@ -11,7 +12,7 @@ def pl2json(list_pl, compartments, posx_ls, posy_ls, id_ls):
     ('functionalzone', 2.4, 1.36)
     """
     newres = []
-    for pl, id in list_pl, id_ls:
+    for pl, i in zip(list_pl, range(len(StartPosId))):
         locd = {}
         locd_room = []
 
@@ -19,11 +20,29 @@ def pl2json(list_pl, compartments, posx_ls, posy_ls, id_ls):
             deep = round(pl[1][2 * t + 1] - pl[1][2 * t], 2)
             width = round(pl[0][2 * t + 1] - pl[0][2 * t], 2)
             locd_room.append({"BimType": "room", 'name': compartments[t + 1], "Deep": deep, "Width": width,
-                              "Position": {"X": posx_ls[t] + width, "Y": posy_ls[t] + deep}})
+                              "Position": {"X": round(StartPosId[i][0] + width,2), "Y": round(StartPosId[i][1] + deep,2)}})
 
         locd["BimType"] = "functionalzone"
-        locd["Id"] = id_ls[id]
+        locd["Id"] = StartPosId[i][2]
         locd["rooms"] = locd_room
         newres.append(locd)
-    return newres
+    return json.dumps(newres)
 
+# Преобразует входные данные о секциях во вход для алгоритма.
+def json2params(json_data):
+    """
+    >>> js = {u'BimType': u'functionalzone',
+    ... u'Deep': 20,
+    ... u'Height': 3,
+    ... u'Id': 6050,
+    ... u'ParentId': 4,
+    ... u'Position': {u'X': 50, u'Y': 0, u'Z': 0},
+    ... u'Width': 10}
+    >>> s1, s2 = json2params(js)
+    >>> (s1[0],s2[5])
+    ((20, 3),[50, 0, 6050])
+    """
+
+    Sizes = map(lambda x: (x['Width'], x['Deep']), json_data)
+    StartPosId = map(lambda x: [x['Position']['X'], x['Position']['Y'], x['Id']], json_data)
+    return Sizes, StartPosId
