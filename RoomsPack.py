@@ -26,7 +26,7 @@ min_margin = 1.2
 compartments = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
 rooms_weights = [1, 1, 1, 1.5, 2, 2] # веса комнат, используются для придания ограничений по каждому типу комнат
 areaconstr = [1,1,3.6,9,14,14] # минимальные без оболочки
-areaconstrmax = [1000,1000,1000,1000,1000,1000] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
+areaconstrmax = [4.5,4.5,4.5,16,1000,1000] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
 widthconstrmin = [1.4,1.2,1.5,2.3,3,3] # минимальные без оболочки
 widthconstrmax = [1000,1.5,1000,1000,1.5,1000] # максимальные без оболочки
 areaconstr_opt = [3,1,4,12,16,16] # оптимальные без оболочки
@@ -854,7 +854,7 @@ def func2_discret(xy):
     # Ограничение по площади снизу
     res1 = Ax.dot(x) * Ay.dot(y) - areaconstr
     # Ограничение по площади сверху
-    # res1max = areaconstrmax - Ax.dot(x) * Ay.dot(y)
+    res1max = areaconstrmax - Ax.dot(x) * Ay.dot(y)
 
     # Ограничение на расположение соседних стен
     res2 = Bx.dot(xy[0:len(Ax[0])-1]) - [min_margin]*len(Bx)#np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
@@ -869,7 +869,7 @@ def func2_discret(xy):
     res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(x),Ay.dot(y))))
 
     res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
-    # res1maxsign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1max))
+    res1maxsign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1max))
     res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
     res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
     res4sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res4))
@@ -877,7 +877,7 @@ def func2_discret(xy):
     res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
     res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
 
-    return res1sign.dot(rooms_weights) + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign) + sum(res5sign) + sum(res6sign)+ sum(res7sign) #+ sum(res1maxsign)
+    return res1sign.dot(rooms_weights) + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign) + sum(res5sign) + sum(res6sign)+ sum(res7sign) + sum(res1maxsign)
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
@@ -992,7 +992,8 @@ def main_topology(max_results, compartments_list, printres = True):
 
     # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
     changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, areaconstrmax]
-    new_lists = [[],[],[],[],[]]
+    new_lists=[]
+    for i in range(len(changing_lists)): new_lists.append([])
     for i in range(len(compartments[1:])):
         if (compartments[1:][i] in set(compartments_list)):
             for j in range(len(changing_lists)):
@@ -1050,13 +1051,12 @@ def main_size(height, width, scens):
     res_x=[]
     for i in range(len(scens)):
         try:
-            pl = quickplacement(scens[i])
-            makeconst(pl)
+            makeconst(quickplacement(scens[i]))
             res = opt.differential_evolution(func2_discret, bounds, maxiter=10000)
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
-            optim_scens.append(optim_placement(pl, xlistnew, ylistnew))
+            optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
             res_x.append(func2_discret_results(res.x))
         except ValueError:
             print('Планировка '+str(i)+' не была рассчитана!')
