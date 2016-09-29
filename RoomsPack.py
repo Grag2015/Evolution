@@ -9,7 +9,8 @@ import re
 
 import fileinput
 import cProfile
-
+import json
+import pl2json from interface2
 
 # настройки алгоритма
 timeout = 15
@@ -1041,12 +1042,13 @@ def main_size(height, width, scens):
     res_x=[]
     for i in range(len(scens)):
         try:
-            makeconst(quickplacement(scens[i]))
+            pl = quickplacement(scens[i])
+            makeconst(pl)
             res = opt.differential_evolution(func2_discret, bounds, maxiter=10000)
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
-            optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+            optim_scens.append(optim_placement(pl, xlistnew, ylistnew))
             res_x.append(func2_discret_results(res.x))
         except ValueError:
             print('Планировка '+str(i)+' не была рассчитана!')
@@ -1055,6 +1057,11 @@ def main_size(height, width, scens):
 
     return optim_scens
 
+
+def calculation(JsonData):
+    # функция получает JSON с размерами функ.зон, рассчитывает для каждой уникальной пары размеров планировку
+    # и возвращает обратно JSON с планировками для каждой функциональной зоны
+    data = json.loads(JsonData)
 
 def main2():
     # Поиск топологий
