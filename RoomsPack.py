@@ -25,8 +25,9 @@ min_margin = 1.2
 compartments = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
 rooms_weights = [1, 1, 1, 1.5, 2, 2] # веса комнат, используются для придания ограничений по каждому типу комнат
 areaconstr = [1,1,3.6,9,14,14] # минимальные без оболочки
+areaconstrmax = [4.5,4.5,4.5,16,1000,1000] # max без оболочки
 widthconstrmin = [1.4,1.2,1.5,2.3,3,3] # минимальные без оболочки
-widthconstrmax = [B+H,1.5,B+H,B+H,1.5,B+H] # максимальные без оболочки
+widthconstrmax = [1000,1.5,1000,1000,1.5,1000] # максимальные без оболочки
 areaconstr_opt = [3,1,4,12,16,16] # оптимальные без оболочки
 sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
@@ -840,6 +841,7 @@ def func2_discret(xy):
     global Bx
     global By
     global areaconstr
+    global areaconstrmax
 
     #print xys
 
@@ -849,6 +851,10 @@ def func2_discret(xy):
     y = np.append(y, H)
 
     res1 = Ax.dot(x) * Ay.dot(y) - areaconstr
+
+    # Ограничение по площади сверху
+    res1max = areaconstrmax - Ax.dot(x) * Ay.dot(y)
+
     res2 = Bx.dot(xy[0:len(Ax[0])-1]) - [min_margin]*len(Bx)#np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
     res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - [min_margin]*len(By) #- np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
     # ограничение на соотношение сторон
@@ -861,6 +867,7 @@ def func2_discret(xy):
     res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(x),Ay.dot(y))))
 
     res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
+    res1maxsign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res1max))
     res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
     res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
     res4sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res4))
@@ -868,7 +875,7 @@ def func2_discret(xy):
     res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
     res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
 
-    return res1sign.dot(rooms_weights) + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign)*1 + sum(res5sign)*1 + sum(res6sign)*1+ sum(res7sign)*1
+    return res1sign.dot(rooms_weights) + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign)*1 + sum(res5sign)*1 + sum(res6sign)*1+ sum(res7sign)*1 + sum(res1maxsign)
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
