@@ -10,7 +10,6 @@ import re
 import fileinput
 import cProfile
 import json
-from interface2 import pl2json
 from interface2 import pl2json, json2params
 
 # настройки алгоритма
@@ -29,7 +28,7 @@ rooms_weights = [1, 1, 1, 1.5, 2, 2] # веса комнат, использую
 areaconstr = [1,1,3.6,9,14,14] # минимальные без оболочки
 areaconstrmax = [4.5,4.5,4.5,16,1000,1000] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
 widthconstrmin = [1.4,1.2,1.5,2.3,3,3] # минимальные без оболочки
-widthconstrmax = [1000,1.5,1000,1000,1.5,1000] # максимальные без оболочки
+widthconstrmax = [2, 1.5, 1.5, 1000, 1000, 1000] # максимальные без оболочки
 areaconstr_opt = [3,1,4,12,16,16] # оптимальные без оболочки
 sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
@@ -887,31 +886,44 @@ def func2_discret_results(xy):
     global Bx
     global By
     global areaconstr
+    global areaconstrmax
 
-    #print xys
+    # print xys
 
     x = xy[0:len(Ax[0]) - 1]
     x = np.append(x, B)
     y = xy[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2]
     y = np.append(y, H)
 
+    # Ограничение по площади снизу
     res1 = Ax.dot(x) * Ay.dot(y) - areaconstr
-    res2 = Bx.dot(xy[0:len(Ax[0])-1]) - np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
-    res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
+    # Ограничение по площади сверху
+    res1max = areaconstrmax - Ax.dot(x) * Ay.dot(y)
+
+    # Ограничение на расположение соседних стен
+    res2 = Bx.dot(xy[0:len(Ax[0]) - 1]) - [min_margin] * len(Bx)  # np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
+    res3 = By.dot(xy[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2]) - [min_margin] * len(
+        By)  # - np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
     # ограничение на соотношение сторон
-    res4 = map(lambda d: int((d>=1./3)&(d<=3))-1, Ay.dot(y)/Ax.dot(x))*np.array(sides_ratio)
+    res4 = map(lambda d: int((d >= 1. / 3) & (d <= 3)) - 1, Ay.dot(y) / Ax.dot(x)) * np.array(sides_ratio)
+    # ограничение на минимальную ширину
     res5 = Ax.dot(x) - widthconstrmin
     res6 = Ay.dot(y) - widthconstrmin
 
-    res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
-    res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
-    res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
-    res4sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res4))
-    res5sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res5))
-    res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
+    # ограничение на максимальную ширину
+    res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(x), Ay.dot(y))))
 
-    listres = ["areas", "dist_neib_x", "dist_neib_y", "ratio", "width"]
-    res_vec = [sum(res1sign), sum(res2sign), sum(res3sign), sum(res4sign), sum(res5sign), sum(res6sign)]
+    res1sign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res1))
+    res1maxsign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res1max))
+    res2sign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res2))
+    res3sign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res3))
+    res4sign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res4))
+    res5sign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res5))
+    res6sign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res6))
+    res7sign = np.array(map(lambda x: np.sign(x) * (np.sign(x) - 1) / 2, res7))
+
+    listres = ["areasmin", "areasmax", "dist_neib_x", "dist_neib_y", "ratio", "widthX", "widthY", "widthMax"]
+    res_vec = [sum(res1sign), sum(res1maxsign), sum(res2sign), sum(res3sign), sum(res4sign), sum(res5sign), sum(res6sign), sum(res7sign)]
     res = ''
     for i in range(len(listres)):
         if res_vec[i] > 0:
@@ -991,14 +1003,14 @@ def main_topology(max_results, compartments_list, printres = True):
     global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax
     max_res = max_results
 
-    sc = [[[[(6, 6)], [(9, 9)], [(8, 8)], [(7, 9)], [(7, 8)], [(9, 7)], [(7, 7)]],
-     [[(3, 3)], [(6, 6)], [(1, 7)], [(1, 9)], [(0, 7)], [(3, 1)], [(0, 1)]],
-     [[(4, 4)], [(11, 5)], [(6, 6)], [(3, 11)], [(1, 6)], [(5, 1)], [(1, 1)]],
-     [[(5, 3)], [(11, 3)], [(9, 1)], [(6, 6)], [(7, 1)], [(10, 0)], [(7, 0)]],
-     [[(5, 4)], [(12, 5)], [(11, 6)], [(5, 11)], [(6, 6)], [(11, 1)], [(6, 1)]],
-     [[(3, 5)], [(9, 11)], [(7, 11)], [(2, 12)], [(1, 11)], [(6, 6)], [(1, 6)]],
-     [[(5, 5)], [(12, 11)], [(11, 11)], [(5, 12)], [(6, 11)], [(11, 6)], [(6, 6)]]]]
-    return sc
+    # sc = [[[[(6, 6)], [(9, 9)], [(8, 8)], [(7, 9)], [(7, 8)], [(9, 7)], [(7, 7)]],
+    #  [[(3, 3)], [(6, 6)], [(1, 7)], [(1, 9)], [(0, 7)], [(3, 1)], [(0, 1)]],
+    #  [[(4, 4)], [(11, 5)], [(6, 6)], [(3, 11)], [(1, 6)], [(5, 1)], [(1, 1)]],
+    #  [[(5, 3)], [(11, 3)], [(9, 1)], [(6, 6)], [(7, 1)], [(10, 0)], [(7, 0)]],
+    #  [[(5, 4)], [(12, 5)], [(11, 6)], [(5, 11)], [(6, 6)], [(11, 1)], [(6, 1)]],
+    #  [[(3, 5)], [(9, 11)], [(7, 11)], [(2, 12)], [(1, 11)], [(6, 6)], [(1, 6)]],
+    #  [[(5, 5)], [(12, 11)], [(11, 11)], [(5, 12)], [(6, 11)], [(11, 6)], [(6, 6)]]]]
+    # return sc
 
     # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
     changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, areaconstrmax]
@@ -1062,7 +1074,7 @@ def main_size(height, width, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds, maxiter=10000)
+            res = opt.differential_evolution(func2_discret, bounds)
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
@@ -1102,7 +1114,7 @@ def calculation(json_string):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(20, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
+    scens = main_topology(50, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
@@ -1123,7 +1135,7 @@ def main2():
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(10, 10, scens)
+    optim_scens = main_size(8, 8, scens)
     # Визуализация
     i=0
     n=2
