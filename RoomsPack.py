@@ -70,18 +70,20 @@ hall_corr = list((set(partcommon))- set([(1,6),(6,1),(10,1),(5,1),(4,1),(11,6),(
 envel_corr = list((set(inclusion_partcommon)- {(6, 9), (9, 6)}) | set([(8,8)]))
 corr_other = list(((set(partcommon) | set(inverse(partcommon))) - set([(11,2), (11,3), (11,4)])) | {(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(0,8),(0,9),(0,10),(0,11),(0,12),(11,0),(9,0)} ) # -
 hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12),(3,11)}) # используем для случая с коридором
-bath_kitch2room = list(set(adjacency) | {(3,12),(4,12),(5,12)})
+bath_kitch2room = list(set(adjacency) | {(3,12), (4,12), (5,12), (2, 12), (5, 11)})
+other_room2 = list(set(adjacency) | {(3,12),(4,12), (3,11), (5,12), (5,11)})
+
 
 # Если нет коридора, то hall_other:=corr_other - это надо вынести в ф-ю main
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
 tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
-    [[],[], hall_corr , hall_other , hall_other, hall_other, adjacency],
-    [[],[], [], corr_other, corr_other, corr_other, adjacency],
-    [[], [], [], [],  bath_kitchen, bath_kitch2room, adjacency],
-    [[], [], [], [], [], bath_kitch2room, adjacency],
-    [[], [], [], [], [], [], adjacency],
+    [[],[], hall_corr , hall_other , hall_other, hall_other, other_room2],
+    [[],[], [], corr_other, corr_other, corr_other, other_room2],
+    [[], [], [], [],  bath_kitchen, bath_kitch2room, other_room2],
+    [[], [], [], [], [], bath_kitch2room, other_room2],
+    [[], [], [], [], [], [], other_room2],
     [[], [], [], [], [], [], []]]
 
 # envel_hall | envel_corr | envel_room
@@ -1049,7 +1051,6 @@ def main_topology(max_results, compartments_list, printres = True):
         tc_src[1][3] = adjacency
         tc_src[1][4] = adjacency
         tc_src[1][5] = adjacency + [(3,11)]
-        tc_src[1][6] = adjacency
 
     k = 0
     for i in range(len(compartments)):
@@ -1077,7 +1078,7 @@ def main_topology(max_results, compartments_list, printres = True):
     # #check
     # for i in range(7):
     #     for j in range(7):
-    #         if not(sc[i][j][0] in tc[i][j]):
+    #         if not(sc3[i][j][0] in tc[i][j]):
     #             print str(i) +":" + str(j) + "Test wasn't passed"
     # print "Test was passed!"
     # return 1
@@ -1140,7 +1141,7 @@ def calculation(json_string):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(70, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
+    scens = main_topology(100, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
@@ -1156,7 +1157,7 @@ def main2():
         ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
         visual2(quickplacement(pl))
         i+=1
-        if (i>70):
+        if (i>100):
             break
 
     # Учет ограничений по площади
