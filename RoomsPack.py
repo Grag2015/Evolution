@@ -68,8 +68,9 @@ bath_kitchen = partcommon_adjacency
 # hall_other = partcommon #Для случая без коридора
 hall_corr = list((set(partcommon))- set([(1,6),(6,1),(10,1),(5,1),(4,1),(11,6),(6,11)])) #Для случая c коридор  - set([(7,1),(10,1),(5,1),(4,1),(11,6)])
 envel_corr = list((set(inclusion_partcommon)- {(6, 9), (9, 6)}) | set([(8,8)]))
-corr_other = list((set(partcommon) | set(inverse(partcommon))) - set([(11,2), (11,3), (11,4)])) # -
-hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12)}) # используем для случая с коридором
+corr_other = list(((set(partcommon) | set(inverse(partcommon))) - set([(11,2), (11,3), (11,4)])) | {(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(0,8),(0,9),(0,10),(0,11),(0,12),(11,0),(9,0)} ) # -
+hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12),(3,11)}) # используем для случая с коридором
+bath_kitch2room = list(set(adjacency) | {(3,12),(4,12),(5,12)})
 
 # Если нет коридора, то hall_other:=corr_other - это надо вынести в ф-ю main
 
@@ -78,8 +79,8 @@ hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),
 tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
     [[],[], hall_corr , hall_other , hall_other, hall_other, adjacency],
     [[],[], [], corr_other, corr_other, corr_other, adjacency],
-    [[], [], [], [],  bath_kitchen, adjacency, adjacency],
-    [[], [], [], [], [], adjacency, adjacency],
+    [[], [], [], [],  bath_kitchen, bath_kitch2room, adjacency],
+    [[], [], [], [], [], bath_kitch2room, adjacency],
     [[], [], [], [], [], [], adjacency],
     [[], [], [], [], [], [], []]]
 
@@ -224,6 +225,9 @@ def PathConsistency(C):
     if not(withoutgapes3(C)):
         return ((1,2,2), C, 0, 0)
 
+    if not(IsEntrCorrHall(C)):
+        return ((1,2,2), C, 0, 0)
+
     # begin first loop
     samples_3 = itertools.permutations(range(len_comp),3)
     for elem in samples_3:
@@ -248,7 +252,7 @@ def PathConsistency(C):
     while len(LPathsToVisit)>0:
         NPathsChecked += 1
         [i, j, k] = LPathsToVisit.pop()
-
+        # TODO тут можно убрать операцию LIST, она лишняя
         TmpCij = list(set(C[elem[0]][elem[1]]) & set(noatomicBAcomp(C[elem[0]][elem[2]], C[elem[2]][elem[1]])))
         if (len(TmpCij)==0):
             return (elem, C, NPathsChecked, NChanges)
@@ -353,6 +357,7 @@ def AssignNextRel(TmpN1,TmpN2):
 
 nres = 0
 stop = False
+
 def EnumerateScenarios(N):
     global recur_int
     recur_int+=1
@@ -371,6 +376,8 @@ def EnumerateScenarios(N):
         #print 1
         return L # if N is inconsistent, return the empty list
     if IsScenario(N):
+        # if (N == sc):
+        #     print "sc was found"
         # быстрая проверка на наличие пустот
         if(withoutgapes(N)):
             L.append(N)
@@ -500,6 +507,16 @@ def AfterTo(j,k, scen, dim):
 
     return matr[IAatom][j%2][k%2] # остаток от деления на 2 указывает правая ли стена
 
+def IsEntrCorrHall(scen):
+    # Есть выход в любую комнату из коридора или прихожей
+    isentr = {(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(2,1),(2,11),(3,1),(3,11),(4,1),(4,11),(5,1),(5,11),(6,1),(6,11),(7,1),(7,11),(8,1),(8,11),(9,1),(9,11),(10,1),(10,11),(11,5),(11,6),(11,7),(11,8),(11,9),(11,10)}
+    if (len((set(scen[2][3]) | set(scen[1][3])) & isentr)==0):
+        return False
+    if (len((set(scen[2][4]) | set(scen[1][4])) & isentr)==0):
+        return False
+    if (len((set(scen[2][5]) | set(scen[1][5])) & isentr)==0):
+        return False
+    return True
 
 # функция используется для быстрой оценки наличия пустот
 def quickplacement(scen):
@@ -1027,11 +1044,11 @@ def main_topology(max_results, compartments_list, printres = True):
     sides_ratio = new_lists[3]
     comp_col = new_lists[4]
 
-    # есть есть коридора, то с прихожей снимается требование "смежность со всеми комнатами"
+    # есть есть коридор, то с прихожей снимается требование "смежность со всеми комнатами"
     if ("corr" in compartments_list):
         tc_src[1][3] = adjacency
         tc_src[1][4] = adjacency
-        tc_src[1][5] = adjacency
+        tc_src[1][5] = adjacency + [(3,11)]
         tc_src[1][6] = adjacency
 
     k = 0
@@ -1056,6 +1073,15 @@ def main_topology(max_results, compartments_list, printres = True):
     recur_int = 0
     nres = 0
     stop = False
+
+    # #check
+    # for i in range(7):
+    #     for j in range(7):
+    #         if not(sc[i][j][0] in tc[i][j]):
+    #             print str(i) +":" + str(j) + "Test wasn't passed"
+    # print "Test was passed!"
+    # return 1
+
     scens = EnumerateScenarios(N)
     t2 = time.clock()
     if printres:
@@ -1114,7 +1140,7 @@ def calculation(json_string):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(50, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
+    scens = main_topology(70, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
@@ -1130,7 +1156,7 @@ def main2():
         ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
         visual2(quickplacement(pl))
         i+=1
-        if (i>30):
+        if (i>70):
             break
 
     # Учет ограничений по площади
