@@ -29,7 +29,7 @@ areaconstr = [3,1,4,7,10,14,14,3.6] # минимальные без оболоч
 areaconstrmax = [6,1000,5,16,1000,1000,1000,5] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
 widthconstrmin = [1.4,1.2,1.5,2.3,2.3,2.6,3.6,1.5] # минимальные без оболочки
 widthconstrmax = [2, 1.5, 1.5, 1000, 1000, 1000, 1000, 1.5] # максимальные без оболочки
-areaconstr_opt = [3,1,4,12,16,16] # оптимальные без оболочки
+areaconstr_opt = [3,1,4,12,16,16,16,16] # оптимальные без оболочки
 sides_ratio = [0, 0, 1, 1, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
 comp_col = {0: '#73DD9B',
@@ -1145,7 +1145,7 @@ def calculation(json_string):
 def main2():
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(100, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2", "livroom", "bath2"])
+    scens = main_topology(10, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2", "livroom", "bath2"])
     recur_int
     pr = cProfile.Profile()
     pr.enable()
@@ -1166,7 +1166,7 @@ def main2():
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(8, 8, scens)
+    optim_scens = main_size(9, 9, scens)
     # Визуализация
     i=0
     n=2
