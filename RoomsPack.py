@@ -3,7 +3,12 @@ import itertools
 import numpy as np
 import time
 import copy
+#import pylab
+# import PySide
+# import matplotlib
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 import matplotlib.patches as mpatches
 import re
 
@@ -38,8 +43,8 @@ comp_col = {0: '#73DD9B',
             3: '#ECA7A7',
             4: '#ACBFEC',
             5: '#ACBFEC',
-            6: '#ACBFEC',
-            7: '#ACBFEC'
+            6: '#DC2E2E',
+            7: '#EAE234'
            }
 len_comp=len(compartments)
 
@@ -74,21 +79,23 @@ corr_other = list(((set(partcommon) | set(inverse(partcommon))) - set([(11,2), (
 hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12),(3,11)}) # используем для случая с коридором
 bath_kitch2room = list(set(adjacency) | {(3,12), (4,12), (5,12), (2, 12), (5, 11)})
 other_room2 = list(set(adjacency) | {(3,12),(4,12), (3,11), (5,12), (5,11)})
-
+kitchen_livroom = list({(1,6), (6,1), (11,6), (6,11), (3,1), (4,1), (5,1),(1,3), (1,4), (1,5),(3,11), (4,11), (5,11),(11,3), (11,4), (11,5)})
+room2_bath = inverse(kitchen_livroom)
+envel_kitchen = list({(7,7),(7,9),(9,7),(9,9)})
 
 # Если нет коридора, то hall_other:=corr_other - это надо вынести в ф-ю main
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room, envel_room, envel_room],
-        [[], [], hall_corr, hall_other, hall_other, hall_other, hall_other, hall_other, hall_other],
-        [[], [], [], corr_other, corr_other, corr_other, corr_other, corr_other, corr_other],
-        [[], [], [], [], bath_kitchen, bath_kitch2room, other_room2, other_room2, other_room2],
-        [[], [], [], [], [], bath_kitch2room, other_room2, hall_corr, other_room2],
-        [[], [], [], [], [], [], other_room2, other_room2, other_room2],
-        [[], [], [], [], [], [], [], other_room2, hall_corr],
-        [[], [], [], [], [], [], [], [], other_room2],
-        [[], [], [], [], [], [], [], [], []]]
+tc_src=[[[], envel_hall, envel_corr, envel_room, envel_kitchen, envel_room, envel_room, envel_room, envel_room], #envelope
+        [[], [], hall_corr, hall_other, hall_other, hall_other, hall_other, hall_other, hall_other], # "hall"
+        [[], [], [], corr_other, corr_other, corr_other, corr_other, corr_other, corr_other], # "corr"
+        [[], [], [], [], bath_kitchen, bath_kitch2room, other_room2, other_room2, other_room2], # "bath"
+        [[], [], [], [], [], bath_kitch2room, other_room2, kitchen_livroom, other_room2], # "kitchen"
+        [[], [], [], [], [], [], other_room2, other_room2, other_room2], # "room"
+        [[], [], [], [], [], [], [], other_room2, room2_bath], #"room2"
+        [[], [], [], [], [], [], [], [], other_room2], # "livroom"
+        [[], [], [], [], [], [], [], [], []]]  #"bath2"
 
 # envel_hall | envel_corr | envel_room
 
@@ -518,9 +525,13 @@ def IsEntrCorrHall(scen):
     isentr = {(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(2,1),(2,11),(3,1),(3,11),(4,1),(4,11),(5,1),(5,11),(6,1),(6,11),(7,1),(7,11),(8,1),(8,11),(9,1),(9,11),(10,1),(10,11),(11,5),(11,6),(11,7),(11,8),(11,9),(11,10)}
     if (len((set(scen[2][3]) | set(scen[1][3])) & isentr)==0):
         return False
-    if (len((set(scen[2][4]) | set(scen[1][4])) & isentr)==0):
+    if (len(((set(scen[2][4]) | set(scen[1][4]))|(set(scen[2][7]) | set(scen[1][7]))) & isentr)==0):
         return False
+    # if (len((set(scen[2][4]) | set(scen[1][4])) & isentr)==0):
+    #     return False
     if (len((set(scen[2][5]) | set(scen[1][5])) & isentr)==0):
+        return False
+    if (len((set(scen[2][6]) | set(scen[1][6])) & isentr)==0):
         return False
     return True
 
@@ -686,7 +697,7 @@ def visual(placement_all):
     # plt.show()
 
 # visual without sizes
-def visual2(placement_all):
+def visual2(placement_all, ax1):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     # fig1 = plt.figure(figsize=(10,10) )
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
@@ -700,7 +711,7 @@ def visual2(placement_all):
         )
         ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
                  placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
-    # plt.show()
+
 
 # move walls
 def movewalls(playsments_a):
@@ -1142,122 +1153,56 @@ def calculation(json_string):
     newres = pl2json(plac_ls, compartments, StartPosId)
     return newres
 
-def main2():
+
+def main2(n):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(10, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2", "livroom", "bath2"])
-    recur_int
-    pr = cProfile.Profile()
-    pr.enable()
-    main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
-    pr.disable()
-    pr.print_stats(sort='time')
+    scens = main_topology(n, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2", "livroom", "bath2"])
+    # recur_int
+    # pr = cProfile.Profile()
+    # pr.enable()
+    # main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
+    # pr.disable()
+    # pr.print_stats(sort='time')
 
     # Визуализация
     i=0
-    for pl in scens:
-        if i%9==0:
-            fig1 = plt.figure(figsize=(15, 15))
-        ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-        visual2(quickplacement(pl))
-        i+=1
-        if (i>100):
+    # for t,pl in enumerate(scens):
+    #     if i%4==0:
+    #         fig1 = plt.figure()
+    #     ax1 = fig1.add_subplot(2,2,i%4+1, title='scen '+str(i), aspect='equal')
+    #     visual2(quickplacement(pl),ax1)
+    #     i+=1
+    #     if (i>100):
+    #         break
+    for t, pl in enumerate(scens):
+        fig1 = plt.figure()
+        ax1 = fig1.add_subplot(1, 1, i % 4 + 1, title='scen ' + str(t), aspect='equal')
+        visual2(quickplacement(pl), ax1)
+        if (i > 100):
             break
+    plt.show()
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(9, 9, scens)
-    # Визуализация
-    i=0
-    n=2
-    for pl in optim_scens:
-        if i%n**2==0:
-            fig1 = plt.figure(figsize=(15, 15))
-        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-        visual(pl)
-        i+=1
-        if (i>30):
-            break
+    # optim_scens = main_size(9, 9, scens)
+    # # Визуализация
+    # i=0
+    # n=2
+    # for pl in optim_scens:
+    #     if i%n**2==0:
+    #         fig1 = plt.figure(figsize=(15, 15))
+    #     ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+    #     visual(pl)
+    #     i+=1
+    #     if (i>30):
+    #         break
 
 
-    t1=time.clock()
-    #PathConsistency(tc)
-    atomicIAcomp(0,2)
-    t2=time.clock()
-    t2-t1
-
-    PathConsistency(tc)
-    tc[0][0]
 
 #  ----------------------------------------- ТЕСТИРОВАНИЕ
 if __name__ == "__main__":
-    timeout = 15
-    depth_recurs = 10000
-    recur_int = 0
-    B=5
-    H=6
-    max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
-    min_margin = 0.5
-    # atomic relations block algebra
-    ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
+    main2(9)
 
-    # комнаты
-    # TODO удалить лишние элементы в списке (коридор)
-    compartments = ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"]
-    rooms_weights = [1, 1, 2, 2, 1, 1.5] # веса комнат, используются для придания ограничений по каждому типу комнат
-    areaconstr = [1,1,14,14,3.6,9] # минимальные без оболочки
-    areaconstr_opt = [3,1,16,16,4,12] # оптимальные без оболочки
-    sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
-    #цвета для визуализации, без оболочки
-    comp_col = {0: '#ECA7A7',
-                1: '#73DD9B',
-                2: '#ACBFEC',
-                3: '#ACBFEC',
-                4: '#EAE234',
-                5: '#ECA7A7'
-               }
-
-
-    # Ограничения
-    all_const = set()
-    for i in range(13):
-        for j in range(13):
-            all_const.add(ARelBA[i][j])
-
-    # часть общей стены + минимум одна смежная стена
-    partcommon_adjacency = [(1, 3), (1, 5), (1, 6), (1, 7), (1, 9), (3, 1), (5, 1), (6, 1), (7, 1), (9, 1)]
-    # часть общей стены
-    partcommon = list(set(partcommon_adjacency) | set(
-        [(1, 2), (1, 4), (1, 8), (1, 10), (2, 1), (4, 1), (8, 1), (10, 1), (11, 6), (6, 11)]))
-    # А содержит В и есть 1,2 общая часть стены
-    inclusion_partcommon = [(9, 6), (9, 7), (9, 8), (9, 9), (7, 6), (7, 7), (7, 8), (7, 9), (8, 6), (8, 7), (8, 9),
-                            (6, 9), (6, 10)]
-
-    # смежные
-    adjacency = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (6, 11), (7, 1), (8, 1), (9, 1), (10, 1), (11, 1),
-                 (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (11, 6),
-                 (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10), (0, 11),
-                 (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0), (11, 0)]
-
-    envel_hall = inclusion_partcommon
-    envel_room = inclusion_partcommon  # - {(7, 8), (8, 7), (8, 9), (9, 8)}
-    bath_kitchen = partcommon_adjacency
-    # hall_other = partcommon #Для случая без коридора
-    hall_corr = list(set(partcommon) - set([(1, 6), (6, 1)]))  # Для случая c коридор
-    envel_corr = list(set(inclusion_partcommon) | set([(8, 8)]))
-    corr_other = list(set(partcommon) | set(inverse(partcommon)))
-
-    len_comp = len(compartments)
-    tc_src = [[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
-              [[], [], hall_corr, adjacency, adjacency, adjacency, adjacency],
-              [[], [], [], corr_other, corr_other, corr_other, corr_other],
-              [[], [], [], [], adjacency, adjacency, adjacency],
-              [[], [], [], [], [], adjacency, adjacency],
-              [[], [], [], [], [], [], bath_kitchen],
-              [[], [], [], [], [], [], []]]
-    tc =  prepare_tc(tc_src)
-
-    import doctest
-    doctest.testmod()
 
 #  ----------------------------------------- / ТЕСТИРОВАНИЕ
