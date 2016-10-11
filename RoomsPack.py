@@ -87,7 +87,7 @@ envel_kitchen = list({(7,7),(7,9),(9,7),(9,9)})
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src=[[[], envel_hall, envel_corr, envel_room, envel_kitchen, envel_room, envel_room, envel_room, envel_room], #envelope
+tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room, envel_room, envel_room], #envelope
         [[], [], hall_corr, hall_other, hall_other, hall_other, hall_other, hall_other, hall_other], # "hall"
         [[], [], [], corr_other, corr_other, corr_other, corr_other, corr_other, corr_other], # "corr"
         [[], [], [], [], bath_kitchen, bath_kitch2room, other_room2, other_room2, other_room2], # "bath"
@@ -523,8 +523,14 @@ def AfterTo(j,k, scen, dim):
 def IsEntrCorrHall(scen):
     # Есть выход в любую комнату из коридора или прихожей
     isentr = {(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(2,1),(2,11),(3,1),(3,11),(4,1),(4,11),(5,1),(5,11),(6,1),(6,11),(7,1),(7,11),(8,1),(8,11),(9,1),(9,11),(10,1),(10,11),(11,5),(11,6),(11,7),(11,8),(11,9),(11,10)}
+    iscorn = {(7,7),(7,9),(9,7),(9,9)}
+    # или кухня или гостиная угловая
+    if (len((set(scen[0][4]) | set(scen[0][7])) & iscorn)==0):
+        return False
+
     if (len((set(scen[2][3]) | set(scen[1][3])) & isentr)==0):
         return False
+    # кухня или гостиная проходная
     if (len(((set(scen[2][4]) | set(scen[1][4]))|(set(scen[2][7]) | set(scen[1][7]))) & isentr)==0):
         return False
     # if (len((set(scen[2][4]) | set(scen[1][4])) & isentr)==0):
