@@ -21,21 +21,21 @@ from interface2 import pl2json, json2params
 timeout = 15
 depth_recurs = 100000
 recur_int = 0
-B=5
-H=6
+B=20
+H=20
 max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
 min_margin = 1.2
-
+delta = 0.1
 # комнаты
 # TODO удалить лишние элементы в списке (коридор)
-compartments = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2", "livroom", "bath2"] # room2 - основная спасльня, bath2 - примык. к room2
-rooms_weights = [1, 1, 1, 1.5, 2, 2, 1, 1] # веса комнат, используются для придания ограничений по каждому типу комнат
-areaconstr = [3,1,4,7,10,14,14,3.6] # минимальные без оболочки
-areaconstrmax = [6,1000,5,16,1000,1000,1000,5] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
-widthconstrmin = [1.4,1.2,1.5,2.3,2.3,2.6,3.6,1.5] # минимальные без оболочки
-widthconstrmax = [2, 1.5, 1.5, 1000, 1000, 1000, 1000, 1.5] # максимальные без оболочки
+compartments = ["envelope",  "podezd", "corr", "flat1", "flat2", "flat3", "flat4"] # room2 - основная спасльня, bath2 - примык. к room2
+rooms_weights = [5, 3, 1, 1, 1, 1] # веса комнат, используются для придания ограничений по каждому типу комнат
+areaconstr = [2.3*10,2*2,60*(1-delta),60*(1-delta),110*(1-delta),110*(1-delta)] # минимальные без оболочки
+areaconstrmax = [2.7*15,2*10,60*(1+delta),60*(1+delta),110*(1+delta),110*(1+delta)] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
+widthconstrmin = [2.3, 2, 1, 1, 1, 1] # минимальные без оболочки
+widthconstrmax = [2.7, 3, 100, 100, 100, 100] # максимальные без оболочки
 areaconstr_opt = [3,1,4,12,16,16,16,16] # оптимальные без оболочки
-sides_ratio = [0, 0, 1, 1, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
+sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
 comp_col = {0: '#73DD9B',
             1: '#73DD9B',
@@ -69,12 +69,15 @@ def inverse(noatomicBArel):
         res.append((12-elem[0],12-elem[1]))
     return res
 
-envel_hall = [(9, 9), (9, 8)]#list(set(inclusion_partcommon) - {(6, 9), (9, 6)}) # TODO - убираешь (9, 8) и сразу время работы вырастает в десять раз
+envel_podezd = [(8, 9),(9,9)]#list(set(inclusion_partcommon) - {(6, 9), (9, 6)}) # TODO - убираешь (9, 8) и сразу время работы вырастает в десять раз
 envel_room = list(set(inclusion_partcommon) - {(9, 6)}) #(8, 7), (8, 9), (9, 8)}
 bath_kitchen = partcommon_adjacency
 # hall_other = partcommon #Для случая без коридора
-hall_corr = list((set(partcommon))- set([(1,6),(6,1),(10,1),(5,1),(4,1),(11,6),(6,11)])) #Для случая c коридор  - set([(7,1),(10,1),(5,1),(4,1),(11,6)])
-envel_corr = list((set(inclusion_partcommon)- {(6, 9), (9, 6)}) | set([(8,8)]))
+podezd_corr = [(6,1),(5,1),(4,1),(3,1)]
+podezd_flat = [(0,0),(1,0),(2,0),(3,0),(4,0),(5,0),(10,0),(11,0),(12,0),
+               (0,1),(0,2),(0,3),(0,6),(0,9),(12,1),(12,2),(12,3),(12,6),(12,9)]
+envel_corr = [(9,8),(8,8),(7,8),(6,8),(1,7)]
+envel_flat = [(7,6),(7,7),(7,8),(7,9),(8,7),(8,8),(8,9),(9,7),(9,8),(9,9)]
 corr_other = list(((set(partcommon) | set(inverse(partcommon))) - set([(11,2), (11,3), (11,4)])) | {(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(0,8),(0,9),(0,10),(0,11),(0,12),(11,0),(9,0)} ) # -
 hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12),(3,11)}) # используем для случая с коридором
 bath_kitch2room = list(set(adjacency) | {(3,12), (4,12), (5,12), (2, 12), (5, 11)})
@@ -87,15 +90,13 @@ envel_kitchen = list({(7,7),(7,9),(9,7),(9,9)})
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room, envel_room, envel_room], #envelope
-        [[], [], hall_corr, hall_other, hall_other, hall_other, hall_other, hall_other, hall_other], # "hall"
-        [[], [], [], corr_other, corr_other, corr_other, corr_other, corr_other, corr_other], # "corr"
-        [[], [], [], [], bath_kitchen, bath_kitch2room, other_room2, other_room2, other_room2], # "bath"
-        [[], [], [], [], [], bath_kitch2room, other_room2, kitchen_livroom, other_room2], # "kitchen"
-        [[], [], [], [], [], [], other_room2, other_room2, other_room2], # "room"
-        [[], [], [], [], [], [], [], other_room2, room2_bath], #"room2"
-        [[], [], [], [], [], [], [], [], other_room2], # "livroom"
-        [[], [], [], [], [], [], [], [], []]]  #"bath2"
+tc_src=[[[], envel_podezd, envel_corr, envel_flat, envel_flat, envel_flat, envel_flat], #envelope
+        [[], [], podezd_corr, podezd_flat, podezd_flat, podezd_flat, podezd_flat], # "podezd"
+        [[], [], [], corr_other, corr_other, corr_other, corr_other], # "corr"
+        [[], [], [], [], other_room2, other_room2, other_room2], # "flat1"
+        [[], [], [], [], [], other_room2, other_room2], # "flat2"
+        [[], [], [], [], [], [], other_room2], # "flat3"
+        [[], [], [], [], [], [], []]] #"flat4"
 
 # envel_hall | envel_corr | envel_room
 
@@ -521,20 +522,13 @@ def AfterTo(j,k, scen, dim):
     return matr[IAatom][j%2][k%2] # остаток от деления на 2 указывает правая ли стена
 
 def IsEntrCorrHall(scen):
-    # Есть выход в любую комнату из коридора или прихожей
+    # Есть выход в любую квартиру из коридора или подъезда
     isentr = {(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(2,1),(2,11),(3,1),(3,11),(4,1),(4,11),(5,1),(5,11),(6,1),(6,11),(7,1),(7,11),(8,1),(8,11),(9,1),(9,11),(10,1),(10,11),(11,5),(11,6),(11,7),(11,8),(11,9),(11,10)}
-    iscorn = {(7,7),(7,9),(9,7),(9,9)}
-    # или кухня или гостиная угловая
-    if (len((set(scen[0][4]) | set(scen[0][7])) & iscorn)==0):
-        return False
 
     if (len((set(scen[2][3]) | set(scen[1][3])) & isentr)==0):
         return False
-    # кухня или гостиная проходная
-    if (len(((set(scen[2][4]) | set(scen[1][4]))|(set(scen[2][7]) | set(scen[1][7]))) & isentr)==0):
+    if (len((set(scen[2][4]) | set(scen[1][4])) & isentr)==0):
         return False
-    # if (len((set(scen[2][4]) | set(scen[1][4])) & isentr)==0):
-    #     return False
     if (len((set(scen[2][5]) | set(scen[1][5])) & isentr)==0):
         return False
     if (len((set(scen[2][6]) | set(scen[1][6])) & isentr)==0):
@@ -685,7 +679,7 @@ def placement_all(dmin, dmax, scen):
     res.append(placement(1, dmin, dmax, scen))
     return res
 
-def visual(placement_all):
+def visual(placement_all, ax1):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     # fig1 = plt.figure(figsize=(10,10) )
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
@@ -900,7 +894,7 @@ def func2_discret(xy):
     res2 = Bx.dot(xy[0:len(Ax[0])-1]) - [min_margin]*len(Bx)#np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
     res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - [min_margin]*len(By) #- np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
     # ограничение на соотношение сторон
-    res4 = map(lambda d: int((d>=1./3)&(d<=3))-1, Ay.dot(y)/Ax.dot(x))*np.array(sides_ratio)
+    res4 = map(lambda d: int((d>=1./2.5)&(d<=2.5))-1, Ay.dot(y)/Ax.dot(x))*np.array(sides_ratio)
     # ограничение на минимальную ширину
     res5 = Ax.dot(x) - widthconstrmin
     res6 = Ay.dot(y) - widthconstrmin
@@ -917,7 +911,7 @@ def func2_discret(xy):
     res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
     res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
 
-    return res1sign.dot(rooms_weights) + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign) + sum(res5sign) + sum(res6sign)+ sum(res7sign) + sum(res1maxsign)
+    return res1sign.dot(rooms_weights) + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign) + sum(res5sign) + sum(res6sign)+ sum(res7sign)*5 + sum(res1maxsign)
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
@@ -1035,58 +1029,52 @@ def withoutgapes3(N):
 
 # Поиск различных вариантов компоновки (топологий)
 # ЗАГЛУШКА
-def main_topology(max_results, compartments_list, printres = True):
+def main_topology(max_results, printres = True):
     """
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
     """
-    global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax
-    max_res = max_results
-
-    # sc = [[[[(6, 6)], [(9, 9)], [(8, 8)], [(7, 9)], [(7, 8)], [(9, 7)], [(7, 7)]],
-    #  [[(3, 3)], [(6, 6)], [(1, 7)], [(1, 9)], [(0, 7)], [(3, 1)], [(0, 1)]],
-    #  [[(4, 4)], [(11, 5)], [(6, 6)], [(3, 11)], [(1, 6)], [(5, 1)], [(1, 1)]],
-    #  [[(5, 3)], [(11, 3)], [(9, 1)], [(6, 6)], [(7, 1)], [(10, 0)], [(7, 0)]],
-    #  [[(5, 4)], [(12, 5)], [(11, 6)], [(5, 11)], [(6, 6)], [(11, 1)], [(6, 1)]],
-    #  [[(3, 5)], [(9, 11)], [(7, 11)], [(2, 12)], [(1, 11)], [(6, 6)], [(1, 6)]],
-    #  [[(5, 5)], [(12, 11)], [(11, 11)], [(5, 12)], [(6, 11)], [(11, 6)], [(6, 6)]]]]
-    # return sc
-
-    # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
-    changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, areaconstrmax]
-    new_lists=[]
-    for i in range(len(changing_lists)): new_lists.append([])
-    for i in range(len(compartments[1:])):
-        if (compartments[1:][i] in set(compartments_list)):
-            for j in range(len(changing_lists)):
-                new_lists[j].append(changing_lists[j][i])
-
-    rooms_weights = new_lists[0]
-    areaconstr = new_lists[1]
-    areaconstr_opt = new_lists[2]
-    sides_ratio = new_lists[3]
-    comp_col = new_lists[4]
-
-    # есть есть коридор, то с прихожей снимается требование "смежность со всеми комнатами"
-    if ("corr" in compartments_list):
-        tc_src[1][3] = adjacency
-        tc_src[1][4] = adjacency
-        tc_src[1][5] = adjacency + [(3,11)]
-
-    k = 0
-    for i in range(len(compartments)):
-        if (not (compartments[i] in set(compartments_list))):
-            # удаляем строку i
-            # print k
-            tc_src.pop(k)
-            # удаляем столбец i
-            for j in range(len(tc_src)):
-                tc_src[j].pop(k)
-            k -= 1
-        k += 1
-
-    compartments = compartments_list
-    len_comp = len(compartments)
+    # global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax
+    # max_res = max_results
+    #
+    # # sc = [[[[(6, 6)], [(9, 9)], [(8, 8)], [(7, 9)], [(7, 8)], [(9, 7)], [(7, 7)]],
+    # #  [[(3, 3)], [(6, 6)], [(1, 7)], [(1, 9)], [(0, 7)], [(3, 1)], [(0, 1)]],
+    # #  [[(4, 4)], [(11, 5)], [(6, 6)], [(3, 11)], [(1, 6)], [(5, 1)], [(1, 1)]],
+    # #  [[(5, 3)], [(11, 3)], [(9, 1)], [(6, 6)], [(7, 1)], [(10, 0)], [(7, 0)]],
+    # #  [[(5, 4)], [(12, 5)], [(11, 6)], [(5, 11)], [(6, 6)], [(11, 1)], [(6, 1)]],
+    # #  [[(3, 5)], [(9, 11)], [(7, 11)], [(2, 12)], [(1, 11)], [(6, 6)], [(1, 6)]],
+    # #  [[(5, 5)], [(12, 11)], [(11, 11)], [(5, 12)], [(6, 11)], [(11, 6)], [(6, 6)]]]]
+    # # return sc
+    #
+    # # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
+    # changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, areaconstrmax]
+    # new_lists=[]
+    # for i in range(len(changing_lists)): new_lists.append([])
+    # for i in range(len(compartments[1:])):
+    #     if (compartments[1:][i] in set(compartments_list)):
+    #         for j in range(len(changing_lists)):
+    #             new_lists[j].append(changing_lists[j][i])
+    #
+    # rooms_weights = new_lists[0]
+    # areaconstr = new_lists[1]
+    # areaconstr_opt = new_lists[2]
+    # sides_ratio = new_lists[3]
+    # comp_col = new_lists[4]
+    #
+    # k = 0
+    # for i in range(len(compartments)):
+    #     if (not (compartments[i] in set(compartments_list))):
+    #         # удаляем строку i
+    #         # print k
+    #         tc_src.pop(k)
+    #         # удаляем столбец i
+    #         for j in range(len(tc_src)):
+    #             tc_src[j].pop(k)
+    #         k -= 1
+    #     k += 1
+    #
+    # compartments = compartments_list
+    # len_comp = len(compartments)
     tc = prepare_tc(tc_src)
 
     # topology
@@ -1122,7 +1110,9 @@ def main_size(height, width, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds)
+            res = opt.differential_evolution(func2_discret, bounds, tol=0, popsize=15)
+            print res.message, "nit: ", res.nit
+            print 'bounds', bounds
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
@@ -1163,7 +1153,7 @@ def calculation(json_string):
 def main2(n):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(n, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2", "livroom", "bath2"])
+    scens = main_topology(n)
     # recur_int
     # pr = cProfile.Profile()
     # pr.enable()
@@ -1172,43 +1162,40 @@ def main2(n):
     # pr.print_stats(sort='time')
 
     # Визуализация
-    i=0
+    # i=0
+    # n=1
     # for t,pl in enumerate(scens):
-    #     if i%4==0:
+    #     if i%(n**2)==0:
     #         fig1 = plt.figure()
-    #     ax1 = fig1.add_subplot(2,2,i%4+1, title='scen '+str(i), aspect='equal')
+    #     ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i), aspect='equal')
     #     visual2(quickplacement(pl),ax1)
     #     i+=1
     #     if (i>100):
     #         break
-    for t, pl in enumerate(scens):
-        fig1 = plt.figure()
-        ax1 = fig1.add_subplot(1, 1, i % 4 + 1, title='scen ' + str(t), aspect='equal')
-        visual2(quickplacement(pl), ax1)
-        if (i > 100):
-            break
-    plt.show()
+    #
+    # plt.show()
+    # print scens
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    # optim_scens = main_size(9, 9, scens)
-    # # Визуализация
-    # i=0
-    # n=2
-    # for pl in optim_scens:
-    #     if i%n**2==0:
-    #         fig1 = plt.figure(figsize=(15, 15))
-    #     ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-    #     visual(pl)
-    #     i+=1
-    #     if (i>30):
-    #         break
-
+    optim_scens = main_size(20, 20, scens)
+    # Визуализация
+    i=0
+    n=1
+    for pl in optim_scens:
+        if i%n**2==0:
+            fig1 = plt.figure(figsize=(15, 15))
+        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+        visual(pl, ax1)
+        i+=1
+        if (i>30):
+            break
+    plt.show()
 
 
 #  ----------------------------------------- ТЕСТИРОВАНИЕ
 if __name__ == "__main__":
-    main2(10)
+    main2(15)
 
 
 #  ----------------------------------------- / ТЕСТИРОВАНИЕ
