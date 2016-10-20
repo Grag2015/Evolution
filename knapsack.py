@@ -40,4 +40,11 @@ def Knapsack(B, H, B1, H1, B2, H2):
     # print ("objective = %s$" % value(prob.objective))
 
     # возвращаем список Количество квартир, Список площадей
-    return map(lambda x: x.varValue, prob.variables()), areas
+    varres=[]
+    areasres=[]
+    for i, var in enumerate(prob.variables()):
+        if var.varValue!=0:
+            varres.append(var.varValue)
+            areasres.append(areas[i])
+
+    return varres, areasres
