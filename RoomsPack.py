@@ -12,11 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import re
 
-import fileinput
-import cProfile
-import json
-from interface2 import pl2json, json2params
-
+from knapsack import Knapsack
 # настройки алгоритма
 timeout = 15
 depth_recurs = 100000
@@ -26,29 +22,32 @@ H=20
 max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
 min_margin = 1.2
 delta = 0.1
-# комнаты
-# TODO удалить лишние элементы в списке (коридор)
-compartments = ["envelope",  "podezd", "corr", "flat1", "flat2", "flat3", "flat4"] # room2 - основная спасльня, bath2 - примык. к room2
-rooms_weights = [5, 3, 1, 1, 1, 1] # веса комнат, используются для придания ограничений по каждому типу комнат
-areaconstr = [2.3*10,2*2,60*(1-delta),60*(1-delta),110*(1-delta),110*(1-delta)] # минимальные без оболочки
-areaconstrmax = [2.7*15,2*10,60*(1+delta),60*(1+delta),110*(1+delta),110*(1+delta)] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
-widthconstrmin = [2.3, 2, 4.5, 4.5, 4.5, 4.5] # минимальные без оболочки
-widthconstrmax = [2.7, 3, 100, 100, 100, 100] # максимальные без оболочки
-areaconstr_opt = [3,1,4,12,16,16,16,16] # оптимальные без оболочки
-sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
+
+# размеры подъезда
+B1=2.5
+H1=12
+# предварительные размеры коридора для задачи о рюкзаке
+# коридор горизонтальный
+B2=B/2
+H2=2
+
+compartments = ["envelope",  "podezd", "corr"] #["flat1", "flat2", "flat3", "flat4"]
+rooms_weights = [5, 3] #[1, 1, 1, 1] # веса комнат, используются для придания ограничений по каждому типу комнат
+areaconstr = [(B1 - 0.2)*(H1 - 2), H2*H2] #[60*(1-delta),60*(1-delta),110*(1-delta),110*(1-delta)] # минимальные без оболочки
+areaconstrmax = [(B1 + 0.2)*(H1 + 2), H2*B2] #[60*(1+delta),60*(1+delta),110*(1+delta),110*(1+delta)] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
+widthconstrmin = [B1 - 0.2, 2] #4.5, 4.5, 4.5, 4.5] # минимальные без оболочки
+widthconstrmax = [B1 + 0.2, 3] #100, 100, 100, 100] # максимальные без оболочки
+sides_ratio = [0, 0] #1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
+
 #цвета для визуализации, без оболочки
 comp_col = {0: '#73DD9B',
-            1: '#73DD9B',
-            2: '#EAE234',
-            3: '#ECA7A7',
-            4: '#ACBFEC',
-            5: '#ACBFEC',
-            6: '#DC2E2E',
-            7: '#EAE234'
+            1: '#73DD9B'
            }
+
+
+
+
 len_comp=len(compartments)
-
-
 
 # часть общей стены + минимум одна смежная стена
 partcommon_adjacency = [(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1)]
@@ -91,16 +90,38 @@ envel_kitchen = list({(7,7),(7,9),(9,7),(9,9)})
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src=[[[], envel_podezd, envel_corr, envel_flat, envel_flat, envel_flat, envel_flat], #envelope
-        [[], [], podezd_corr, podezd_flat, podezd_flat, podezd_flat, podezd_flat], # "podezd"
-        [[], [], [], corr_other, corr_other, corr_other, corr_other], # "corr"
-        [[], [], [], [], other_room2, other_room2, other_room2], # "flat1"
-        [[], [], [], [], [], other_room2, other_room2], # "flat2"
-        [[], [], [], [], [], [], other_room2], # "flat3"
-        [[], [], [], [], [], [], []]] #"flat4"
+tc_src=[[[], envel_podezd, envel_corr],# envel_flat, envel_flat, envel_flat, envel_flat], #envelope
+        [[], [], podezd_corr],# podezd_flat, podezd_flat, podezd_flat, podezd_flat], # "podezd"
+        [[], [], []]]# corr_other, corr_other, corr_other, corr_other], # "corr"
+        # [[], [], [], [], other_room2, other_room2, other_room2], # "flat1"
+        # [[], [], [], [], [], other_room2, other_room2], # "flat2"
+        # [[], [], [], [], [], [], other_room2], # "flat3"
+        # [[], [], [], [], [], [], []]] #"flat4"
 
-# envel_hall | envel_corr | envel_room
 
+def create_constr():
+    varres, areasres = Knapsack(B, H, B1, H1, B2, H2)
+    # добавление доп.ограничений на комнаты полученные из задачи о рюкзаке
+    k = 0
+    for j, s in enumerate(areasres):
+        for t in range(int(varres[j])):
+            k += 1
+            compartments.append("flat" + str(k))
+            rooms_weights.append(1)
+            areaconstr.append(s * (1 - delta))
+            areaconstrmax.append(s * (1 + delta))
+            widthconstrmin.append(4.5)
+            widthconstrmax.append(100)
+            sides_ratio.append(1)
+            comp_col[k + 1] = '#ACBFEC'
+    tc_src[0] += [envel_flat]*(len(compartments)-3)
+    tc_src[1] += [podezd_flat]*(len(compartments)-3)
+    tc_src[2] += [corr_other]*(len(compartments)-3)
+    for i in range(3, (len(compartments))):
+        tt = []
+        tt += [[]] * (i + 1)
+        tt += [other_room2] * (len(compartments)-1-i)
+        tc_src.append(tt)
 
 
 def prepare_tc(tc_src):
@@ -1030,7 +1051,7 @@ def withoutgapes3(N):
 
 # Поиск различных вариантов компоновки (топологий)
 # ЗАГЛУШКА
-def main_topology(max_results, printres = True):
+def main_topology(max_results, B_, H_, printres = True):
     """
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
@@ -1076,7 +1097,13 @@ def main_topology(max_results, printres = True):
     #
     # compartments = compartments_list
     # len_comp = len(compartments)
+    global len_comp
     max_res = max_results
+    B = B_
+    H = H_
+    create_constr()
+    len_comp = len(compartments)
+    print map(len, tc_src)
     tc = prepare_tc(tc_src)
 
     # topology
@@ -1112,7 +1139,7 @@ def main_size(height, width, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds, tol=0, popsize=15)
+            res = opt.differential_evolution(func2_discret, bounds, popsize=15)
             print res.message, "nit: ", res.nit
             print 'bounds', bounds
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
@@ -1151,11 +1178,12 @@ def calculation(json_string):
     newres = pl2json(plac_ls, compartments, StartPosId)
     return newres
 
+scens = main_topology(n, 20, 20)
 
-def main2(n):
+def main2(n, B_, H_):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(n)
+    scens = main_topology(n, B_, H_)
     # recur_int
     # pr = cProfile.Profile()
     # pr.enable()
@@ -1197,7 +1225,7 @@ def main2(n):
 
 #  ----------------------------------------- ТЕСТИРОВАНИЕ
 if __name__ == "__main__":
-    main2(10)
+    main2(10, 20, 20)
 
 
 #  ----------------------------------------- / ТЕСТИРОВАНИЕ
