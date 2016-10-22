@@ -25,7 +25,7 @@ delta = 0.1
 
 # размеры подъезда
 B1=2.5
-H1=12
+H1=15
 # предварительные размеры коридора для задачи о рюкзаке
 # коридор горизонтальный
 B2=B/2
@@ -81,7 +81,7 @@ envel_flat = [(7,6),(7,7),(7,8),(7,9),(8,7),(8,8),(8,9),(9,7),(9,8),(9,9)]
 corr_other = list((set(partcommon) | set(inverse(partcommon))) | {(1,11),(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(0,8),(0,9),(0,10),(0,11),(0,12),(11,0),(9,0)} ) # -
 hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12),(3,11)}) # используем для случая с коридором
 bath_kitch2room = list(set(adjacency) | {(3,12), (4,12), (5,12), (2, 12), (5, 11)})
-other_room2 = list(set(adjacency) | {(3,12),(4,12), (3,11), (5,12), (5,11)})
+other_room2 = list(set(adjacency) | {(3,12),(4,12), (3,11), (5,12), (5,11), (10,12), (11,7), (12,9)})
 kitchen_livroom = list({(1,6), (6,1), (11,6), (6,11), (3,1), (4,1), (5,1),(1,3), (1,4), (1,5),(3,11), (4,11), (5,11),(11,3), (11,4), (11,5), (12,5)})
 room2_bath = inverse(kitchen_livroom)
 envel_kitchen = list({(7,7),(7,9),(9,7),(9,9)})
@@ -545,16 +545,13 @@ def AfterTo(j,k, scen, dim):
 
 def IsEntrCorrHall(scen):
     # Есть выход в любую квартиру из коридора или подъезда
-    isentr = {(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(2,1),(2,11),(3,1),(3,11),(4,1),(4,11),(5,1),(5,11),(6,1),(6,11),(7,1),(7,11),(8,1),(8,11),(9,1),(9,11),(10,1),(10,11),(11,5),(11,6),(11,7),(11,8),(11,9),(11,10)}
+    isentr = {(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(2,1),(2,11),(3,1),(3,11),(4,1),(4,11),(5,1),(5,11),
+              (6,1),(6,11),(7,1),(7,11),(8,1),(8,11),(9,1),(9,11),(10,1),(10,11),(11,2),(11,3),(11,4),(11,5),(11,6),(11,7),
+              (11,8),(11,9),(11,10),(2,1),(2,2),(2,3),(2,4),(2,5),(2,6),(2,7),(2,8),(2,9),(2,10)}
+    for i in range(3,len_comp):
+        if (len((set(scen[2][i]) | set(scen[1][i])) & isentr)==0):
+            return False
 
-    if (len((set(scen[2][3]) | set(scen[1][3])) & isentr)==0):
-        return False
-    if (len((set(scen[2][4]) | set(scen[1][4])) & isentr)==0):
-        return False
-    if (len((set(scen[2][5]) | set(scen[1][5])) & isentr)==0):
-        return False
-    if (len((set(scen[2][6]) | set(scen[1][6])) & isentr)==0):
-        return False
     return True
 
 # функция используется для быстрой оценки наличия пустот
@@ -1097,13 +1094,12 @@ def main_topology(max_results, B_, H_, printres = True):
     #
     # compartments = compartments_list
     # len_comp = len(compartments)
-    global len_comp
+    global len_comp, max_res, B, H
     max_res = max_results
     B = B_
     H = H_
     create_constr()
     len_comp = len(compartments)
-    print map(len, tc_src)
     tc = prepare_tc(tc_src)
 
     # topology
@@ -1120,8 +1116,12 @@ def main_topology(max_results, B_, H_, printres = True):
     #             print str(i) +":" + str(j) + "Test wasn't passed"
     # print "Test was passed!"
     # return 1
+    import cPickle
+    file = open("d:\YandexDisk\EnkiSoft\Evolution\dump.txt", 'r')
+    scens = cPickle.load(file)
+    file.close()
 
-    scens = EnumerateScenarios(N)
+    #scens = EnumerateScenarios(N)
     t2 = time.clock()
     if printres:
         print "Найдено " + str(len(scens)) + " вариантов размещения комнат" + '\n' + "Время выполнения программы sec.- " + str(t2-t1)
@@ -1178,54 +1178,55 @@ def calculation(json_string):
     newres = pl2json(plac_ls, compartments, StartPosId)
     return newres
 
-scens = main_topology(n, 20, 20)
+# scens = main_topology(n, 20, 20)
 
 def main2(n, B_, H_):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
+    import cPickle
+
     scens = main_topology(n, B_, H_)
-    # recur_int
-    # pr = cProfile.Profile()
-    # pr.enable()
-    # main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
-    # pr.disable()
-    # pr.print_stats(sort='time')
+
+    # save
+    # file = open("dump.txt", 'w')
+    # cPickle.dump(scens, file)
+    # file.close()
 
     # Визуализация
-    # i=0
-    # n=1
-    # for t,pl in enumerate(scens):
-    #     if i%(n**2)==0:
-    #         fig1 = plt.figure()
-    #     ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i), aspect='equal')
-    #     visual2(quickplacement(pl),ax1)
-    #     i+=1
-    #     if (i>100):
-    #         break
-    #
-    # plt.show()
+    i=0
+    n=1
+    for t,pl in enumerate(scens):
+        if i%(n**2)==0:
+            fig1 = plt.figure()
+        ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i), aspect='equal')
+        visual2(quickplacement(pl),ax1)
+        i+=1
+        if (i>100):
+            break
+
+    plt.show()
     # print scens
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(20, 20, scens)
-    # Визуализация
-    i=0
-    n=1
-    for pl in optim_scens:
-        if i%n**2==0:
-            fig1 = plt.figure(figsize=(15, 15))
-        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-        visual(pl, ax1)
-        i+=1
-        if (i>30):
-            break
-    plt.show()
+    # optim_scens = main_size(20, 20, scens)
+    # # Визуализация
+    # i=0
+    # n=1
+    # for pl in optim_scens:
+    #     if i%n**2==0:
+    #         fig1 = plt.figure(figsize=(15, 15))
+    #     ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+    #     visual(pl, ax1)
+    #     i+=1
+    #     if (i>30):
+    #         break
+    # plt.show()
 
 
 #  ----------------------------------------- ТЕСТИРОВАНИЕ
 if __name__ == "__main__":
-    main2(10, 20, 20)
+    main2(40, 20, 20)
 
 
 #  ----------------------------------------- / ТЕСТИРОВАНИЕ
