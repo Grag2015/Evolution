@@ -3,6 +3,8 @@ import itertools
 import numpy as np
 import time
 import copy
+import matplotlib
+matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import re
@@ -1014,14 +1016,24 @@ def withoutgapes3(N):
 
 # Поиск различных вариантов компоновки (топологий)
 # ЗАГЛУШКА
-def main_topology(max_results, compartments_list, printres = True):
+def main_topology(max_results, compartments_list, hall_pos, printres = True):
     """
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
     """
-    global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax
+    global max_res, compartments, envel_hall, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax
     max_res = max_results
 
+    # правим envel_hall в зависимости от hall_pos
+    if hall_pos==0:
+        envel_hall = [(9,9)]
+    else:
+        if hall_pos == 1:
+            envel_hall = [(9, 8)]
+        else:
+            if hall_pos != 2:
+                print "envel_hall incorrect"
+                return False
     # sc = [[[[(6, 6)], [(9, 9)], [(8, 8)], [(7, 9)], [(7, 8)], [(9, 7)], [(7, 7)]],
     #  [[(3, 3)], [(6, 6)], [(1, 7)], [(1, 9)], [(0, 7)], [(3, 1)], [(0, 1)]],
     #  [[(4, 4)], [(11, 5)], [(6, 6)], [(3, 11)], [(1, 6)], [(5, 1)], [(1, 1)]],
@@ -1091,21 +1103,30 @@ def main_topology(max_results, compartments_list, printres = True):
     return scens
 
 # Учет ограничений по площади/длине
-def main_size(height, width, scens):
+def main_size(B_, H_, scens, entr_wall, hall_pos):
     global B, H, res_x
-    B = width
-    H = height
+    B = B_
+    H = H_
     t1 = time.clock()
     optim_scens=[]
     res_x=[]
     for i in range(len(scens)):
         try:
-            makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds)
+            makeconst(quickplacement(scens[i])) # подготовка ограничения для целевой функции
+            res = opt.differential_evolution(func2_discret, bounds) # оптимизация целевой ф-и с указанными ограничениями
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
-            optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+            res_tmp = optim_placement(quickplacement(scens[i]), xlistnew, ylistnew) # преобразование результатов оптимизации во внутренний формат
+            # вращение планировки в зависимости от позиции входной стены entr_wall in {(0,0),(0,1),(1,0),(1,1),(2,0),(2,1),(3,0),(3,1)}
+            # если прихожая может быть в центре, то просто поворачиваем по часовой стрелке entr_wall[0] раз
+            if hall_pos>=1:
+                res_tmp = rotate90(res_tmp, entr_wall[0])
+            # если прихожая только угловая
+            else:
+                res_tmp = rotate90(res_tmp, entr_wall[0]+entr_wall[1])
+
+            optim_scens.append(res_tmp)
             res_x.append(func2_discret_results(res.x))
         except ValueError:
             print('Планировка '+str(i)+' не была рассчитана!')
@@ -1138,16 +1159,15 @@ def calculation(json_string):
     newres = pl2json(plac_ls, compartments, StartPosId)
     return newres
 
-def main2():
+# hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
+# entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
+def main2(max_results, compartments_list, hall_pos, entr_wall, B_, H_):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    scens = main_topology(100, ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"])
+    scens = main_topology(max_results, compartments_list, hall_pos)
     recur_int
-    pr = cProfile.Profile()
-    pr.enable()
+
     main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
-    pr.disable()
-    pr.print_stats(sort='time')
 
     # Визуализация
     i=0
@@ -1162,7 +1182,7 @@ def main2():
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(8, 8, scens)
+    optim_scens = main_size(B_, H_, scens, entr_wall)
     # Визуализация
     i=0
     n=2
@@ -1175,15 +1195,8 @@ def main2():
         if (i>30):
             break
 
+main_topology(5, ["envelope", "hall", "corr", "bath", "kitchen", "room", "room2"])
 
-    t1=time.clock()
-    #PathConsistency(tc)
-    atomicIAcomp(0,2)
-    t2=time.clock()
-    t2-t1
-
-    PathConsistency(tc)
-    tc[0][0]
 
 #  ----------------------------------------- ТЕСТИРОВАНИЕ
 if __name__ == "__main__":
@@ -1253,7 +1266,6 @@ if __name__ == "__main__":
               [[], [], [], [], [], [], []]]
     tc =  prepare_tc(tc_src)
 
-    import doctest
-    doctest.testmod()
+
 
 #  ----------------------------------------- / ТЕСТИРОВАНИЕ
