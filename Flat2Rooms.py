@@ -666,7 +666,7 @@ def placement_all(dmin, dmax, scen):
     res.append(placement(1, dmin, dmax, scen))
     return res
 
-def visual(placement_all):
+def visual(placement_all, ax1):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     # fig1 = plt.figure(figsize=(10,10) )
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
@@ -684,7 +684,7 @@ def visual(placement_all):
     # plt.show()
 
 # visual without sizes
-def visual2(placement_all):
+def visual2(placement_all, ax1):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     # fig1 = plt.figure(figsize=(10,10) )
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
@@ -1102,6 +1102,30 @@ def main_topology(max_results, compartments_list, hall_pos, printres = True):
 
     return scens
 
+def rotate90(pl, n): # n time по часовой стрелке
+    """
+    >>> pl = [[0.0, 5.0, 0.0, 1.3636363636363635, 0.0, 3.1818181818181817, 1.3636363636363635, 2.2727272727272729,
+    ... 2.2727272727272729, 3.1818181818181817, 0.0, 3.1818181818181817, 3.1818181818181817, 5.0],
+    ... [0.0, 6.0, 0.0, 2.3999999999999999, 2.3999999999999999, 4.7999999999999998, 0.0, 2.3999999999999999, 0.0,
+    ... 2.3999999999999999, 4.7999999999999998, 6.0, 0.0, 6.0]]
+    >>> (rotate90(pl)[0][0],rotate90(pl)[0][5],rotate90(pl)[1][4],rotate90(pl)[1][6])
+    (0.0, 3.0, 0.0, 1.6363636363636362)
+    """
+    if n==0:
+        return pl
+    if n==1:
+        pln=[[],[]]
+        pln[0] = map(lambda x: (x/float(H))*B, pl[1])
+        pln[1] = map(lambda y: (H-(y/float(B))*H), pl[0])
+        for i in range(len(pl[0])/2):
+            b1=min(pln[1][2*i],pln[1][2 * i+1])
+            b2=max(pln[1][2*i],pln[1][2 * i+1])
+            pln[1][2*i]=b1
+            pln[1][2*i+1]=b2
+        return pln
+    else:
+        return rotate90(rotate90(pl, n-1), 1)
+
 # Учет ограничений по площади/длине
 def main_size(B_, H_, scens, entr_wall, hall_pos):
     global B, H, res_x
@@ -1164,6 +1188,7 @@ def calculation(json_string):
     newres = pl2json(plac_ls, compartments, StartPosId)
     return newres
 
+
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
 # Todo внимание! нужно возвращать 1 наилучшую планировку!
@@ -1179,7 +1204,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     max_results = 3
     recur_int = 0
     scens = main_topology(max_results, compartments_list, hall_pos)
-
+    print scens
 
     # Визуализация
     i=0
@@ -1187,14 +1212,14 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
         if i%9==0:
             fig1 = plt.figure(figsize=(15, 15))
         ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-        visual2(quickplacement(pl))
+        visual2(quickplacement(pl), ax1)
         i+=1
         if (i>100):
             break
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(B_, H_, scens, entr_wall)
+    optim_scens = main_size(B_, H_, scens, entr_wall, hall_pos)
     # Визуализация
     i=0
     n=2
@@ -1202,9 +1227,10 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
         if i%n**2==0:
             fig1 = plt.figure(figsize=(15, 15))
         ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-        visual(pl)
+        visual(pl, ax1)
         i+=1
         if (i>30):
             break
 
 
+Flat2Rooms(20, 20, (0,1),0, 2)
