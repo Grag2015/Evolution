@@ -1004,7 +1004,7 @@ def withoutgapes3(N):
     s = 0
     st = []
     for t in range(1, len_comp):
-        st = st + N[0][t] # TODO тут возможно ошибка
+        st = st + N[0][t]
     st = set(st)
     for t in range(len(dct)):
         if dct[t] in st:
