@@ -888,7 +888,7 @@ def func2_discret(xy):
 
     # ограничение на максимальную ширину
     res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(x),Ay.dot(y))))
-
+    # отрицательные элементы переводим в 1, 0 и положительные - в 0
     res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
     res1maxsign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1max))
     res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
@@ -1110,10 +1110,15 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
     t1 = time.clock()
     optim_scens=[]
     res_x=[]
+    bestmin = 1000
+    bestmini = -1
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i])) # подготовка ограничения для целевой функции
             res = opt.differential_evolution(func2_discret, bounds) # оптимизация целевой ф-и с указанными ограничениями
+            if res.fun < bestmin:
+                bestmin = res.fun
+                bestmini = i
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i
@@ -1133,7 +1138,7 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
 
-    return optim_scens
+    return optim_scens[bestmini]
 
 
 def calculation(json_string):
@@ -1161,13 +1166,20 @@ def calculation(json_string):
 
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
-def main2(max_results, compartments_list, hall_pos, entr_wall, B_, H_):
+# Todo внимание! нужно возвращать 1 наилучшую планировку!
+def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
+    compartments_list = ["envelope",  "hall", "corr", "bath", "kitchen"]
+    # ToDo надо добавлять еще 3-х и 4-хкомнатные квартиры
+    if count_rooms==1:
+        compartments_list += ["room"]
+    else:
+        compartments_list += ["room","room2"]
+    max_results = 3
+    recur_int = 0
     scens = main_topology(max_results, compartments_list, hall_pos)
-    recur_int
 
-    main_topology(5, ["envelope",  "hall", "room", "bath", "kitchen"])
 
     # Визуализация
     i=0
@@ -1195,77 +1207,4 @@ def main2(max_results, compartments_list, hall_pos, entr_wall, B_, H_):
         if (i>30):
             break
 
-main_topology(5, ["envelope", "hall", "corr", "bath", "kitchen", "room", "room2"])
 
-
-#  ----------------------------------------- ТЕСТИРОВАНИЕ
-if __name__ == "__main__":
-    timeout = 15
-    depth_recurs = 10000
-    recur_int = 0
-    B=5
-    H=6
-    max_res = 10 #максимальное количество результатов, важно ограничивать для скорости работы
-    min_margin = 0.5
-    # atomic relations block algebra
-    ARelBA = [[(y, x) for x in range(13)] for y in range(13)]
-
-    # комнаты
-    # TODO удалить лишние элементы в списке (коридор)
-    compartments = ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"]
-    rooms_weights = [1, 1, 2, 2, 1, 1.5] # веса комнат, используются для придания ограничений по каждому типу комнат
-    areaconstr = [1,1,14,14,3.6,9] # минимальные без оболочки
-    areaconstr_opt = [3,1,16,16,4,12] # оптимальные без оболочки
-    sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
-    #цвета для визуализации, без оболочки
-    comp_col = {0: '#ECA7A7',
-                1: '#73DD9B',
-                2: '#ACBFEC',
-                3: '#ACBFEC',
-                4: '#EAE234',
-                5: '#ECA7A7'
-               }
-
-
-    # Ограничения
-    all_const = set()
-    for i in range(13):
-        for j in range(13):
-            all_const.add(ARelBA[i][j])
-
-    # часть общей стены + минимум одна смежная стена
-    partcommon_adjacency = [(1, 3), (1, 5), (1, 6), (1, 7), (1, 9), (3, 1), (5, 1), (6, 1), (7, 1), (9, 1)]
-    # часть общей стены
-    partcommon = list(set(partcommon_adjacency) | set(
-        [(1, 2), (1, 4), (1, 8), (1, 10), (2, 1), (4, 1), (8, 1), (10, 1), (11, 6), (6, 11)]))
-    # А содержит В и есть 1,2 общая часть стены
-    inclusion_partcommon = [(9, 6), (9, 7), (9, 8), (9, 9), (7, 6), (7, 7), (7, 8), (7, 9), (8, 6), (8, 7), (8, 9),
-                            (6, 9), (6, 10)]
-
-    # смежные
-    adjacency = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (6, 11), (7, 1), (8, 1), (9, 1), (10, 1), (11, 1),
-                 (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (11, 6),
-                 (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10), (0, 11),
-                 (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0), (11, 0)]
-
-    envel_hall = inclusion_partcommon
-    envel_room = inclusion_partcommon  # - {(7, 8), (8, 7), (8, 9), (9, 8)}
-    bath_kitchen = partcommon_adjacency
-    # hall_other = partcommon #Для случая без коридора
-    hall_corr = list(set(partcommon) - set([(1, 6), (6, 1)]))  # Для случая c коридор
-    envel_corr = list(set(inclusion_partcommon) | set([(8, 8)]))
-    corr_other = list(set(partcommon) | set(inverse(partcommon)))
-
-    len_comp = len(compartments)
-    tc_src = [[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
-              [[], [], hall_corr, adjacency, adjacency, adjacency, adjacency],
-              [[], [], [], corr_other, corr_other, corr_other, corr_other],
-              [[], [], [], [], adjacency, adjacency, adjacency],
-              [[], [], [], [], [], adjacency, adjacency],
-              [[], [], [], [], [], [], bath_kitchen],
-              [[], [], [], [], [], [], []]]
-    tc =  prepare_tc(tc_src)
-
-
-
-#  ----------------------------------------- / ТЕСТИРОВАНИЕ

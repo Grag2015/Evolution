@@ -1180,7 +1180,7 @@ def calculation(json_string):
 
 # scens = main_topology(n, 20, 20)
 
-def main2(n, B_, H_):
+def Section2Flats(n, B_, H_):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
     import cPickle
@@ -1193,23 +1193,23 @@ def main2(n, B_, H_):
     # file.close()
 
     # Визуализация
-    i=0
-    n=1
-    for t,pl in enumerate(scens):
-        if i%(n**2)==0:
-            fig1 = plt.figure()
-        ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i), aspect='equal')
-        visual2(quickplacement(pl),ax1)
-        i+=1
-        if (i>100):
-            break
-
-    plt.show()
+    # i=0
+    # n=1
+    # for t,pl in enumerate(scens):
+    #     if i%(n**2)==0:
+    #         fig1 = plt.figure()
+    #     ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i), aspect='equal')
+    #     visual2(quickplacement(pl),ax1)
+    #     i+=1
+    #     if (i>100):
+    #         break
+    #
+    # plt.show()
     # print scens
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    # optim_scens = main_size(20, 20, scens)
+    optim_scens = main_size(B_, H_, scens)
     # # Визуализация
     # i=0
     # n=1
@@ -1222,11 +1222,4 @@ def main2(n, B_, H_):
     #     if (i>30):
     #         break
     # plt.show()
-
-
-#  ----------------------------------------- ТЕСТИРОВАНИЕ
-if __name__ == "__main__":
-    main2(40, 20, 20)
-
-
-#  ----------------------------------------- / ТЕСТИРОВАНИЕ
+    return scens[0], optim_scens[0]
