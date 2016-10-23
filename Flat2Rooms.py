@@ -1161,8 +1161,8 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
             print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
-
-    return optim_scens[bestmini]
+    res_tmp = []
+    return res_tmp.append(optim_scens[bestmini])
 
 
 def calculation(json_string):
@@ -1204,8 +1204,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     max_results = 3
     recur_int = 0
     scens = main_topology(max_results, compartments_list, hall_pos)
-    print scens
-
+    #print scens
     # Визуализация
     i=0
     for pl in scens:
@@ -1213,6 +1212,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
             fig1 = plt.figure(figsize=(15, 15))
         ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
         visual2(quickplacement(pl), ax1)
+        print quickplacement(pl)
         i+=1
         if (i>100):
             break
@@ -1233,4 +1233,4 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
             break
 
 
-Flat2Rooms(20, 20, (0,1),0, 2)
+Flat2Rooms(20, 20, (0,0),0, 2)
