@@ -25,23 +25,22 @@ min_margin = 1.2
 
 # комнаты
 # TODO удалить лишние элементы в списке (коридор)
-compartments = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
-rooms_weights = [1, 1, 1, 1.5, 2, 2] # веса комнат, используются для придания ограничений по каждому типу комнат
-areaconstr = [1,1,3.6,9,14,14] # минимальные без оболочки
-areaconstrmax = [4.5,4.5,4.5,16,1000,1000] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
-widthconstrmin = [1.4,1.2,1.5,2.3,3,3] # минимальные без оболочки
-widthconstrmax = [2, 1.5, 1.5, 1000, 1000, 1000] # максимальные без оболочки
-areaconstr_opt = [3,1,4,12,16,16] # оптимальные без оболочки
-sides_ratio = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
+compartments_src = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
+rooms_weights_src = [1, 1, 1, 1.5, 2, 2] # веса комнат, используются для придания ограничений по каждому типу комнат
+areaconstr_src = [1,1,3.6,9,14,14] # минимальные без оболочки
+areaconstrmax_src = [4.5,4.5,4.5,16,1000,1000] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
+widthconstrmin_src = [1.4,1.2,1.5,2.3,3,3] # минимальные без оболочки
+widthconstrmax_src = [2, 1.5, 1.5, 1000, 1000, 1000] # максимальные без оболочки
+sides_ratio_src = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
-comp_col = {0: '#73DD9B',
+comp_col_src = {0: '#73DD9B',
             1: '#73DD9B',
             2: '#EAE234',
             3: '#ECA7A7',
             4: '#ACBFEC',
             5: '#ACBFEC'
            }
-len_comp=len(compartments)
+len_comp=len(compartments_src)
 
 
 
@@ -80,7 +79,7 @@ other_room2 = list(set(adjacency) | {(3,12),(4,12), (3,11), (5,12), (5,11)})
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
+tc_src_s=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
     [[],[], hall_corr , hall_other , hall_other, hall_other, other_room2],
     [[],[], [], corr_other, corr_other, corr_other, other_room2],
     [[], [], [], [],  bath_kitchen, bath_kitch2room, other_room2],
@@ -1024,9 +1023,19 @@ def main_topology(max_results, compartments_list, hall_pos, printres = True):
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
     """
-    global max_res, compartments, envel_hall, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax, \
+    global max_res, compartments, envel_hall, recur_int, nres, stop, rooms_weights, areaconstr, sides_ratio, comp_col, len_comp, areaconstrmax, \
         widthconstrmin, widthconstrmax
     max_res = max_results
+
+    compartments = copy.deepcopy(compartments_src)
+    rooms_weights = copy.deepcopy(rooms_weights_src)
+    areaconstr = copy.deepcopy(areaconstr_src)
+    areaconstrmax = copy.deepcopy(areaconstrmax_src)
+    widthconstrmin = copy.deepcopy(widthconstrmin_src)
+    widthconstrmax = copy.deepcopy(widthconstrmax_src)
+    sides_ratio = copy.deepcopy(sides_ratio_src)
+    comp_col = copy.deepcopy(comp_col_src)
+    tc_src = copy.deepcopy(tc_src_s)
 
     # правим envel_hall в зависимости от hall_pos
     if hall_pos==0:
@@ -1048,7 +1057,7 @@ def main_topology(max_results, compartments_list, hall_pos, printres = True):
     # return sc
 
     # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
-    changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, areaconstrmax, widthconstrmin, widthconstrmax]
+    changing_lists = [rooms_weights, areaconstr, sides_ratio, comp_col, areaconstrmax, widthconstrmin, widthconstrmax]
     new_lists=[]
     for i in range(len(changing_lists)): new_lists.append([])
     for i in range(len(compartments[1:])):
@@ -1058,12 +1067,11 @@ def main_topology(max_results, compartments_list, hall_pos, printres = True):
 
     rooms_weights = new_lists[0]
     areaconstr = new_lists[1]
-    areaconstr_opt = new_lists[2]
-    sides_ratio = new_lists[3]
-    comp_col = new_lists[4]
-    areaconstrmax = new_lists[5]
-    widthconstrmin = new_lists[6]
-    widthconstrmax = new_lists[7]
+    sides_ratio = new_lists[2]
+    comp_col = new_lists[3]
+    areaconstrmax = new_lists[4]
+    widthconstrmin = new_lists[5]
+    widthconstrmax = new_lists[6]
 
     # есть есть коридор, то с прихожей снимается требование "смежность со всеми комнатами"
     if ("corr" in compartments_list):

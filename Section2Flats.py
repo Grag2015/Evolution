@@ -1153,7 +1153,7 @@ def main_size(height, width, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds, popsize=17, tol=0.00001)
+            res = opt.differential_evolution(func2_discret, bounds, popsize=20, tol=0)
             print res.message, "nit: ", res.nit
             print 'bounds', bounds
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
@@ -1212,3 +1212,13 @@ def Section2Flats(n, B_, H_):
             break
     plt.show()
     return scens[0], optim_scens[0]
+
+# Todo надо искать наверное другой метод оптимизации, очень плохо рассчитывает например такую топологию
+# https://yadi.sk/i/0-wdAf5gxYKcL
+# [[[(6, 6)], [(8, 9)], [(9, 8)], [(7, 6)], [(8, 9)], [(9, 9)], [(9, 7)]],
+#  [[(4, 3)], [(6, 6)], [(5, 1)], [(1, 3)], [(11, 6)], [(12, 6)], [(5, 0)]],
+#  [[(3, 4)], [(7, 11)], [(6, 6)], [(1, 4)], [(8, 11)], [(9, 11)], [(6, 1)]],
+#  [[(5, 6)], [(11, 9)], [(11, 8)], [(6, 6)], [(12, 9)], [(12, 9)], [(11, 7)]],
+#  [[(4, 3)], [(1, 6)], [(4, 1)], [(0, 3)], [(6, 6)], [(11, 6)], [(4, 0)]],
+#  [[(3, 3)], [(0, 6)], [(3, 1)], [(0, 3)], [(1, 6)], [(6, 6)], [(3, 0)]],
+#  [[(3, 5)], [(7, 12)], [(6, 11)], [(1, 5)], [(8, 12)], [(9, 12)], [(6, 6)]]]

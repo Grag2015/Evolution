@@ -30,8 +30,8 @@ def prepareflats(scen, flats):
     for i in range(3, len(scen)):
         x1 = flats[0][i*2]
         y1 = flats[1][i*2]
-        H = flats[0][i*2+1] - flats[0][i*2]
         B = flats[0][i*2+1] - flats[0][i*2]
+        H = flats[1][i*2+1] - flats[1][i*2]
         hall_pos, entrwall = entrwall_hall_pos(scen[2][i], scen[1][i])
         if B*H<44:
             count_rooms = 1
@@ -108,3 +108,5 @@ def visual_sect(placement_all, B_, H_):
         # ax1.text(placement_all[0][2*i]/float(B_)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B_))/2.,
         #          placement_all[1][2 * i] / float(H_) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H_))/2.)
     # plt.show()
+
+visual_sect(flats, B_, H_)
