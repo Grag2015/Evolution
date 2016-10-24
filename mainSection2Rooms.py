@@ -1,6 +1,12 @@
 from Section2Flats import Section2Flats
 from Flat2Rooms import Flat2Rooms
 from Flat2Rooms import visual_pl
+import numpy as np
+
+import matplotlib
+matplotlib.use('Qt4Agg')
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 def Section2Rooms(n, B_, H_):
     scens, flats = Section2Flats(n, B_, H_)
@@ -11,12 +17,12 @@ def Section2Rooms(n, B_, H_):
         res.append([(fl[0],fl[1]), Flat2Rooms(fl[2], fl[3], fl[4], fl[5], fl[6])])
 
     # visualization
-    globplac =[]
+    globplac =[[],[]]
     for rs in res:
-        globplac.append(list(np.array(rs[1][0]) + x1))
-        globplac.append(list(np.array(rs[1][1]) + y1))
+        globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
+        globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
 
-    visual_pl(globplac)
+        visual_sect(globplac, B_, H_)
 
 def prepareflats(scen, flats):
     # output - x1,y1, H,B, entrwall, hall_pos, count_rooms
@@ -26,7 +32,7 @@ def prepareflats(scen, flats):
         y1 = flats[1][i*2]
         H = flats[0][i*2+1] - flats[0][i*2]
         B = flats[0][i*2+1] - flats[0][i*2]
-        hall_pos, entrwall = entrwall_hall_pos(scen[2,i], scen[1,i])
+        hall_pos, entrwall = entrwall_hall_pos(scen[2][i], scen[1][i])
         if B*H<44:
             count_rooms = 1
         else:
@@ -88,4 +94,17 @@ def entrwall_hall_pos(corr_flat, podezd_flat):
             (4, 11): (1, (1,0))}
     return dct[tmp[0]]
 
-Section2Rooms(1, 20, 20)
+def visual_sect(placement_all, B_, H_):
+    # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
+    fig1 = plt.figure(figsize=(10,10) )
+    # plt.axis([-0.1, 1.1, -0.1, 1.1])
+    ax1 = fig1.add_subplot(111, aspect='equal')
+    for i in range(0, len(placement_all[0])/2): # объединяющий прямоугольник не отрисовываем
+        ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B_), placement_all[1][2*i]/float(H_)),   # (x,y)
+                                         abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B_),          # width
+                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H_), alpha=0.6, label='test '+str(i)
+            )
+        )
+        # ax1.text(placement_all[0][2*i]/float(B_)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B_))/2.,
+        #          placement_all[1][2 * i] / float(H_) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H_))/2.)
+    # plt.show()

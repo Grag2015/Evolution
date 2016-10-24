@@ -96,6 +96,9 @@ def prepare_tc(tc_src):
     tc = copy.deepcopy(tc_src)
     # верхний треугольник оставляем без изменений
     # диагональ заполняем значением (6,6)
+    global len_comp
+    print "len_comp"
+    print len_comp
     for i in range(len_comp):
         tc[i][i].append((6,6))
 
@@ -1235,5 +1238,5 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     #     i+=1
     #     if (i>30):
     #         break
-    return optim_scens
+    return optim_scens[0]
 

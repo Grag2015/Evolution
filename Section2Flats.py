@@ -7,8 +7,9 @@ import copy
 # import PySide
 # import matplotlib
 # matplotlib.use('Agg')
+import matplotlib
+matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
-
 import matplotlib.patches as mpatches
 import re
 
@@ -126,6 +127,7 @@ def create_constr():
 
 def prepare_tc(tc_src):
     tc = copy.deepcopy(tc_src)
+    global len_comp
     # верхний треугольник оставляем без изменений
     # диагональ заполняем значением (6,6)
     for i in range(len_comp):
