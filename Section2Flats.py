@@ -1116,12 +1116,12 @@ def main_topology(max_results, B_, H_, printres = True):
     #             print str(i) +":" + str(j) + "Test wasn't passed"
     # print "Test was passed!"
     # return 1
-    import cPickle
-    file = open("d:\YandexDisk\EnkiSoft\Evolution\dump.txt", 'r')
-    scens = cPickle.load(file)
-    file.close()
+    # import cPickle
+    # file = open("d:\YandexDisk\EnkiSoft\Evolution\dump.txt", 'r')
+    # scens = cPickle.load(file)
+    # file.close()
 
-    #scens = EnumerateScenarios(N)
+    scens = EnumerateScenarios(N)
     t2 = time.clock()
     if printres:
         print "Найдено " + str(len(scens)) + " вариантов размещения комнат" + '\n' + "Время выполнения программы sec.- " + str(t2-t1)
@@ -1154,31 +1154,6 @@ def main_size(height, width, scens):
 
     return optim_scens
 
-
-def calculation(json_string):
-    # функция получает JSON с размерами функ.зон, рассчитывает для каждой уникальной пары размеров планировку
-    # и возвращает обратно JSON с планировками для каждой функциональной зоны
-    print "beforerroe"
-    data = json.loads(json_string)
-    print "aftererroe"
-    Sizes, StartPosId = json2params(data)
-    # Расчет топологий
-    scens = main_topology(1, ["envelope", "hall", "corr", "bath", "kitchen", "room", "room2"])
-
-    # Расчитываем планировки для каждого элемента из списка (Для каждой топологии)
-    SizesUnique = list(set(Sizes))
-    optim_scens = []
-    for bh in SizesUnique:
-        # Беру первую рассчитанную планировку (в дальнейшем их сортируем в порядке возр. кол-ва нарушенных ограничений)
-        tmp = main_size(bh[0], bh[1], scens)[0]
-        optim_scens.append([tmp[0][2:], tmp[1][2:]])  # exclude envelop
-
-    # Готовим список с планировками и отправляем его в pl2json вместе с StartPosId
-    plac_ls = map(lambda x: optim_scens[SizesUnique.index(x)], Sizes)
-    newres = pl2json(plac_ls, compartments, StartPosId)
-    return newres
-
-# scens = main_topology(n, 20, 20)
 
 def Section2Flats(n, B_, H_):
     # Поиск топологий

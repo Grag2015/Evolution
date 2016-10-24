@@ -1,4 +1,6 @@
 from Section2Flats import Section2Flats
+from Flat2Rooms import Flat2Rooms
+from Flat2Rooms import visual_pl
 
 def Section2Rooms(n, B_, H_):
     scens, flats = Section2Flats(n, B_, H_)
@@ -9,9 +11,12 @@ def Section2Rooms(n, B_, H_):
         res.append([(fl[0],fl[1]), Flat2Rooms(fl[2], fl[3], fl[4], fl[5], fl[6])])
 
     # visualization
+    globplac =[]
     for rs in res:
-        globplac = [list(np.array(rs[1][0]) + x1), list(np.array(rs[1][1]) + y1)]
-        visual()
+        globplac.append(list(np.array(rs[1][0]) + x1))
+        globplac.append(list(np.array(rs[1][1]) + y1))
+
+    visual_pl(globplac)
 
 def prepareflats(scen, flats):
     # output - x1,y1, H,B, entrwall, hall_pos, count_rooms
@@ -82,3 +87,5 @@ def entrwall_hall_pos(corr_flat, podezd_flat):
             (1, 4): (1, (0,0)),
             (4, 11): (1, (1,0))}
     return dct[tmp[0]]
+
+Section2Rooms(1, 20, 20)

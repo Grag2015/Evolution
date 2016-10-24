@@ -1211,29 +1211,29 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     scens = main_topology(max_results, compartments_list, hall_pos)
     #print scens
     # Визуализация
-    i=0
-    for pl in scens:
-        if i%9==0:
-            fig1 = plt.figure(figsize=(15, 15))
-        ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-        visual2(quickplacement(pl), ax1)
-        i+=1
-        if (i>100):
-            break
+    # i=0
+    # for pl in scens:
+    #     if i%9==0:
+    #         fig1 = plt.figure(figsize=(15, 15))
+    #     ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
+    #     visual2(quickplacement(pl), ax1)
+    #     i+=1
+    #     if (i>100):
+    #         break
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
     optim_scens = main_size(B_, H_, scens, entr_wall, hall_pos)
     # Визуализация
-    i=0
-    n=2
-    for pl in optim_scens:
-        if i%n**2==0:
-            fig1 = plt.figure(figsize=(15, 15))
-        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-        visual(pl, ax1)
-        i+=1
-        if (i>30):
-            break
-
+    # i=0
+    # n=2
+    # for pl in optim_scens:
+    #     if i%n**2==0:
+    #         fig1 = plt.figure(figsize=(15, 15))
+    #     ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+    #     visual(pl, ax1)
+    #     i+=1
+    #     if (i>30):
+    #         break
+    return optim_scens
 
