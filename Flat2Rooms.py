@@ -1021,7 +1021,8 @@ def main_topology(max_results, compartments_list, hall_pos, printres = True):
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
     """
-    global max_res, compartments, envel_hall, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax
+    global max_res, compartments, envel_hall, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax, \
+        widthconstrmin, widthconstrmax
     max_res = max_results
 
     # правим envel_hall в зависимости от hall_pos
@@ -1044,7 +1045,7 @@ def main_topology(max_results, compartments_list, hall_pos, printres = True):
     # return sc
 
     # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
-    changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, areaconstrmax]
+    changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, areaconstrmax, widthconstrmin, widthconstrmax]
     new_lists=[]
     for i in range(len(changing_lists)): new_lists.append([])
     for i in range(len(compartments[1:])):
@@ -1057,6 +1058,9 @@ def main_topology(max_results, compartments_list, hall_pos, printres = True):
     areaconstr_opt = new_lists[2]
     sides_ratio = new_lists[3]
     comp_col = new_lists[4]
+    areaconstrmax = new_lists[5]
+    widthconstrmin = new_lists[6]
+    widthconstrmax = new_lists[7]
 
     # есть есть коридор, то с прихожей снимается требование "смежность со всеми комнатами"
     if ("corr" in compartments_list):
@@ -1137,28 +1141,28 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
     bestmin = 1000
     bestmini = -1
     for i in range(len(scens)):
-        try:
-            makeconst(quickplacement(scens[i])) # подготовка ограничения для целевой функции
-            res = opt.differential_evolution(func2_discret, bounds) # оптимизация целевой ф-и с указанными ограничениями
-            if res.fun < bestmin:
-                bestmin = res.fun
-                bestmini = i
-            xlistnew = list(res.x[0:len(Ax[0]) - 1])
-            ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
-            #print i
-            res_tmp = optim_placement(quickplacement(scens[i]), xlistnew, ylistnew) # преобразование результатов оптимизации во внутренний формат
-            # вращение планировки в зависимости от позиции входной стены entr_wall in {(0,0),(0,1),(1,0),(1,1),(2,0),(2,1),(3,0),(3,1)}
-            # если прихожая может быть в центре, то просто поворачиваем по часовой стрелке entr_wall[0] раз
-            if hall_pos>=1:
-                res_tmp = rotate90(res_tmp, entr_wall[0])
-            # если прихожая только угловая
-            else:
-                res_tmp = rotate90(res_tmp, entr_wall[0]+entr_wall[1])
+        #try:
+        makeconst(quickplacement(scens[i])) # подготовка ограничения для целевой функции
+        res = opt.differential_evolution(func2_discret, bounds) # оптимизация целевой ф-и с указанными ограничениями
+        if res.fun < bestmin:
+            bestmin = res.fun
+            bestmini = i
+        xlistnew = list(res.x[0:len(Ax[0]) - 1])
+        ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
+        #print i
+        res_tmp = optim_placement(quickplacement(scens[i]), xlistnew, ylistnew) # преобразование результатов оптимизации во внутренний формат
+        # вращение планировки в зависимости от позиции входной стены entr_wall in {(0,0),(0,1),(1,0),(1,1),(2,0),(2,1),(3,0),(3,1)}
+        # если прихожая может быть в центре, то просто поворачиваем по часовой стрелке entr_wall[0] раз
+        if hall_pos>=1:
+            res_tmp = rotate90(res_tmp, entr_wall[0])
+        # если прихожая только угловая
+        else:
+            res_tmp = rotate90(res_tmp, entr_wall[0]+entr_wall[1])
 
-            optim_scens.append(res_tmp)
-            res_x.append(func2_discret_results(res.x))
-        except ValueError:
-            print('Планировка '+str(i)+' не была рассчитана!')
+        optim_scens.append(res_tmp)
+        res_x.append(func2_discret_results(res.x))
+        #except ValueError:
+        #    print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
@@ -1231,4 +1235,5 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
         i+=1
         if (i>30):
             break
+
 
