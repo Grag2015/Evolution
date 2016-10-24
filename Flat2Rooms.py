@@ -1162,7 +1162,8 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
-    return res_tmp.append(optim_scens[bestmini])
+    res_tmp.append(optim_scens[bestmini])
+    return res_tmp
 
 
 def calculation(json_string):
@@ -1212,7 +1213,6 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
             fig1 = plt.figure(figsize=(15, 15))
         ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
         visual2(quickplacement(pl), ax1)
-        print quickplacement(pl)
         i+=1
         if (i>100):
             break
@@ -1232,5 +1232,3 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
         if (i>30):
             break
 
-
-Flat2Rooms(20, 20, (0,0),0, 2)
