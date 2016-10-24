@@ -1187,16 +1187,16 @@ def Section2Flats(n, B_, H_):
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
     optim_scens = main_size(B_, H_, scens)
-    # # Визуализация
-    # i=0
-    # n=1
-    # for pl in optim_scens:
-    #     if i%n**2==0:
-    #         fig1 = plt.figure(figsize=(15, 15))
-    #     ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-    #     visual(pl, ax1)
-    #     i+=1
-    #     if (i>30):
-    #         break
-    # plt.show()
+    # Визуализация
+    i=0
+    n=1
+    for pl in optim_scens:
+        if i%n**2==0:
+            fig1 = plt.figure(figsize=(15, 15))
+        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+        visual(pl, ax1)
+        i+=1
+        if (i>30):
+            break
+    plt.show()
     return scens[0], optim_scens[0]
