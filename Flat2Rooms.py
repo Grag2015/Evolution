@@ -1246,5 +1246,5 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     #     i+=1
     #     if (i>30):
     #         break
-    return optim_scens[0]
+    return optim_scens[0], comp_col
 

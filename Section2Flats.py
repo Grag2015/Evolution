@@ -944,7 +944,7 @@ def func2_discret(xy):
     res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
     res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
 
-    return res1sign.dot(rooms_weights) + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign) + sum(res5sign) + sum(res6sign)+ sum(res7sign)*5 + sum(res1maxsign)
+    return res1sign.dot(rooms_weights)*5 + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign) + sum(res5sign) + sum(res6sign)+ sum(res7sign)*5 + sum(res1maxsign)
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
@@ -1150,10 +1150,15 @@ def main_size(height, width, scens):
     t1 = time.clock()
     optim_scens=[]
     res_x=[]
+    bestmin = 1000
+    bestmini = -1
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
             res = opt.differential_evolution(func2_discret, bounds, popsize=20, tol=0)
+            if res.fun < bestmin:
+                bestmin = res.fun
+                bestmini = i
             print res.message, "nit: ", res.nit
             print 'bounds', bounds
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
@@ -1165,16 +1170,17 @@ def main_size(height, width, scens):
             print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
+    res_tmp = []
+    res_tmp.append(optim_scens[bestmini])
+    return res_tmp
 
-    return optim_scens
 
-
-def Section2Flats(n, B_, H_):
+def Section2Flats(B_, H_):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
     import cPickle
 
-    scens = main_topology(n, B_, H_)
+    scens = main_topology(3, B_, H_)
 
     # save
     # file = open("dump.txt", 'w')

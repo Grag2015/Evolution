@@ -8,19 +8,22 @@ matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-def Section2Rooms(n, B_, H_):
-    scens, flats = Section2Flats(n, B_, H_)
+def Section2Rooms(B_, H_):
+    scens, flats = Section2Flats(B_, H_)
     prepflats = prepareflats(scens, flats)
 
     res=[]
+    col_list =[]
     for fl in prepflats:
-        res.append([(fl[0],fl[1]), Flat2Rooms(fl[2], fl[3], fl[4], fl[5], fl[6])])
+        tmp = Flat2Rooms(fl[2], fl[3], fl[4], fl[5], fl[6])
+        res.append([(fl[0],fl[1]), tmp[0]])
+        col_list += tmp[1]
 
     # visualization
     globplac =[[],[]]
     for rs in res:
-        globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
-        globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
+        globplac[0] += list(np.array(rs[1][0][2:]) + rs[0][0])
+        globplac[1] += list(np.array(rs[1][1][2:]) + rs[0][1])
 
         visual_sect(globplac, B_, H_)
 
@@ -96,17 +99,19 @@ def entrwall_hall_pos(corr_flat, podezd_flat):
 
 def visual_sect(placement_all, B_, H_):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
-    fig1 = plt.figure(figsize=(10,10) )
+    fig1 = plt.figure(figsize=(20,20) )
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
     ax1 = fig1.add_subplot(111, aspect='equal')
     for i in range(0, len(placement_all[0])/2): # объединяющий прямоугольник не отрисовываем
         ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B_), placement_all[1][2*i]/float(H_)),   # (x,y)
                                          abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B_),          # width
-                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H_), alpha=0.6, label='test '+str(i)
+                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H_), alpha=0.6, label='test '+str(i),
+                                         facecolor=col_list[i]
             )
         )
-        # ax1.text(placement_all[0][2*i]/float(B_)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B_))/2.,
-        #          placement_all[1][2 * i] / float(H_) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H_))/2.)
+        ax1.text(placement_all[0][2 * i] / float(B_) + (abs(placement_all[0][2 * i] - placement_all[0][2 * i + 1]) / float(B_)) / 2.,
+                 placement_all[1][2 * i] / float(H_) + (abs(placement_all[1][2 * i] - placement_all[1][2 * i + 1]) / float(H_)) / 2.,
+                 str(round(placement_all[0][2 * i + 1] - placement_all[0][2 * i], 1)) + 'x' + str(round(placement_all[1][2 * i + 1] - placement_all[1][2 * i], 1)))
     # plt.show()
 
 visual_sect(flats, B_, H_)
