@@ -32,23 +32,23 @@ H1=15
 B2=B/2
 H2=2
 
-compartments = ["envelope",  "podezd", "corr"] #["flat1", "flat2", "flat3", "flat4"]
-rooms_weights = [5, 3] #[1, 1, 1, 1] # веса комнат, используются для придания ограничений по каждому типу комнат
-areaconstr = [(B1 - 0.2)*(H1 - 2), H2*H2] #[60*(1-delta),60*(1-delta),110*(1-delta),110*(1-delta)] # минимальные без оболочки
-areaconstrmax = [(B1 + 0.2)*(H1 + 2), H2*B2] #[60*(1+delta),60*(1+delta),110*(1+delta),110*(1+delta)] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
-widthconstrmin = [B1 - 0.2, 2] #4.5, 4.5, 4.5, 4.5] # минимальные без оболочки
-widthconstrmax = [B1 + 0.2, 3] #100, 100, 100, 100] # максимальные без оболочки
-sides_ratio = [0, 0] #1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
+compartments_src = ["envelope",  "podezd", "corr"] #["flat1", "flat2", "flat3", "flat4"]
+rooms_weights_src = [5, 3] #[1, 1, 1, 1] # веса комнат, используются для придания ограничений по каждому типу комнат
+areaconstr_src = [(B1 - 0.2)*(H1 - 2), H2*H2] #[60*(1-delta),60*(1-delta),110*(1-delta),110*(1-delta)] # минимальные без оболочки
+areaconstrmax_src = [(B1 + 0.2)*(H1 + 2), H2*B2] #[60*(1+delta),60*(1+delta),110*(1+delta),110*(1+delta)] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
+widthconstrmin_src = [B1 - 0.2, 2] #4.5, 4.5, 4.5, 4.5] # минимальные без оболочки
+widthconstrmax_src = [B1 + 0.2, 3] #100, 100, 100, 100] # максимальные без оболочки
+sides_ratio_src = [0, 0] #1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 
 #цвета для визуализации, без оболочки
-comp_col = {0: '#73DD9B',
+comp_col_src = {0: '#73DD9B',
             1: '#73DD9B'
            }
 
 
 
 
-len_comp=len(compartments)
+len_comp=len(compartments_src)
 
 # часть общей стены + минимум одна смежная стена
 partcommon_adjacency = [(1,3),(1,5),(1,6),(1,7),(1,9),(3,1),(5,1),(6,1),(7,1),(9,1)]
@@ -91,7 +91,7 @@ envel_kitchen = list({(7,7),(7,9),(9,7),(9,9)})
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src=[[[], envel_podezd, envel_corr],# envel_flat, envel_flat, envel_flat, envel_flat], #envelope
+tc_src_s = [[[], envel_podezd, envel_corr],# envel_flat, envel_flat, envel_flat, envel_flat], #envelope
         [[], [], podezd_corr],# podezd_flat, podezd_flat, podezd_flat, podezd_flat], # "podezd"
         [[], [], []]]# corr_other, corr_other, corr_other, corr_other], # "corr"
         # [[], [], [], [], other_room2, other_room2, other_room2], # "flat1"
@@ -101,12 +101,23 @@ tc_src=[[[], envel_podezd, envel_corr],# envel_flat, envel_flat, envel_flat, env
 
 
 def create_constr():
+    global compartments, rooms_weights, areaconstr, areaconstrmax, widthconstrmin, widthconstrmax, sides_ratio, comp_col, tc_src
     varres, areasres = Knapsack(B, H, B1, H1, B2, H2)
+    compartments = copy.deepcopy(compartments_src)
+    rooms_weights = copy.deepcopy(rooms_weights_src)
+    areaconstr = copy.deepcopy(areaconstr_src)
+    areaconstrmax = copy.deepcopy(areaconstrmax_src)
+    widthconstrmin = copy.deepcopy(widthconstrmin_src)
+    widthconstrmax = copy.deepcopy(widthconstrmax_src)
+    sides_ratio = copy.deepcopy(sides_ratio_src)
+    comp_col = copy.deepcopy(comp_col_src)
     # добавление доп.ограничений на комнаты полученные из задачи о рюкзаке
     k = 0
     for j, s in enumerate(areasres):
         for t in range(int(varres[j])):
             k += 1
+            # ToDO s = 40, т.е. площади не учитываем, главное чтобы минимальное для квартиры
+            s = 40
             compartments.append("flat" + str(k))
             rooms_weights.append(1)
             areaconstr.append(s * (1 - delta))
@@ -115,6 +126,7 @@ def create_constr():
             widthconstrmax.append(100)
             sides_ratio.append(1)
             comp_col[k + 1] = '#ACBFEC'
+    tc_src = copy.deepcopy(tc_src_s)
     tc_src[0] += [envel_flat]*(len(compartments)-3)
     tc_src[1] += [podezd_flat]*(len(compartments)-3)
     tc_src[2] += [corr_other]*(len(compartments)-3)
@@ -1096,7 +1108,7 @@ def main_topology(max_results, B_, H_, printres = True):
     #
     # compartments = compartments_list
     # len_comp = len(compartments)
-    global len_comp, max_res, B, H
+    global len_comp, max_res, B, H, stop
     max_res = max_results
     B = B_
     H = H_
@@ -1141,7 +1153,7 @@ def main_size(height, width, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds, popsize=15)
+            res = opt.differential_evolution(func2_discret, bounds, popsize=17, tol=0.00001)
             print res.message, "nit: ", res.nit
             print 'bounds', bounds
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
