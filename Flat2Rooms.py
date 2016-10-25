@@ -1204,10 +1204,42 @@ def calculation(json_string):
     newres = pl2json(plac_ls, compartments, StartPosId)
     return newres
 
-
+def IAcode(a1,b1,a2,b2):
+    eps=0.001
+    res = -1
+    #варианты 0-6
+    if b1<a2:
+        res=0
+    if abs(b1-a2)<eps:
+        res=1
+    if (b1>a2) & (a1<a2) & (b2>b1):
+        res=2
+    if (abs(a1-a2)<eps) & (b2>b1):
+        res=3
+    if (a1>a2) & (b1<b2):
+        res=4
+    if (a1>a2) & (abs(b1-b2)<eps):
+        res=5
+    if (abs(a1-a2)<eps) & (abs(b1-b2)<eps):
+        res=6
+    #варианты 7-12
+    if a1 > b2:
+        res = 12
+    if abs(a1 - b2) < eps:
+        res = 11
+    if (a1 < b2) & (b1 > b2) & (a2 < a1):
+        res = 10
+    if (abs(a1 - a2) < eps) & (b2 < b1):
+        res = 9
+    if (a1 < a2) & (b1 > b2):
+        res = 8
+    if (a1 < a2) & (abs(b1 - b2) < eps):
+        res = 7
+    return res
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
 # Todo внимание! нужно возвращать 1 наилучшую планировку!
+
 def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     # Поиск топологий
     # Параметры - количество результатов, список комнат

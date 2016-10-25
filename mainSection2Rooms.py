@@ -25,7 +25,7 @@ def Section2Rooms(B_, H_):
         globplac[0] += list(np.array(rs[1][0][2:]) + rs[0][0])
         globplac[1] += list(np.array(rs[1][1][2:]) + rs[0][1])
 
-        visual_sect(globplac, B_, H_)
+        visual_sect(globplac, B_, H_, col_list)
 
 def prepareflats(scen, flats):
     # output - x1,y1, H,B, entrwall, hall_pos, count_rooms
@@ -97,7 +97,7 @@ def entrwall_hall_pos(corr_flat, podezd_flat):
             (4, 11): (1, (1,0))}
     return dct[tmp[0]]
 
-def visual_sect(placement_all, B_, H_):
+def visual_sect(placement_all, B_, H_, col_list):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     fig1 = plt.figure(figsize=(20,20) )
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
@@ -114,4 +114,4 @@ def visual_sect(placement_all, B_, H_):
                  str(round(placement_all[0][2 * i + 1] - placement_all[0][2 * i], 1)) + 'x' + str(round(placement_all[1][2 * i + 1] - placement_all[1][2 * i], 1)))
     # plt.show()
 
-visual_sect(flats, B_, H_)
+Section2Rooms(20, 20)

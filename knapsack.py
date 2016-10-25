@@ -15,10 +15,10 @@ def Knapsack(B, H, B1, H1, B2, H2):
     prob = LpProblem("Knapsack problem", LpMaximize)
 
     # Переменные оптимизации, целые
-    x1 = LpVariable("x1", 0, 3, 'Integer')
-    x2 = LpVariable("x2", 0, 4, 'Integer')
-    x3 = LpVariable("x3", 0, 5, 'Integer')
-    x4 = LpVariable("x4", 0, 5, 'Integer')
+    x1 = LpVariable("x1", 0, 2, 'Integer')
+    x2 = LpVariable("x2", 0, 2, 'Integer')
+    x3 = LpVariable("x3", 0, 2, 'Integer')
+    x4 = LpVariable("x4", 0, 2, 'Integer')
 
     # Целевая функция ("ценность рюкзака")
     areas = [45, 60, 90, 110]
