@@ -113,5 +113,3 @@ def visual_sect(placement_all, B_, H_, col_list):
                  placement_all[1][2 * i] / float(H_) + (abs(placement_all[1][2 * i] - placement_all[1][2 * i + 1]) / float(H_)) / 2.,
                  str(round(placement_all[0][2 * i + 1] - placement_all[0][2 * i], 1)) + 'x' + str(round(placement_all[1][2 * i + 1] - placement_all[1][2 * i], 1)))
     # plt.show()
-
-Section2Rooms(20, 20)

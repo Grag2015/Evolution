@@ -25,20 +25,22 @@ min_margin = 1.2
 
 # комнаты
 # TODO удалить лишние элементы в списке (коридор)
-compartments_src = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
-rooms_weights_src = [1, 1, 1, 1.5, 2, 2] # веса комнат, используются для придания ограничений по каждому типу комнат
-areaconstr_src = [1,1,3.6,9,14,14] # минимальные без оболочки
-areaconstrmax_src = [4.5,4.5,4.5,16,1000,1000] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
-widthconstrmin_src = [1.4,1.2,1.5,2.3,3,3] # минимальные без оболочки
-widthconstrmax_src = [2, 1.5, 1.5, 1000, 1000, 1000] # максимальные без оболочки
-sides_ratio_src = [0, 0, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
+compartments_src = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2", "room3", "room4"]
+rooms_weights_src = [1, 1, 1, 1.5, 2, 2, 2, 2] # веса комнат, используются для придания ограничений по каждому типу комнат
+areaconstr_src = [1,1,3.6,9,14,14,14,14] # минимальные без оболочки
+areaconstrmax_src = [4.5,4.5,4.5,16,1000,1000,1000,1000] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
+widthconstrmin_src = [1.4,1.2,1.5,2.3,3,3,3,3] # минимальные без оболочки
+widthconstrmax_src = [2, 1.5, 1.5, 1000, 1000, 1000, 1000, 1000] # максимальные без оболочки
+sides_ratio_src = [0, 0, 1, 1, 1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
 #цвета для визуализации, без оболочки
 comp_col_src = {0: '#73DD9B',
             1: '#73DD9B',
             2: '#EAE234',
             3: '#ECA7A7',
             4: '#ACBFEC',
-            5: '#ACBFEC'
+            5: '#ACBFEC',
+			6: '#ACBFEC',
+            7: '#ACBFEC'
            }
 len_comp=len(compartments_src)
 
@@ -79,14 +81,17 @@ other_room2 = list(set(adjacency) | {(3,12),(4,12), (3,11), (5,12), (5,11)})
 
 # topologic constraints
 # TODO эту матрицу тоже надо чистить
-tc_src_s=[[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room],
-    [[],[], hall_corr , hall_other , hall_other, hall_other, other_room2],
-    [[],[], [], corr_other, corr_other, corr_other, other_room2],
-    [[], [], [], [],  bath_kitchen, bath_kitch2room, other_room2],
-    [[], [], [], [], [], bath_kitch2room, other_room2],
-    [[], [], [], [], [], [], other_room2],
-    [[], [], [], [], [], [], []]]
-
+tc_src_s=[
+[[], envel_hall, envel_corr, envel_room, envel_room, envel_room, envel_room, envel_room, envel_room],
+    [[],[], hall_corr , hall_other , hall_other, hall_other, other_room2, other_room2, other_room2],
+    [[],[], [], corr_other, corr_other, corr_other, other_room2, other_room2, other_room2],
+    [[], [], [], [],  bath_kitchen, bath_kitch2room, other_room2, other_room2, other_room2],
+    [[], [], [], [], [], bath_kitch2room, other_room2, other_room2, other_room2],
+    [[], [], [], [], [], [], other_room2, other_room2, other_room2],
+    [[], [], [], [], [], [], [], other_room2, other_room2],
+	[[], [], [], [], [], [], [], [], other_room2],
+	[[], [], [], [], [], [], [], [], []]
+	]
 # envel_hall | envel_corr | envel_room
 
 
@@ -1280,7 +1285,14 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     if count_rooms==1:
         compartments_list += ["room"]
     else:
-        compartments_list += ["room","room2"]
+        if count_rooms==2:
+            compartments_list += ["room","room2"]
+        else:
+			if count_rooms==3:
+				compartments_list += ["room","room2","room3"]
+			else:
+				compartments_list += ["room","room2","room3","room4"]
+
     max_results = 3
     recur_int = 0
     scens = main_topology(max_results, compartments_list, hall_pos, entr_wall)
@@ -1311,4 +1323,3 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     #     if (i>30):
     #         break
     return optim_scens[0], comp_col
-
