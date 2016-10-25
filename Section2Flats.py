@@ -1172,7 +1172,7 @@ def main_size(height, width, scens):
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
     res_tmp.append(optim_scens[bestmini])
-    return res_tmp
+    return res_tmp, bestmini
 
 
 def Section2Flats(B_, H_):
@@ -1204,7 +1204,7 @@ def Section2Flats(B_, H_):
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens = main_size(B_, H_, scens)
+    optim_scens, bestmini = main_size(B_, H_, scens)
     # Визуализация
     i=0
     n=1
@@ -1217,7 +1217,7 @@ def Section2Flats(B_, H_):
         if (i>30):
             break
     plt.show()
-    return scens[0], optim_scens[0]
+    return scens[bestmini], optim_scens[0]
 
 # Todo надо искать наверное другой метод оптимизации, очень плохо рассчитывает например такую топологию
 # https://yadi.sk/i/0-wdAf5gxYKcL
