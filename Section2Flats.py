@@ -1155,7 +1155,7 @@ def main_size(height, width, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds, popsize=20, tol=0)
+            res = opt.differential_evolution(func2_discret, bounds, popsize=20, tol=0, strategy="best1exp")
             if res.fun < bestmin:
                 bestmin = res.fun
                 bestmini = i
@@ -1229,29 +1229,5 @@ def Section2Flats(B_, H_):
 #  [[(3, 3)], [(0, 6)], [(3, 1)], [(0, 3)], [(1, 6)], [(6, 6)], [(3, 0)]],
 #  [[(3, 5)], [(7, 12)], [(6, 11)], [(1, 5)], [(8, 12)], [(9, 12)], [(6, 6)]]]
 
-def place2scen(pl):
-    scen = []
 
-    def prepare_tc2(tc_src, n):
-        tc = copy.deepcopy(tc_src)
-        # верхний треугольник оставляем без изменений
-        # диагональ заполняем значением (6,6)
-        for i in range(n):
-            tc[i][i].append((6, 6))
 
-        # нижний треугольник заполняем симметричными элементами преобразованными ф-ей inverse
-        for i in range(0, n):  # go along rows
-            for j in range(i + 1, len_comp):  # go along columns
-                tc[j][i] = inverse(tc[i][j])
-        return tc
-
-    for i in range(int(len(pl[0])/2)):
-        scen.append([])
-        for j in range(0,i+1):
-            scen[i].append([])
-        for j in range(i+1, int(len(pl[0])/2)):
-            scen[i].append([(IAcode(pl[0][2*i],pl[0][2*i+1],pl[0][2*j],pl[0][2*j+1]),IAcode(pl[1][2*i],pl[1][2*i+1],pl[1][2*j],pl[1][2*j+1]))])
-    return prepare_tc2(scen, int(len(pl[0])/2))
-
-visual_pl(quickplacement(sc))
-len_comp = 7

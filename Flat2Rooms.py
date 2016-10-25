@@ -1018,7 +1018,7 @@ def withoutgapes3(N):
 
 # Поиск различных вариантов компоновки (топологий)
 # ЗАГЛУШКА
-def main_topology(max_results, compartments_list, hall_pos, printres = True):
+def main_topology(max_results, compartments_list, hall_pos, entr_wall, printres = True):
     """
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
@@ -1115,7 +1115,20 @@ def main_topology(max_results, compartments_list, hall_pos, printres = True):
     if printres:
         print "Найдено " + str(len(scens)) + " вариантов размещения комнат" + '\n' + "Время выполнения программы sec.- " + str(t2-t1)
 
-    return scens
+    # вращение планировок
+    rotated_scens = []
+    for sc in scens:
+        tmp = quickplacement(sc)
+        # вращение планировки в зависимости от позиции входной стены entr_wall in {(0,0),(0,1),(1,0),(1,1),(2,0),(2,1),(3,0),(3,1)}
+        # если прихожая может быть в центре, то просто поворачиваем по часовой стрелке entr_wall[0] раз
+        if hall_pos >= 1:
+            tmp = place2scen(rotate90(tmp, entr_wall[0]))
+        # если прихожая только угловая
+        else:
+            tmp = place2scen(rotate90(tmp, entr_wall[0] + entr_wall[1]))
+        rotated_scens.append(tmp)
+
+    return rotated_scens
 
 def rotate90(pl, n): # n time по часовой стрелке
     """
@@ -1154,7 +1167,7 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
     for i in range(len(scens)):
         #try:
         makeconst(quickplacement(scens[i])) # подготовка ограничения для целевой функции
-        res = opt.differential_evolution(func2_discret, bounds) # оптимизация целевой ф-и с указанными ограничениями
+        res = opt.differential_evolution(func2_discret, bounds, strategy="best1exp") # оптимизация целевой ф-и с указанными ограничениями
         if res.fun < bestmin:
             bestmin = res.fun
             bestmini = i
@@ -1162,13 +1175,6 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
         ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
         #print i
         res_tmp = optim_placement(quickplacement(scens[i]), xlistnew, ylistnew) # преобразование результатов оптимизации во внутренний формат
-        # вращение планировки в зависимости от позиции входной стены entr_wall in {(0,0),(0,1),(1,0),(1,1),(2,0),(2,1),(3,0),(3,1)}
-        # если прихожая может быть в центре, то просто поворачиваем по часовой стрелке entr_wall[0] раз
-        if hall_pos>=1:
-            res_tmp = rotate90(res_tmp, entr_wall[0])
-        # если прихожая только угловая
-        else:
-            res_tmp = rotate90(res_tmp, entr_wall[0]+entr_wall[1])
 
         optim_scens.append(res_tmp)
         res_x.append(func2_discret_results(res.x))
@@ -1236,6 +1242,32 @@ def IAcode(a1,b1,a2,b2):
     if (a1 < a2) & (abs(b1 - b2) < eps):
         res = 7
     return res
+
+def place2scen(pl):
+    scen = []
+
+    def prepare_tc2(tc_src, n):
+        tc = copy.deepcopy(tc_src)
+        # верхний треугольник оставляем без изменений
+        # диагональ заполняем значением (6,6)
+        for i in range(n):
+            tc[i][i].append((6, 6))
+
+        # нижний треугольник заполняем симметричными элементами преобразованными ф-ей inverse
+        for i in range(0, n):  # go along rows
+            for j in range(i + 1, len_comp):  # go along columns
+                tc[j][i] = inverse(tc[i][j])
+        return tc
+
+    for i in range(int(len(pl[0])/2)):
+        scen.append([])
+        for j in range(0,i+1):
+            scen[i].append([])
+        for j in range(i+1, int(len(pl[0])/2)):
+            scen[i].append([(IAcode(pl[0][2*i],pl[0][2*i+1],pl[0][2*j],pl[0][2*j+1]),IAcode(pl[1][2*i],pl[1][2*i+1],pl[1][2*j],pl[1][2*j+1]))])
+    return prepare_tc2(scen, int(len(pl[0])/2))
+
+
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
 # Todo внимание! нужно возвращать 1 наилучшую планировку!
@@ -1251,7 +1283,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
         compartments_list += ["room","room2"]
     max_results = 3
     recur_int = 0
-    scens = main_topology(max_results, compartments_list, hall_pos)
+    scens = main_topology(max_results, compartments_list, hall_pos, entr_wall)
     #print scens
     # Визуализация
     # i=0
