@@ -99,17 +99,18 @@ def entrwall_hall_pos(corr_flat, podezd_flat):
 
 def visual_sect(placement_all, B_, H_, col_list):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
-    fig1 = plt.figure(figsize=(20,20) )
+    fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
-    ax1 = fig1.add_subplot(111, aspect='equal')
+    ax1 = fig1.add_subplot(111)#, aspect='equal')
     for i in range(0, len(placement_all[0])/2): # объединяющий прямоугольник не отрисовываем
-        ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B_), placement_all[1][2*i]/float(H_)),   # (x,y)
-                                         abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B_),          # width
-                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H_), alpha=0.6, label='test '+str(i),
+        ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(H_), placement_all[1][2*i]/float(B_)),   # (x,y)
+                                         abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(H_),          # width
+                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(B_), alpha=0.6, label='test '+str(i),
                                          facecolor=col_list[i]
             )
         )
-        ax1.text(placement_all[0][2 * i] / float(B_) + (abs(placement_all[0][2 * i] - placement_all[0][2 * i + 1]) / float(B_)) / 2.,
-                 placement_all[1][2 * i] / float(H_) + (abs(placement_all[1][2 * i] - placement_all[1][2 * i + 1]) / float(H_)) / 2.,
+        ax1.text(placement_all[0][2 * i] / float(H_) + (abs(placement_all[0][2 * i] - placement_all[0][2 * i + 1]) / float(H_)) / 2.,
+                 placement_all[1][2 * i] / float(B_) + (abs(placement_all[1][2 * i] - placement_all[1][2 * i + 1]) / float(B_)) / 2.,
                  str(round(placement_all[0][2 * i + 1] - placement_all[0][2 * i], 1)) + 'x' + str(round(placement_all[1][2 * i + 1] - placement_all[1][2 * i], 1)))
-    # plt.show()
+    plt.show()
+

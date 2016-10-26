@@ -2,21 +2,15 @@
 # импортируем функции PuLP
 from pulp import *
 
-B=20
-H=20
-B1=2.5
-H1=15
-# коридор горизонтальный
-B2=B/2
-H2=2
+
 
 def Knapsack(B, H, B1, H1, B2, H2):
     # Создаем новую задачу Линейного программирования (LP) с максимизацией целевой функции
     prob = LpProblem("Knapsack problem", LpMaximize)
 
     # Переменные оптимизации, целые
-    x1 = LpVariable("x1", 0, 2, 'Integer')
-    x2 = LpVariable("x2", 0, 2, 'Integer')
+    x1 = LpVariable("x1", 1, 2, 'Integer')
+    x2 = LpVariable("x2", 1, 2, 'Integer')
     x3 = LpVariable("x3", 0, 2, 'Integer')
     x4 = LpVariable("x4", 0, 2, 'Integer')
 

@@ -102,7 +102,14 @@ tc_src_s = [[[], envel_podezd, envel_corr],# envel_flat, envel_flat, envel_flat,
 
 def create_constr():
     global compartments, rooms_weights, areaconstr, areaconstrmax, widthconstrmin, widthconstrmax, sides_ratio, comp_col, tc_src
+    B1 = 2.5
+    H1 = 15
+    # коридор горизонтальный
+    B2 = B / 2
+    H2 = 2
+    print (B, H, B1, H1, B2, H2)
     varres, areasres = Knapsack(B, H, B1, H1, B2, H2)
+    print varres, areasres
     compartments = copy.deepcopy(compartments_src)
     rooms_weights = copy.deepcopy(rooms_weights_src)
     areaconstr = copy.deepcopy(areaconstr_src)
