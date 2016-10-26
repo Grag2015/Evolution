@@ -33,8 +33,8 @@ B2=B/2
 H2=2
 
 compartments_src = ["envelope",  "podezd", "corr"] #["flat1", "flat2", "flat3", "flat4"]
-rooms_weights_src = [5, 3] #[1, 1, 1, 1] # веса комнат, используются для придания ограничений по каждому типу комнат
-areaconstr_src = [(B1 - 0.2)*(H1 - 2), H2*H2] #[60*(1-delta),60*(1-delta),110*(1-delta),110*(1-delta)] # минимальные без оболочки
+rooms_weights_src = [5, 0] #[1, 1, 1, 1] # веса комнат, используются для придания ограничений по каждому типу комнат
+areaconstr_src = [(B1 - 0.2)*(H1 - 2), H2*H2] ## минимальные без оболочки
 areaconstrmax_src = [(B1 + 0.2)*(H1 + 2), H2*B2] #[60*(1+delta),60*(1+delta),110*(1+delta),110*(1+delta)] #[4.5,1000,4.5,16,1000,1000] # максимальные без оболочки
 widthconstrmin_src = [B1 - 0.2, 2] #4.5, 4.5, 4.5, 4.5] # минимальные без оболочки
 widthconstrmax_src = [B1 + 0.2, 3] #100, 100, 100, 100] # максимальные без оболочки
@@ -108,7 +108,11 @@ def create_constr():
     B2 = B / 2
     H2 = 2
     print (B, H, B1, H1, B2, H2)
-    varres, areasres = Knapsack(B, H, B1, H1, B2, H2)
+    #varres, areasres = Knapsack(B, H, B1, H1, B2, H2)
+    r1 = int(round((B/2.-1)*10/50,0))
+    r2 = int(round((B/2.-1)*H/50,0))
+    varres= [1]*(r1+r2)
+    areasres= [50]*(r1+r2)
     print varres, areasres
     compartments = copy.deepcopy(compartments_src)
     rooms_weights = copy.deepcopy(rooms_weights_src)
@@ -126,9 +130,9 @@ def create_constr():
             # ToDO s = 40, т.е. площади не учитываем, главное чтобы минимальное для квартиры
             s = 40
             compartments.append("flat" + str(k))
-            rooms_weights.append(1)
+            rooms_weights.append(0)
             areaconstr.append(s * (1 - delta))
-            areaconstrmax.append(s * (1 + delta))
+            areaconstrmax.append(2*s * (1 + delta))
             widthconstrmin.append(4.5)
             widthconstrmax.append(100)
             sides_ratio.append(1)
@@ -951,7 +955,7 @@ def func2_discret(xy):
     res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
     res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
 
-    return res1sign.dot(rooms_weights)*5 + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign) + sum(res5sign) + sum(res6sign)+ sum(res7sign)*5 + sum(res1maxsign)
+    return res1sign.dot(rooms_weights)*5 + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign)*10 + sum(res5sign)*7 + sum(res6sign)*7+ sum(res7sign)*5 + sum(res1maxsign)
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
@@ -1150,7 +1154,7 @@ def main_topology(max_results, B_, H_, printres = True):
     return scens
 
 # Учет ограничений по площади/длине
-def main_size(height, width, scens):
+def main_size(width, height, scens):
     global B, H, res_x
     B = width
     H = height
@@ -1195,18 +1199,18 @@ def Section2Flats(B_, H_):
     # file.close()
 
     # Визуализация
-    # i=0
-    # n=1
-    # for t,pl in enumerate(scens):
-    #     if i%(n**2)==0:
-    #         fig1 = plt.figure()
-    #     ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i), aspect='equal')
-    #     visual2(quickplacement(pl),ax1)
-    #     i+=1
-    #     if (i>100):
-    #         break
-    #
-    # plt.show()
+    i=0
+    n=1
+    for t,pl in enumerate(scens):
+        if i%(n**2)==0:
+            fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
+        ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i))
+        visual2(quickplacement(pl),ax1)
+        i+=1
+        if (i>100):
+            break
+
+    plt.show()
     # print scens
 
     # Учет ограничений по площади
@@ -1217,8 +1221,8 @@ def Section2Flats(B_, H_):
     n=1
     for pl in optim_scens:
         if i%n**2==0:
-            fig1 = plt.figure(figsize=(15, 15))
-        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+            fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
+        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]))
         visual(pl, ax1)
         i+=1
         if (i>30):
