@@ -1247,38 +1247,206 @@ def Section2Flats(B_, H_):
 
 # проверка и корректировка готовой планировки
 def check_pl(scen, pl):
+    new_scen = copy.deepcopy(pl)
     # берем коридор и смотрим, что есть выше и ниже
     # если есть часть общей стены сверху коридора
     for i in range(3, len(scen[0])):
         up_corr = []
-        if scen[2][i] in {(2,1),(7,1),(8,1),(9,1),(10,1)}:
+        if scen[2][i][0] in {(2,1),(7,1),(8,1),(9,1),(10,1),(6,1)}:
             up_corr.append(i)
         else:
             # если есть часть общей стены снизу коридора
             down_corr = []
-            if scen[2][i] in {(2,11),(7,11),(8,11),(9,11),(10,11)}:
+            if scen[2][i][0] in {(2,11),(7,11),(8,11),(9,11),(10,11),(6,11)}:
                 down_corr.append(i)
     # делаем предплоложение, что объединение всех комнат в up_corr и down_corr представляют прямоугольник
     # подсчет площади объед-х комнат
-    if len(up_corr)>1:
-        a = 0
-        b = 0
-        for i in len(up_corr):
-            a += (pl[0][up_corr[i]*2+1]-pl[0][up_corr[i]*2+1])
-            b = (pl[1][up_corr[i]*2+1]-pl[1][up_corr[i]*2+1])
-
-    # проверка площади объединения, ratio
-            if a*b < 60: # объединяем все в одну квартиру
-
+    print up_corr, down_corr
+    a = 0
+    b = 0
+    for i in range(len(up_corr)):
+        a += (pl[0][up_corr[i]*2+1]-pl[0][up_corr[i]*2])
+        b = (pl[1][up_corr[i]*2+1]-pl[1][up_corr[i]*2])
+    print "a,b", a, b
+# проверка площади объединения, ratio
+    if a*b < 60: # объединяем все в одну квартиру
+        for t, i in enumerate(up_corr):
+            new_scen[0].pop(i - t*2)
+            new_scen[0].pop(i - t*2)
+            new_scen[1].pop(i - t*2)
+            new_scen[1].pop(i - t*2)
+        new_scen[0].append(min(map(lambda x: pl[0][2*x], up_corr)))
+        new_scen[0].append(max(map(lambda x: pl[0][2*x+1], up_corr)))
+        new_scen[1].append(pl[1][2*up_corr[0]])
+        new_scen[1].append(pl[1][2*up_corr[0] + 1])
+    else:
+        if a*b >= 60:
+            if float(a)/b > 2.5:
+                # делим на 2
+                for t, i in enumerate(up_corr):
+                    print t, i
+                    new_scen[0].pop(i - t * 2)
+                    new_scen[0].pop(i - t * 2)
+                    new_scen[1].pop(i - t * 2)
+                    new_scen[1].pop(i - t * 2)
+                tmp_min = min(map(lambda x: pl[0][2 * x], up_corr))
+                tmp_max = max(map(lambda x: pl[0][2 * x + 1], up_corr))
+                new_scen[0].append(tmp_min)
+                new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
+                new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
+                new_scen[0].append(tmp_max)
+                new_scen[1].append(pl[1][2 * up_corr[0]])
+                new_scen[1].append(pl[1][2 * up_corr[0] + 1])
+                new_scen[1].append(pl[1][2 * up_corr[0]])
+                new_scen[1].append(pl[1][2 * up_corr[0] + 1])
             else:
-                if a*b >= 60: # объединяем все в одну квартиру
-                    if float(a/2.)/b > 1/2.5
-
+                if float(2*b)/a <= 2.5:
+                    # делим на 2
+                    for t, i in enumerate(up_corr):
+                        print t, i
+                        new_scen[0].pop(i - t * 2)
+                        new_scen[0].pop(i - t * 2)
+                        new_scen[1].pop(i - t * 2)
+                        new_scen[1].pop(i - t * 2)
+                    tmp_min = min(map(lambda x: pl[0][2 * x], up_corr))
+                    tmp_max = max(map(lambda x: pl[0][2 * x + 1], up_corr))
+                    print tmp_min,tmp_max
+                    new_scen[0].append(tmp_min)
+                    new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
+                    new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
+                    new_scen[0].append(tmp_max)
+                    new_scen[1].append(pl[1][2 * up_corr[0]])
+                    new_scen[1].append(pl[1][2 * up_corr[0] + 1])
+                    new_scen[1].append(pl[1][2 * up_corr[0]])
+                    new_scen[1].append(pl[1][2 * up_corr[0] + 1])
+                else:
+                    for t, i in enumerate(up_corr):
+                        new_scen[0].pop(i - t * 2)
+                        new_scen[0].pop(i - t * 2)
+                        new_scen[1].pop(i - t * 2)
+                        new_scen[1].pop(i - t * 2)
+                    new_scen[0].append(min(map(lambda x: pl[0][2 * x], up_corr)))
+                    new_scen[0].append(max(map(lambda x: pl[0][2 * x + 1], up_corr)))
+                    new_scen[1].append(pl[1][2 * up_corr[0]])
+                    new_scen[1].append(pl[1][2 * up_corr[0] + 1])
     if len(down_corr) > 1:
         s = 0
         for i in len(down_corr):
             s += (pl[0][down_corr[i] * 2 + 1] - pl[0][down_corr[i] * 2 + 1]) * (
             pl[1][down_corr[i] * 2 + 1] - pl[1][down_corr[i] * 2 + 1])
-
     # ToDo тут надо пересчитать hall_pos, entrwall
-    return new_pl, hall_pos, entrwall
+    return new_scen#, hall_pos, entrwall
+
+
+scen = [[[(6, 6)],
+   [(8, 9)],
+   [(9, 8)],
+   [(7, 6)],
+   [(9, 9)],
+   [(8, 9)],
+   [(8, 9)],
+   [(9, 7)]],
+  [[(4, 3)],
+   [(6, 6)],
+   [(5, 1)],
+   [(1, 3)],
+   [(12, 6)],
+   [(12, 6)],
+   [(11, 6)],
+   [(5, 0)]],
+  [[(3, 4)],
+   [(7, 11)],
+   [(6, 6)],
+   [(1, 4)],
+   [(9, 11)],
+   [(8, 11)],
+   [(8, 11)],
+   [(6, 1)]],
+  [[(5, 6)],
+   [(11, 9)],
+   [(11, 8)],
+   [(6, 6)],
+   [(12, 9)],
+   [(12, 9)],
+   [(12, 9)],
+   [(11, 7)]],
+  [[(3, 3)],
+   [(0, 6)],
+   [(3, 1)],
+   [(0, 3)],
+   [(6, 6)],
+   [(1, 6)],
+   [(0, 6)],
+   [(3, 0)]],
+  [[(4, 3)],
+   [(0, 6)],
+   [(4, 1)],
+   [(0, 3)],
+   [(11, 6)],
+   [(6, 6)],
+   [(1, 6)],
+   [(4, 0)]],
+  [[(4, 3)],
+   [(1, 6)],
+   [(4, 1)],
+   [(0, 3)],
+   [(12, 6)],
+   [(11, 6)],
+   [(6, 6)],
+   [(4, 0)]],
+  [[(3, 5)],
+   [(7, 12)],
+   [(6, 11)],
+   [(1, 5)],
+   [(9, 12)],
+   [(8, 12)],
+   [(8, 12)],
+   [(6, 6)]]]
+
+new_pl = check_pl(scen, pl)
+
+pl =  [[0,
+   25,
+   11.863175037729532,
+   18.093795513908297,
+   0,
+   18.093795513908297,
+   18.093795513908297,
+   25,
+   0,
+   4.6531202427545448,
+   4.6531202427545448,
+   7.1674444396676025,
+   7.1674444396676025,
+   11.863175037729532,
+   0,
+   18.093795513908297],
+  [0,
+   15,
+   0,
+   4.9207505159045049,
+   4.9207505159045049,
+   7.0584616068327994,
+   0,
+   15,
+   0,
+   4.9207505159045049,
+   0,
+   4.9207505159045049,
+   0,
+   4.9207505159045049,
+   7.0584616068327994,
+   15]]
+
+visual_pl(new_pl)
+visual_pl(pl)
+comp_col = {0: '#73DD9B',
+ 1: '#73DD9B',
+ 2: '#ACBFEC',
+ 3: '#ACBFEC',
+ 4: '#ACBFEC',
+ 5: '#ACBFEC',
+ 6: '#ACBFEC',
+ 7: '#ACBFEC'}
+
+compartments = ['envelope', 'podezd', 'corr', 'flat1', 'flat2', 'flat3', 'flat4', 'flat5' , 'flat6']
