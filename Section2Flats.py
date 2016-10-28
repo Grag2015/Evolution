@@ -24,9 +24,13 @@ max_res = 10 #максимальное количество результато
 min_margin = 1.2
 delta = 0.1
 
+# переменная хранит индекс в xlist левой стены подъезда и передается в целевую функцию
+x1ind=0
+x2ind=0
+
 # размеры подъезда
 B1=2.5
-H1=15
+H1=10
 # предварительные размеры коридора для задачи о рюкзаке
 # коридор горизонтальный
 B2=B/2
@@ -44,6 +48,7 @@ sides_ratio_src = [0, 0] #1, 1, 1, 1] # вкл/выкл ограничение �
 comp_col_src = {0: '#73DD9B',
             1: '#73DD9B'
            }
+
 
 
 
@@ -69,7 +74,7 @@ def inverse(noatomicBArel):
         res.append((12-elem[0],12-elem[1]))
     return res
 
-envel_podezd = [(8, 9),(9,9)]#list(set(inclusion_partcommon) - {(6, 9), (9, 6)}) # TODO - убираешь (9, 8) и сразу время работы вырастает в десять раз
+envel_podezd = [(8, 9)]#list(set(inclusion_partcommon) - {(6, 9), (9, 6)}) # TODO - убираешь (9, 8) и сразу время работы вырастает в десять раз
 envel_room = list(set(inclusion_partcommon) - {(9, 6)}) #(8, 7), (8, 9), (9, 8)}
 bath_kitchen = partcommon_adjacency
 # hall_other = partcommon #Для случая без коридора
@@ -109,8 +114,8 @@ def create_constr():
     H2 = 2
     print (B, H, B1, H1, B2, H2)
     #varres, areasres = Knapsack(B, H, B1, H1, B2, H2)
-    r1 = int(round((B/2.-1)*10/50,0))
-    r2 = int(round((B/2.-1)*H/50,0))
+    r1 = 2 #int(round((B/2.-1)*10/50,0))
+    r2 = 2 #int(round((B/2.-1)*H/50,0))
     varres= [1]*(r1+r2)
     areasres= [50]*(r1+r2)
     print varres, areasres
@@ -756,6 +761,20 @@ def visual2(placement_all, ax1):
         ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
                  placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
 
+def visual_place_simple(placement_all):
+    H = max(placement_all[0])
+    B = max(placement_all[1])
+    # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
+    fig1 = plt.figure(figsize=(20,20*H/B) )
+    # plt.axis([-0.1, 1.1, -0.1, 1.1])
+    ax1 = fig1.add_subplot(111)
+    for i in range(1, len(placement_all[0])/2): # объединяющий прямоугольник не отрисовываем
+        ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B), placement_all[1][2*i]/float(H)),   # (x,y)
+                                         abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B),          # width
+                                         abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H), alpha=0.6, label='test '+str(i),
+                                         facecolor='#73DD9B'
+            )
+        )
 
 # move walls
 def movewalls(playsments_a):
@@ -813,11 +832,12 @@ def visual_pl(placement_all):
 import scipy.optimize as opt
 
 # placement example
-# placemnt = [[0, 10, 0, 10, 1, 2, 0, 1, 0, 2, 2, 10], [0, 10, 0, 1, 1, 4, 2, 3, 4, 10, 3, 10]]
+# pl = [[0,20,10,15,0,10,15,20,0,17,17,20], [0,20,0,10,0,10,0,10,10,20,10,20]]
 # функция формирует матрицы для целевой функции
 
-def makeconst(placemnt, discret=True):
-    global Ax, Ay, Bx, By, bx, by, bounds
+def makeconst(pl, discret=True):
+    placemnt = copy.deepcopy(pl)
+    global Ax, Ay, Bx, By, bx, by, bounds, x1ind, x2ind
     # создаем матрицу для целевой функции
     def makematr(placemnt):
 
@@ -873,7 +893,10 @@ def makeconst(placemnt, discret=True):
                     Ay[i, yl] = 1
                     if (placemnt[1][2 * i] != 0):
                         Ay[i, ylist.index(placemnt[1][2 * i])] = -1
-    makematr(placemnt)
+        return xlist, ylist
+
+    xlist, ylist = makematr(placemnt)
+
     bounds = []
     if (discret):
         matrlist =  [len(Ax[0])-1, len(Ay[0])-1]
@@ -884,6 +907,23 @@ def makeconst(placemnt, discret=True):
     for matr in range(len(matrlist)):
         for i in range(matrlist[matr]):
             bounds.append(boundslist[matr])
+    print bounds
+
+    # bounds[x1ind] = (B/2. - B1/2., B/2. - B1/2.)
+    # bounds[x2ind] = (B/2. + B1/2., B/2. + B1/2.)
+    # фиксируем высоту подъезда
+
+    # находим и фиксируем переменные в xlist, ylist, которые отвечают за размеры подъезда
+    y1 = pl[1][3]
+    x1 = pl[0][2]
+    x2 = pl[0][3]
+    y1ind = ylist.index(y1)
+    x1ind = xlist.index(x1)
+    x2ind = xlist.index(x2)
+    bounds[y1ind + len(xlist) - 1] = (H1, H1)
+    # удаляем правую границу подъезда из списка ограничений
+    bounds.pop(x2ind)
+
     return True
 
 # непрерывная функция с фиктивными переменными для описания ограничений-неравенств
@@ -924,27 +964,31 @@ def func2_discret(xy):
 
     #print xys
 
-    x = xy[0:len(Ax[0]) - 1]
-    x = np.append(x, B)
-    y = xy[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2]
-    y = np.append(y, H)
+    x = xy[0:len(Ax[0]) - 2]
+    # операция вставки требует много ресурсов, помноженная на количество вызовов ф-и func2_discret может сказаться в целом на производительности
+    x = np.insert(x, x2ind, x[x1ind]+B1) # Добавляем элемент соотв-щий правой стенке подъезда, со значением левая стенка + ширина подъезда
+
+    xb = np.append(x, B)
+    y = xy[len(Ax[0]) - 2:len(Ax[0]) + len(Ay[0]) - 2]
+    yb = np.append(y, H)
 
     # Ограничение по площади снизу
-    res1 = Ax.dot(x) * Ay.dot(y) - areaconstr
+    #print x, y
+    res1 = Ax.dot(xb) * Ay.dot(yb) - areaconstr
     # Ограничение по площади сверху
-    res1max = areaconstrmax - Ax.dot(x) * Ay.dot(y)
+    res1max = areaconstrmax - Ax.dot(xb) * Ay.dot(yb)
 
     # Ограничение на расположение соседних стен
-    res2 = Bx.dot(xy[0:len(Ax[0])-1]) - [min_margin]*len(Bx)#np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
-    res3 = By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]) - [min_margin]*len(By) #- np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
+    res2 = Bx.dot(x) - [min_margin]*len(Bx)#np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
+    res3 = By.dot(y) - [min_margin]*len(By) #- np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
     # ограничение на соотношение сторон
-    res4 = map(lambda d: int((d>=1./2.5)&(d<=2.5))-1, Ay.dot(y)/Ax.dot(x))*np.array(sides_ratio)
+    res4 = map(lambda d: int((d>=1./2.5)&(d<=2.5))-1, Ay.dot(yb)/Ax.dot(xb))*np.array(sides_ratio)
     # ограничение на минимальную ширину
-    res5 = Ax.dot(x) - widthconstrmin
-    res6 = Ay.dot(y) - widthconstrmin
+    res5 = Ax.dot(xb) - widthconstrmin
+    res6 = Ay.dot(yb) - widthconstrmin
 
     # ограничение на максимальную ширину
-    res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(x),Ay.dot(y))))
+    res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(xb),Ay.dot(yb))))
 
     res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
     res1maxsign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1max))
@@ -955,7 +999,7 @@ def func2_discret(xy):
     res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
     res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
 
-    return res1sign.dot(rooms_weights)*5 + sum(res2sign)*10 + sum(res3sign)*10 + sum(res4sign)*10 + sum(res5sign)*7 + sum(res6sign)*7+ sum(res7sign)*5 + sum(res1maxsign)
+    return res1sign.dot(rooms_weights)*5 + sum(res2sign)*15 + sum(res3sign)*15 + sum(res4sign)*10 + sum(res5sign)*7 + sum(res6sign)*7+ sum(res7sign)*5 + sum(res1maxsign)
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
@@ -1071,6 +1115,12 @@ def withoutgapes3(N):
     else:
         return False
 
+def my_differential_evolution(func2_discret, bounds):
+    res = opt.differential_evolution(func2_discret, bounds, popsize=15, tol=0.01, strategy="best1exp")
+    #print res, type(res)
+    res.x = np.insert(res.x, x2ind, res.x[x1ind] + B1)
+    return res
+
 # Поиск различных вариантов компоновки (топологий)
 # ЗАГЛУШКА
 def main_topology(max_results, B_, H_, printres = True):
@@ -1162,23 +1212,24 @@ def main_size(width, height, scens):
     optim_scens=[]
     res_x=[]
     bestmin = 1000
-    bestmini = -1
+    bestmini = 0
     for i in range(len(scens)):
-        try:
-            makeconst(quickplacement(scens[i]))
-            res = opt.differential_evolution(func2_discret, bounds, popsize=15, tol=0.01, strategy="best1exp")
-            if res.fun < bestmin:
-                bestmin = res.fun
-                bestmini = i
-            print res.message, "nit: ", res.nit
-            print 'bounds', bounds
-            xlistnew = list(res.x[0:len(Ax[0]) - 1])
-            ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
-            #print i
-            optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
-            res_x.append(func2_discret_results(res.x))
-        except ValueError:
-            print('Планировка '+str(i)+' не была рассчитана!')
+        # try:
+        makeconst(quickplacement(scens[i]))
+        res = my_differential_evolution(func2_discret, bounds)
+        res_x.append(func2_discret_results(res.x))
+        if res.fun < bestmin & res_x[-1].find("dist_neib")==-1:
+            bestmin = res.fun
+            bestmini = i
+        print res.message, "nit: ", res.nit
+        print 'bounds', bounds
+        xlistnew = list(res.x[0:len(Ax[0]) - 1])
+        ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
+        #print i
+        optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+
+        # except ValueError:
+        #     print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
@@ -1638,4 +1689,37 @@ def check_pl(scen, pl):
 #
 # compartments = ['envelope', 'podezd', 'corr', 'flat1', 'flat2', 'flat3', 'flat4', 'flat5' , 'flat6']
 
+pl=[[0,
+   20,
+   8.75,
+   11.25,
+   0,
+   11.25,
+   11.25,
+   20,
+   0,
+   5.625,
+   5.625,
+   11.25,
+   0,
+   7.4398225834008169,
+   7.4398225834008169,
+   14.879645166801634],
+  [0,
+   20,
+   0,
+   10.0,
+   10.0,
+   12.753914387985629,
+   0,
+   20,
+   12.753914387985629,
+   20,
+   12.753914387985629,
+   20,
+   0,
+   10.0,
+   0,
+   10.0]]
 
+[(1, 3), (0,0), (1,0), (2,0), (3, 11), (2, 1), (4, 12), (1, 6), (0, 10), (0, 3), (12, 9), (1, 2), (0, 6), (1, 5), (0, 11), (11, 1), (0, 4), (1, 10), (4, 1), (1, 1), (7, 1), (6, 11), (1, 4), (0, 5), (1, 9), (10, 1), (3, 12),  (0, 8), (0, 1), (11, 7), (6, 1), (3, 1), (1, 8), (1, 7), (0, 9), (0, 7), (0, 2), (11, 6)]
