@@ -1132,6 +1132,8 @@ def main_topology(max_results, compartments_list, hall_pos, entr_wall, printres 
         else:
             tmp = place2scen(rotate90(tmp, entr_wall[0] + entr_wall[1]))
         rotated_scens.append(tmp)
+    # простая проверка горизонтальности планировки по наличию торцевой комнаты, проверка выполняется после поворотов (для координации прихожей с коридором)
+
 
     return rotated_scens
 
