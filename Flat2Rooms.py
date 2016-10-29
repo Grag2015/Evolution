@@ -54,7 +54,7 @@ partcommon = list(set(partcommon_adjacency) | set([(1,2),(1,4),(1,8),(1,10),(2,1
 inclusion_partcommon = [(9,6),(9,7),(9,8),(9,9),(7,6),(7,7),(7,8),(7,9),(8,6),(8,7),(8,9),(6,9),(6,10)]
 
 # смежные
-adjacency = [(1, 1), (2, 1),(3, 1), (4, 1),(5, 1),(6, 1),(6, 11),(7, 1),(8, 1),(9, 1),(10, 1),(11,1),
+adjacency= [(1, 1), (2, 1),(3, 1), (4, 1),(5, 1),(6, 1),(6, 11),(7, 1),(8, 1),(9, 1),(10, 1),(11,1),
 			(1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (11, 6),
 			(0, 1), (0, 2), (0, 3), (0, 4), (0, 5),(0, 6), (0, 7),(0, 8), (0, 9), (0, 10), (0, 11),
 			(1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0), (11, 0)]
@@ -1288,7 +1288,7 @@ def place2scen(pl):
 
         # нижний треугольник заполняем симметричными элементами преобразованными ф-ей inverse
         for i in range(0, n):  # go along rows
-            for j in range(i + 1, len_comp):  # go along columns
+            for j in range(i + 1, n):  # go along columns
                 tc[j][i] = inverse(tc[i][j])
         return tc
 
@@ -1300,6 +1300,51 @@ def place2scen(pl):
             scen[i].append([(IAcode(pl[0][2*i],pl[0][2*i+1],pl[0][2*j],pl[0][2*j+1]),IAcode(pl[1][2*i],pl[1][2*i+1],pl[1][2*j],pl[1][2*j+1]))])
     return prepare_tc2(scen, int(len(pl[0])/2))
 
+def postproc(pl, sc):
+    res_pl = copy.deepcopy(pl)
+    will_deleted = []
+    processed = []
+    will_procc = []
+    show_board = [1]*int(len(pl[0])/2)
+    a = 0
+    b = 0
+    # идем по комнатам и смотрим где нарушаются ограничения
+    for i in range(5, int(len(pl[0])/2)):
+        a = (pl[0][i * 2 + 1] - pl[0][i * 2])
+        b = (pl[1][i * 2 + 1] - pl[1][i * 2])
+        if (min([a, b]) < 3) | (a * b < 10):  # минимальная ширина комнаты, 10 - критичная площадь для комнаты
+            will_procc.append(i)
+
+    # объединяем с полностью смежной, если такой нет, то просто со смежной
+    for i in will_procc:
+        for t in range(5, int(len(pl[0])/2)):
+
+            if (t != i) & (not(t in processed)):
+                if sc[i][t][0] in [(1,6),(6,1),(11,6),(6,11)]:  # полностью смежная
+                    wdth = max(pl[0][i * 2 + 1], pl[0][t * 2 + 1]) - min(pl[0][i * 2], pl[0][t * 2])
+                    hgth = max(pl[1][i * 2 + 1], pl[1][t * 2 + 1]) - min(pl[1][i * 2], pl[1][t * 2])
+                    if max(wdth,hgth) / min(wdth,hgth) <= 3:  # если ratio для объединенной комнаты в рамках нормы, то выполняем объединение
+                        will_deleted += [i, t]
+                        processed += [i, t]
+                        res_pl[0] += [min(pl[0][i * 2], pl[0][t * 2]), max(pl[0][i * 2 + 1], pl[0][t * 2 + 1])]
+                        res_pl[1] += [min(pl[1][i * 2], pl[1][t * 2]), max(pl[1][i * 2 + 1], pl[1][t * 2 + 1])]
+                        show_board.append(1)
+                        break
+                else:
+                    if sc[i][t][0] in list(set(adjacency) - {(1,1),(1,11), (11,1), (11,11)}):  # НЕполностью смежная
+                        # удаляем границу при отрисовке
+                        show_board[i]=0
+                        show_board[t]=0
+                        processed += [i, t]
+                        break
+
+    for t, i in enumerate(will_deleted):
+        res_pl[0].pop(2 * i - t * 2)
+        res_pl[0].pop(2 * i - t * 2)
+        res_pl[1].pop(2 * i - t * 2)
+        res_pl[1].pop(2 * i - t * 2)
+        show_board.pop(i - t)
+    return res_pl
 
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
