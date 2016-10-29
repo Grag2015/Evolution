@@ -1023,7 +1023,7 @@ def withoutgapes3(N):
 
 # Поиск различных вариантов компоновки (топологий)
 # ЗАГЛУШКА
-def main_topology(max_results, compartments_list, hall_pos, entr_wall, printres = True):
+def main_topology(max_results, compartments_list, hall_pos, entr_wall, B, H, printres = True):
     """
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
@@ -1130,9 +1130,20 @@ def main_topology(max_results, compartments_list, hall_pos, entr_wall, printres 
             tmp = place2scen(rotate90(tmp, entr_wall[0]))
         # если прихожая только угловая
         else:
-            tmp = place2scen(rotate90(tmp, entr_wall[0] + entr_wall[1]))
+            tmp = rotate90(tmp, entr_wall[0] + entr_wall[1])
+            # простая проверка горизонтальности планировки по наличию торцевой комнаты, проверка выполняется после поворотов (для координации прихожей с коридором)
+            # и работает только для hall_pos == 0
+            list_torets = [(7,6),(6,9),(9,6),(6,7)] # блоки расположены соот-но повороту по часовой стрелке
+            for i in range(4,len_comp): # от кухни и все комнаты
+                if sc[0][i][0] in list_torets: # если есть торцевая комната, то делаем проверку и поворот
+                    # надо повернуть торцевую комнату entr_wall[0] + entr_wall[1] раз
+                    ind = list_torets.index(sc[0][i][0])
+                    rotated_torets = list_torets[ind + (entr_wall[0] + entr_wall[1])%4]
+                    if ((rotated_torets in [(7,6),(9,6)]) & (B<H))|((rotated_torets in [(6,9),(6,7)]) & (B>H)):
+                        tmp = diag_rotate(tmp, (entr_wall[0] + entr_wall[1])%2)
+                    break
+            tmp = place2scen(tmp)
         rotated_scens.append(tmp)
-    # простая проверка горизонтальности планировки по наличию торцевой комнаты, проверка выполняется после поворотов (для координации прихожей с коридором)
 
 
     return rotated_scens
@@ -1160,6 +1171,21 @@ def rotate90(pl, n): # n time по часовой стрелке
         return pln
     else:
         return rotate90(rotate90(pl, n-1), 1)
+
+# вращение размещения вокруг диагонали главной (левверх-правниз) или неглавной
+def diag_rotate(pl,main_diag):
+    res=[]
+    res.append(pl[1])
+    res.append(pl[0])
+    if main_diag==1:
+        max0 = max(res[0])
+        max1 = max(res[1])
+        for i in range(int(len(pl[0])/2)):
+            tmp0 = max0 - res[0][i*2]
+            tmp1 = max0 - res[0][i*2+1]
+            res[0][i * 2] = tmp1
+            res[0][i * 2 + 1] = tmp0
+    return res
 
 # Учет ограничений по площади/длине
 def main_size(B_, H_, scens, entr_wall, hall_pos):
@@ -1297,7 +1323,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms,):
 
     max_results = 3
     recur_int = 0
-    scens = main_topology(max_results, compartments_list, hall_pos, entr_wall)
+    scens = main_topology(max_results, compartments_list, hall_pos, entr_wall, B_, H_)
     #print scens
     # Визуализация
     # i=0

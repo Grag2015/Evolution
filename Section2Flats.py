@@ -1332,8 +1332,8 @@ def main_topology(max_results, B_, H_, printres = True):
         return scens4
     if create_constr()==5:
         return scens5
-    if create_constr()==6:
-        return scens6
+    # if create_constr()==6:
+    #     return scens6[0:2]
 
     len_comp = len(compartments)
     tc = prepare_tc(tc_src)
@@ -1375,24 +1375,23 @@ def main_size(width, height, scens):
     bestmin = 1000
     bestmini = 0
     for i in range(len(scens)):
-        # try:
-        makeconst(quickplacement(scens[i]))
-        res = my_differential_evolution(func2_discret, bounds)
-        res_x.append(func2_discret_results(res.x))
-        print res_x[-1]
-        if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
-            bestmin = res.fun
-            bestmini = i
-            print 'bestmini', bestmini
-        print res.message, "nit: ", res.nit
-        print 'bounds', bounds
-        xlistnew = list(res.x[0:len(Ax[0]) - 1])
-        ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
-        #print i
-        optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
-
-        # except ValueError:
-        #     print('Планировка '+str(i)+' не была рассчитана!')
+        try:
+            makeconst(quickplacement(scens[i]))
+            res = my_differential_evolution(func2_discret, bounds)
+            res_x.append(func2_discret_results(res.x))
+            print res_x[-1]
+            if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
+                bestmin = res.fun
+                bestmini = i
+                print 'bestmini', bestmini
+            print res.message, "nit: ", res.nit
+            print 'bounds', bounds
+            xlistnew = list(res.x[0:len(Ax[0]) - 1])
+            ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
+            #print i
+            optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+        except ValueError:
+            print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
