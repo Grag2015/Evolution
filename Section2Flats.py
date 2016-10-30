@@ -975,6 +975,7 @@ def func2_discret(xy):
 
     x = xy[0:len(Ax[0]) - 2]
     # операция вставки требует много ресурсов, помноженная на количество вызовов ф-и func2_discret может сказаться в целом на производительности
+
     x = np.insert(x, x2ind, x[x1ind]+B1) # Добавляем элемент соотв-щий правой стенке подъезда, со значением левая стенка + ширина подъезда
 
     xb = np.append(x, B)
@@ -1785,28 +1786,31 @@ def main_topology(max_results, B_, H_, printres = True):
             [[(4,3)],[(1,6)],[(4,1)],[(12,0)],[(4,0)],[(12,6)],[(12,6)],[(12,6)],[(12,6)],[(12,6)],[(11,6)],[(6,6)],[(0,3)]],
             [[(5,3)],[(11,9)],[(11,7)],[(12,1)],[(5,1)],[(12,9)],[(12,9)],[(12,9)],[(12,9)],[(12,9)],[(12,9)],[(12,9)],[(6,6)]]]]
     # /ГОТОВЫЕ СЦЕНАРИИ ДЛЯ РАЗЛИЧНОГО ЧИСЛА КВАРТИР
+    n=create_constr()
     global len_comp, max_res, B, H, stop
     max_res = max_results
     B = B_
     H = H_
 
-    if create_constr()==4:
-        return scens4
-    # if create_constr()==5:
-    #     return scens5
-    if create_constr()==6:
-        return scens6
-    if create_constr()==7:
-        return scens7
-    if create_constr()==8:
-        return scens8
-    if create_constr()==9:
-        return scens9
-    if create_constr()==10:
-        return scens10
-
     len_comp = len(compartments)
     tc = prepare_tc(tc_src)
+
+    # ЗАГЛУШКИ
+    if n==4:
+        return scens4[0:min(max_results,len(scens4))]
+    if n==5:
+        return scens5[0:min(max_results,len(scens5))]
+    if n==6:
+        return scens6[0:min(max_results,len(scens6))]
+    if n==7:
+        return scens7[0:min(max_results,len(scens7))]
+    if n==8:
+        return scens8[0:min(max_results,len(scens8))]
+    if n==9:
+        return scens9[0:min(max_results,len(scens9))]
+    if n==10:
+        return scens10[0:min(max_results,len(scens10))]
+    # /ЗАГЛУШКИ
 
     # topology
     t1 = time.clock()
@@ -1847,6 +1851,7 @@ def main_size(width, height, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
+            print quickplacement(scens[i])
             res = my_differential_evolution(func2_discret, bounds)
             res_x.append(func2_discret_results(res.x))
             print res_x[-1]

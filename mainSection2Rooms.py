@@ -4,11 +4,13 @@ from Flat2Rooms import visual_pl
 import numpy as np
 
 import matplotlib
+import time
 matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 def Section2Rooms(B_, H_):
+    t1 = time.clock()
     flats, hall_pos, entrwall = Section2Flats(B_, H_)
     prepflats = prepareflats(flats)
 
@@ -18,7 +20,8 @@ def Section2Rooms(B_, H_):
         tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4])
         res.append([(fl[0],fl[1]), tmp[0]])
         col_list += tmp[1]
-
+    t2 = time.clock()
+    print "РАСЧЕТ СЕКЦИИ ЗАКОНЧЕН! " + "Время выполнения программы sec.- " + str(t2-t1)
     # visualization
     globplac =[[],[]]
     for rs in res:
