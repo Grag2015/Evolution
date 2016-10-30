@@ -2,7 +2,7 @@ from Section2Flats import Section2Flats
 from Flat2Rooms import Flat2Rooms
 from Flat2Rooms import visual_pl
 import numpy as np
-
+import pandas as pd
 import matplotlib
 matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
@@ -11,20 +11,20 @@ import matplotlib.patches as mpatches
 def Section2Rooms(B_, H_):
     flats, hall_pos, entrwall = Section2Flats(B_, H_)
     prepflats = prepareflats(flats)
-
+    df_csv=pd.DataFrame(columns=["roomtype", "color", "x1", "y1", "x2", "y2","flat"])
     res=[]
     col_list =[]
     for i, fl in enumerate(prepflats):
         tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4])
         res.append([(fl[0],fl[1]), tmp[0]])
         col_list += tmp[1]
-
+        df_csv = df_csv.append(tmp[2].assign(flat = ["flat"+str(i+1)]*len(tmp[2])))
     # visualization
     globplac =[[],[]]
     for rs in res:
         globplac[0] += list(np.array(rs[1][0][2:]) + rs[0][0])
         globplac[1] += list(np.array(rs[1][1][2:]) + rs[0][1])
-
+    df_csv.to_csv("h20_b20.csv", index=False)
     visual_sect(globplac, B_, H_, col_list)
 
 def prepareflats(flats):

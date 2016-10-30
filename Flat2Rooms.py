@@ -4,6 +4,7 @@ import numpy as np
 import time
 import copy
 import matplotlib
+import pandas as pd#
 matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -15,6 +16,7 @@ import json
 from interface2 import pl2json, json2params
 
 # настройки алгоритма
+#df=[]
 timeout = 15
 depth_recurs = 100000
 recur_int = 0
@@ -1349,10 +1351,11 @@ def postproc(pl, sc):
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
 # Todo внимание! нужно возвращать 1 наилучшую планировку!
-
-def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms,):
+#B_, H_, entr_wall, hall_pos, count_rooms = (7,8,(0,0),0,2)
+def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
+    global df
     compartments_list = ["envelope",  "hall", "corr", "bath", "kitchen"]
     # ToDo надо добавлять еще 3-х и 4-хкомнатные квартиры
     if count_rooms==1:
@@ -1395,4 +1398,16 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms,):
     #     i+=1
     #     if (i>30):
     #         break
-    return optim_scens[0], comp_col
+    x1,y1,x2,y2=([],[],[],[])
+    for i in range(2,len(optim_scens[0][0])):
+        if i%2==0:
+            x1.append(optim_scens[0][0][i])
+            y1.append(optim_scens[0][1][i])
+        else:
+            x2.append(optim_scens[0][0][i])
+            y2.append(optim_scens[0][1][i])
+    df = pd.DataFrame(data=[compartments_list[1:], comp_col, x1, y1, x2, y2], index=["roomtype", "color", "x1", "y1", "x2", "y2"]).T
+    df.to_csv("b7_h8_n2.csv", index=False)
+    return optim_scens[0], comp_col, df
+
+
