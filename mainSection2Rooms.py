@@ -16,19 +16,25 @@ def Section2Rooms(B_, H_):
 
     res=[]
     col_list =[]
+    show_board = []
+    line_width = []
+    fill_ = []
     for i, fl in enumerate(prepflats):
         tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4])
         res.append([(fl[0],fl[1]), tmp[0]])
-        col_list += tmp[1]
+        col_list += ["#f7f01d"]+tmp[1]
+        show_board += tmp[2]
+        line_width += [2] + [None] * (len(tmp[2]) - 1)
+        fill_ += [False] + [True] * (len(tmp[2]) - 1)
     t2 = time.clock()
     print "РАСЧЕТ СЕКЦИИ ЗАКОНЧЕН! " + "Время выполнения программы sec.- " + str(t2-t1)
     # visualization
     globplac =[[],[]]
     for rs in res:
-        globplac[0] += list(np.array(rs[1][0][2:]) + rs[0][0])
-        globplac[1] += list(np.array(rs[1][1][2:]) + rs[0][1])
+        globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
+        globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
 
-    visual_sect(globplac, B_, H_, col_list)
+    visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_)
 
 def prepareflats(flats):
     # output - x1,y1, H,B, entrwall, hall_pos, count_rooms
@@ -45,7 +51,7 @@ def prepareflats(flats):
             if B*H<60:
                 count_rooms = 2
             else:
-                if B*H<90:
+                if B*H<110:
                     count_rooms = 3
                 else:
                     count_rooms = 4
@@ -53,7 +59,7 @@ def prepareflats(flats):
     return prepflats
 
 
-def visual_sect(placement_all, B_, H_, col_list):
+def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
@@ -62,7 +68,7 @@ def visual_sect(placement_all, B_, H_, col_list):
         ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B_), placement_all[1][2*i]/float(H_)),   # (x,y)
                                          abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B_),          # width
                                          abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H_), alpha=0.6, label='test '+str(i),
-                                         facecolor=col_list[i]
+                                         facecolor=col_list[i], linestyle=show_board[i], linewidth=line_width[i], fill=fill_[i]
             )
         )
         ax1.text(placement_all[0][2 * i] / float(B_) + (abs(placement_all[0][2 * i] - placement_all[0][2 * i + 1]) / float(B_)) / 2.,

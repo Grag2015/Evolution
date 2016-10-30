@@ -780,7 +780,7 @@ def visual_place_simple(placement_all):
         ax1.add_patch(mpatches.Rectangle((placement_all[0][2*i]/float(B), placement_all[1][2*i]/float(H)),   # (x,y)
                                          abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B),          # width
                                          abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H), alpha=0.6, label='test '+str(i),
-                                         facecolor='#73DD9B'
+                                         facecolor='#73DD9B', linestyle='-'
             )
         )
 
@@ -928,7 +928,7 @@ def makeconst(pl, discret=True):
     y1ind = ylist.index(y1)
     x1ind = xlist.index(x1)
     x2ind = xlist.index(x2)
-    bounds[y1ind + len(xlist) - 1] = (H1, H1)
+    bounds[y1ind + len(xlist) - 1] = (H1-3, H1)
     bounds[x1ind] = (6,B-6-2.5)
     # удаляем правую границу подъезда из списка ограничений
     bounds.pop(x2ind)
