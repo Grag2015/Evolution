@@ -1138,7 +1138,7 @@ def main_topology(max_results, compartments_list, hall_pos, entr_wall, B, H, pri
                 if sc[0][i][0] in list_torets: # если есть торцевая комната, то делаем проверку и поворот
                     # надо повернуть торцевую комнату entr_wall[0] + entr_wall[1] раз
                     ind = list_torets.index(sc[0][i][0])
-                    rotated_torets = list_torets[ind + (entr_wall[0] + entr_wall[1])%4]
+                    rotated_torets = list_torets[(ind + entr_wall[0] + entr_wall[1])%4]
                     if ((rotated_torets in [(7,6),(9,6)]) & (B<H))|((rotated_torets in [(6,9),(6,7)]) & (B>H)):
                         tmp = diag_rotate(tmp, (entr_wall[0] + entr_wall[1])%2)
                     break
@@ -1185,6 +1185,10 @@ def diag_rotate(pl,main_diag):
             tmp1 = max0 - res[0][i*2+1]
             res[0][i * 2] = tmp1
             res[0][i * 2 + 1] = tmp0
+            tmp0 = max1 - res[1][i*2]
+            tmp1 = max1 - res[1][i*2+1]
+            res[1][i * 2] = tmp1
+            res[1][i * 2 + 1] = tmp0
     return res
 
 # Учет ограничений по площади/длине
@@ -1329,8 +1333,8 @@ def postproc(pl):
                         # will_deleted += [i, t]
                         processed += [i, t]
                         # удаляем границу при отрисовке
-                        show_board[i]=":"
-                        show_board[t]=":"
+                        show_board[i]=":"#'--'#
+                        show_board[t]=":"#'--'#
                         # res_pl[0] += [min(pl[0][i * 2], pl[0][t * 2]), max(pl[0][i * 2 + 1], pl[0][t * 2 + 1])]
                         # res_pl[1] += [min(pl[1][i * 2], pl[1][t * 2]), max(pl[1][i * 2 + 1], pl[1][t * 2 + 1])]
                         # show_board.append(1)
@@ -1338,8 +1342,8 @@ def postproc(pl):
                 else:
                     if sc[i][t][0] in list(set(adjacency) - {(1,1),(1,11), (11,1), (11,11)}):  # НЕполностью смежная
                         # удаляем границу при отрисовке
-                        show_board[i]=":"
-                        show_board[t]=":"
+                        show_board[i]=":"#'--'
+                        show_board[t]=":"#'--'#
                         processed += [i, t]
                         break
 
@@ -1376,29 +1380,29 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms,):
     scens = main_topology(max_results, compartments_list, hall_pos, entr_wall, B_, H_)
     #print scens
     # Визуализация
-    # i=0
-    # for pl in scens:
-    #     if i%9==0:
-    #         fig1 = plt.figure(figsize=(15, 15))
-    #     ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
-    #     visual2(quickplacement(pl), ax1)
-    #     i+=1
-    #     if (i>100):
-    #         break
+    i=0
+    for pl in scens:
+        if i%9==0:
+            fig1 = plt.figure(figsize=(15, 15))
+        ax1 = fig1.add_subplot(3,3,i%9+1, title='scen '+str(i), aspect='equal')
+        visual2(quickplacement(pl), ax1)
+        i+=1
+        if (i>100):
+            break
 
     # Учет ограничений по площади
     # Параметры - ширина, высота, сценарии (топологические)
     optim_scens = main_size(B_, H_, scens, entr_wall, hall_pos)
     show_board = postproc(optim_scens[0])
     # Визуализация
-    # i=0
-    # n=2
-    # for pl in optim_scens:
-    #     if i%n**2==0:
-    #         fig1 = plt.figure(figsize=(15, 15))
-    #     ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
-    #     visual(pl, ax1)
-    #     i+=1
-    #     if (i>30):
-    #         break
+    i=0
+    n=2
+    for pl in optim_scens:
+        if i%n**2==0:
+            fig1 = plt.figure(figsize=(15, 15))
+        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]), aspect='equal')
+        visual(pl, ax1)
+        i+=1
+        if (i>30):
+            break
     return optim_scens[0], comp_col, show_board
