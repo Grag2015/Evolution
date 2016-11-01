@@ -121,8 +121,8 @@ def create_constr():
     #varres, areasres = Knapsack(B, H, B1, H1, B2, H2)
     r1 = int(round((B/2.-1)*10/55,0))
     r2 = int(round((B/2.-1)*H/55,0))
-    varres= [1]*(r1+r2)
-    areasres= [50]*(r1+r2)
+    varres= [1]*(r1*r2)
+    areasres= [50]*(r1*r2)
     print varres, areasres
     compartments = copy.deepcopy(compartments_src)
     rooms_weights = copy.deepcopy(rooms_weights_src)
