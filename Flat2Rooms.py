@@ -1359,7 +1359,7 @@ def postproc(pl):
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
 # Todo внимание! нужно возвращать 1 наилучшую планировку!
 
-def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms,):
+def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
     compartments_list = ["envelope",  "hall", "corr", "bath", "kitchen"]
@@ -1377,7 +1377,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms,):
 
     max_results = 3
     recur_int = 0
-    scens = main_topology(max_results, compartments_list, hall_pos, entr_wall, B_, H_)
+    scens = main_topology(max_results, compartments_list, hall_pos, entr_wall, B_, H_, flat_out_walls)
     #print scens
     # Визуализация
     i=0

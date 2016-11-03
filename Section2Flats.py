@@ -12,6 +12,7 @@ matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import re
+from Flat2Rooms import place2scen
 
 from knapsack import Knapsack
 # настройки алгоритма
@@ -83,7 +84,7 @@ podezd_flat = [(0,0),(1,0),(2,0),(3,0),(4,0),(5,0),(10,0),(11,0),(12,0),
                (0,1),(0,2),(0,3),(0,6),(0,9),(12,1),(12,2),(12,3),(12,6),(12,9),
                (1, 1), (1, 2), (1, 3), (1, 6), (1, 9), (11, 1), (11, 2), (11, 3), (11, 6), (11, 9)]
 envel_corr = [(9,8),(8,8),(7,8),(6,8)]
-envel_flat = [(7,6),(7,7),(7,8),(7,9),(8,7),(8,8),(8,9),(9,7),(9,8),(9,9)]
+envel_flat = [(7,6),(7,7),(7,9),(8,7),(8,9),(9,7),(9,9)]
 corr_other = list((set(partcommon) | set(inverse(partcommon))) | {(1,11),(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(0,8),(0,9),(0,10),(0,11),(0,12),(11,0),(9,0)} ) # -
 hall_other = list(set(partcommon) | {(0,0),(0,1),(0,2),(0,3),(0,5),(0,7),(0,10),(0,11),(0,12),(3,11)}) # используем для случая с коридором
 bath_kitch2room = list(set(adjacency) | {(3,12), (4,12), (5,12), (2, 12), (5, 11)})
@@ -1874,7 +1875,7 @@ def main_size(width, height, scens):
     return res_tmp, bestmini
 
 # Section2Flats(25, 15)
-def Section2Flats(B_, H_):
+def Section2Flats(B_, H_, out_walls):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
 
@@ -1906,6 +1907,14 @@ def Section2Flats(B_, H_):
     print "scens[bestmini]", scens[bestmini]
     print "optim_scens[0]", optim_scens[0]
     new_scen_res, hall_pos_res, entrwall_res = check_pl(scens[bestmini], optim_scens[0])
+
+    # расчет внешних стен для квартир
+    will_put_walls = {(7, 6):(0,1,1,1), (7, 7):(0,1,1,0), (7, 9):(0,0,1,1), (8, 7):(0,1,0,0), (8, 9):(0,0,0,1), (9, 7):(1,1,0,0), (9, 9):(1,0,0,1)}
+    sc_tmp = place2scen(new_scen_res)
+    flats_out_walls=[]
+    for i in range(3,len(sc_tmp)): # не берем 3 служ. помещения (енвелоп, подъезд, коридор)
+        flats_out_walls.append(map(lambda x: x[0]*x[1],zip(will_put_walls[sc_tmp[0][i][0]],out_walls)))
+
     print "new_scen_res", new_scen_res
     # заглушка
     # new_scen_res =[[0,25,11.832458301964532,18.186082541575203,0,18.186082541575203,18.186082541575203,25,0,9.0930412707876016,
@@ -1940,7 +1949,7 @@ def Section2Flats(B_, H_):
 
     plt.show()
 
-    return new_scen_res, hall_pos_res, entrwall_res
+    return new_scen_res, hall_pos_res, entrwall_res, flats_out_walls
 
 # функция возвращает позицию угла и входную стену принимая отношения корр-комната, подъезд-комната
 def entrwall_hall_pos(corr_flat, podezd_flat):

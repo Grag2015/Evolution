@@ -9,9 +9,10 @@ matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-def Section2Rooms(B_, H_):
+def Section2Rooms(B_, H_, out_walls):
+    # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)
     t1 = time.clock()
-    flats, hall_pos, entrwall = Section2Flats(B_, H_)
+    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls)
     prepflats = prepareflats(flats)
 
     res=[]
@@ -20,7 +21,7 @@ def Section2Rooms(B_, H_):
     line_width = []
     fill_ = []
     for i, fl in enumerate(prepflats):
-        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4])
+        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i])
         res.append([(fl[0],fl[1]), tmp[0]])
         col_list += ["#f7f01d"]+tmp[1]
         show_board += tmp[2]
@@ -37,7 +38,7 @@ def Section2Rooms(B_, H_):
     visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_)
 
 def prepareflats(flats):
-    # output - x1,y1, H,B, entrwall, hall_pos, count_rooms
+    # output - x1,y1, H,B, count_rooms
     prepflats = []
     for i in range(3, int(len(flats[0])/2)):
         x1 = flats[0][i*2]
@@ -77,7 +78,7 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
     plt.show()
 
 # ToDo в секциирум отправляем флаги 0/1 для каждой стороны (причем пока верх и низ считаем = 1)
-# ToDo в секциирум на основании флагов выше рассчитываем и отправляет флаги для каждой комнаты - при этом эти флгаи будут абсолютные, на основании информации
+# ToDo в секциирум на основании флагов выше рассчитываем и отправляет флаги для каждой квартиры - при этом эти флгаи будут абсолютные, на основании информации
 # секция енвелоп-флэт, с помощью позиции входной стены надо переводить эти флаги в относительные и передавать дальше
 # ToDo в флэт2рум правим условия енвелоп-рум в зависимости от флагов (относительно 0 - левая стенка) возможны такие такие комбинации
 # 1 - внешняя стена (1,0,0), (0,1,0), (0,0,1), (1,0,1), (0,1,1), (1,1,0), (1,1,1) - под каждую комбинацию свои енвелоп-рум
