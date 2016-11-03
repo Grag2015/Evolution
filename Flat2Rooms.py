@@ -1021,9 +1021,29 @@ def withoutgapes3(N):
     else:
         return False
 
+# преобразование абсолютных значений флагов внешних стен, в относительные значения (относительно ненулевой стены входа)
+def abs_outwalls2rel_outwalls(flat_out_walls, hall_pos, entr_wall):
+    # вращение планировки в зависимости от позиции входной стены entr_wall in {(0,0),(0,1),(1,0),(1,1),(2,0),(2,1),(3,0),(3,1)}
+    # если прихожая может быть в центре, то просто поворачиваем по часовой стрелке entr_wall[0] раз
+    if hall_pos >= 1:
+        n=entr_wall[0]
+    # если прихожая только угловая
+    else:
+        n = entr_wall[0] + entr_wall[1]
+    res=[]
+    for i in range(len(flat_out_walls)):
+        res.append(flat_out_walls[(i+n)%len(flat_out_walls)])
+    return tuple(res)
+
+# корректировка ограничения envelroom в зависимости от расположения внешних стен
+def outwalls2envelroom(out_walls_rel): # out_walls_rel - относительныый
+    res = {(0,1,0,0):[(),()],(0,0,1,0):[(),()],(0,0,0,1):[(),()],(0,1,1,0):[(),()],(0,1,0,1):[(),()],(0,0,1,1):[(),()],
+           (0, 1, 1, 1): [(), ()]} #
+    return res[out_walls_rel]
+
 # Поиск различных вариантов компоновки (топологий)
 # ЗАГЛУШКА
-def main_topology(max_results, compartments_list, hall_pos, entr_wall, B, H, printres = True):
+def main_topology(max_results, compartments_list, hall_pos, entr_wall, B, H, flat_out_walls, printres = True):
     """
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
@@ -1098,6 +1118,12 @@ def main_topology(max_results, compartments_list, hall_pos, entr_wall, B, H, pri
 
     compartments = compartments_list
     len_comp = len(compartments)
+
+    # корректировка енвелоп-рум
+    new_envel_room = outwalls2envelroom(abs_outwalls2rel_outwalls(flat_out_walls, hall_pos, entr_wall))
+    for i in range(4,len_comp):
+        tc_src[0,i] = new_envel_room
+
     tc = prepare_tc(tc_src)
 
     # topology
@@ -1133,15 +1159,16 @@ def main_topology(max_results, compartments_list, hall_pos, entr_wall, B, H, pri
             tmp = rotate90(tmp, entr_wall[0] + entr_wall[1])
             # простая проверка горизонтальности планировки по наличию торцевой комнаты, проверка выполняется после поворотов (для координации прихожей с коридором)
             # и работает только для hall_pos == 0
-            list_torets = [(7,6),(6,9),(9,6),(6,7)] # блоки расположены соот-но повороту по часовой стрелке
-            for i in range(4,len_comp): # от кухни и все комнаты
-                if sc[0][i][0] in list_torets: # если есть торцевая комната, то делаем проверку и поворот
-                    # надо повернуть торцевую комнату entr_wall[0] + entr_wall[1] раз
-                    ind = list_torets.index(sc[0][i][0])
-                    rotated_torets = list_torets[(ind + entr_wall[0] + entr_wall[1])%4]
-                    if ((rotated_torets in [(7,6),(9,6)]) & (B<H))|((rotated_torets in [(6,9),(6,7)]) & (B>H)):
-                        tmp = diag_rotate(tmp, (entr_wall[0] + entr_wall[1])%2)
-                    break
+            # TODO пока ВЫКЛЮЧИЛ поворот для квартир с торцевой комнатой
+            # list_torets = [(7,6),(6,9),(9,6),(6,7)] # блоки расположены соот-но повороту по часовой стрелке
+            # for i in range(4,len_comp): # от кухни и все комнаты
+            #     if sc[0][i][0] in list_torets: # если есть торцевая комната, то делаем проверку и поворот
+            #         # надо повернуть торцевую комнату entr_wall[0] + entr_wall[1] раз
+            #         ind = list_torets.index(sc[0][i][0])
+            #         rotated_torets = list_torets[(ind + entr_wall[0] + entr_wall[1])%4]
+            #         if ((rotated_torets in [(7,6),(9,6)]) & (B<H))|((rotated_torets in [(6,9),(6,7)]) & (B>H)):
+            #             tmp = diag_rotate(tmp, (entr_wall[0] + entr_wall[1])%2)
+            #         break
             tmp = place2scen(tmp)
         rotated_scens.append(tmp)
 
