@@ -1233,12 +1233,13 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
     optim_scens=[]
     res_x=[]
     bestmin = 1000
-    bestmini = -1
+    bestmini = 0
     for i in range(len(scens)):
         #try:
         makeconst(quickplacement(scens[i])) # подготовка ограничения для целевой функции
         res = opt.differential_evolution(func2_discret, bounds, strategy="best1exp") # оптимизация целевой ф-и с указанными ограничениями
-        if res.fun < bestmin:
+        res_x.append(func2_discret_results(res.x))
+        if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
             bestmin = res.fun
             bestmini = i
         xlistnew = list(res.x[0:len(Ax[0]) - 1])
@@ -1247,7 +1248,6 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
         res_tmp = optim_placement(quickplacement(scens[i]), xlistnew, ylistnew) # преобразование результатов оптимизации во внутренний формат
 
         optim_scens.append(res_tmp)
-        res_x.append(func2_discret_results(res.x))
         #except ValueError:
         #    print('Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()

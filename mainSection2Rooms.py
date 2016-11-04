@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from Section2Flats import Section2Flats
 from Flat2Rooms import Flat2Rooms
 from Flat2Rooms import visual_pl
@@ -46,10 +47,10 @@ def prepareflats(flats):
         B = flats[0][i*2+1] - flats[0][i*2]
         H = flats[1][i*2+1] - flats[1][i*2]
 
-        if B*H<44:
+        if B*H<50:
             count_rooms = 1
         else:
-            if B*H<60:
+            if B*H<80:
                 count_rooms = 2
             else:
                 if B*H<110:
@@ -95,3 +96,5 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
 
 # дополнительно
 # для ускорения можно поработать с глобальными переменными - например, передавать Ay, Ax в целевую функцию
+
+Section2Rooms(20, 15, (0,1,0,1))
