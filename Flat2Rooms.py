@@ -101,8 +101,8 @@ def prepare_tc(tc_src):
     # верхний треугольник оставляем без изменений
     # диагональ заполняем значением (6,6)
     global len_comp
-    print "len_comp"
-    print len_comp
+    # print "len_comp"
+    # print len_comp
     for i in range(len_comp):
         tc[i][i].append((6,6))
 
@@ -1229,7 +1229,7 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
     global B, H, res_x
     B = B_
     H = H_
-    t1 = time.clock()
+    #t1 = time.clock()
     optim_scens=[]
     res_x=[]
     bestmin = 1000
@@ -1250,11 +1250,11 @@ def main_size(B_, H_, scens, entr_wall, hall_pos):
         optim_scens.append(res_tmp)
         #except ValueError:
         #    print('Планировка '+str(i)+' не была рассчитана!')
-    t2 = time.clock()
-    print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
+    #t2 = time.clock()
+    #print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
     res_tmp.append(optim_scens[bestmini])
-    return res_tmp
+    return res_tmp, res.fun, res_x
 
 
 def calculation(json_string):
