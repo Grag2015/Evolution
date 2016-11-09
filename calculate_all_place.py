@@ -64,7 +64,11 @@ for scall in scensall:
 t2 = time.clock()
 print "Расчет закончен! Время выполнения программы sec.- " + str(t2 - t1)
 
-# file = open("plall.txt", 'r')
-# data = cPickle.load(file)
-# file.close()
-# data
+file = open("d:\YandexDisk\EnkiSoft\Evolution\plall1_0100.txt", 'rb')
+plall1_0100 = cPickle.load(file)
+file.close()
+
+file = open("d:\YandexDisk\EnkiSoft\Evolution\plall2_0100.txt", 'rb')
+plall2_0100 = cPickle.load(file)
+file.close()
+
