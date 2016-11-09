@@ -1225,8 +1225,58 @@ def diag_rotate(pl,main_diag):
     return res
 
 # Учет ограничений по площади/длине
-def main_size(B_, H_, scens, entr_wall, hall_pos):
+def main_size(B_, H_, scens, entr_wall, hall_pos, count_rooms):
     global B, H, res_x
+
+    # добавил подготовку ограничений из main_topology
+
+    global max_res, compartments, envel_hall, recur_int, nres, stop, rooms_weights, areaconstr, sides_ratio, comp_col, len_comp, areaconstrmax, \
+        widthconstrmin, widthconstrmax
+
+    compartments_list = ["envelope", "hall", "corr", "bath", "kitchen"]
+    # ToDo надо добавлять еще 3-х и 4-хкомнатные квартиры
+    if count_rooms == 1:
+        compartments_list += ["room"]
+    else:
+        if count_rooms == 2:
+            compartments_list += ["room", "room2"]
+        else:
+            if count_rooms == 3:
+                compartments_list += ["room", "room2", "room3"]
+            else:
+                compartments_list += ["room", "room2", "room3", "room4"]
+
+    compartments = copy.deepcopy(compartments_src)
+    rooms_weights = copy.deepcopy(rooms_weights_src)
+    areaconstr = copy.deepcopy(areaconstr_src)
+    areaconstrmax = copy.deepcopy(areaconstrmax_src)
+    widthconstrmin = copy.deepcopy(widthconstrmin_src)
+    widthconstrmax = copy.deepcopy(widthconstrmax_src)
+    sides_ratio = copy.deepcopy(sides_ratio_src)
+    comp_col = copy.deepcopy(comp_col_src)
+
+    # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
+    changing_lists = [rooms_weights, areaconstr, sides_ratio, comp_col, areaconstrmax, widthconstrmin, widthconstrmax]
+    new_lists=[]
+    for i in range(len(changing_lists)): new_lists.append([])
+    for i in range(len(compartments[1:])):
+        if (compartments[1:][i] in set(compartments_list)):
+            for j in range(len(changing_lists)):
+                new_lists[j].append(changing_lists[j][i])
+
+    rooms_weights = new_lists[0]
+    areaconstr = new_lists[1]
+    sides_ratio = new_lists[2]
+    comp_col = new_lists[3]
+    areaconstrmax = new_lists[4]
+    widthconstrmin = new_lists[5]
+    widthconstrmax = new_lists[6]
+
+    compartments = compartments_list
+    len_comp = len(compartments)
+
+    # /добавил подготовку ограничений из main_topology
+
     B = B_
     H = H_
     #t1 = time.clock()
