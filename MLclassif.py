@@ -22,4 +22,4 @@ for x in plall_total:
                 funs += 4
 data = pd.DataFrame([outwalls,size,funs],columns=["outwalls","size","funs"])
 
-pd.pivot_table(df, values='D', index=['B'], columns=['A', 'C'], aggfunc=np.sum)
+pd.pivot_table(df, values='funs', columns=["outwalls","size"], aggfunc=np.min)
