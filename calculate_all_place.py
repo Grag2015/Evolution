@@ -41,8 +41,8 @@ blist = np.array([4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10])
 hlist = np.array([6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15])
 plall=[]
 for scall in scensall:
-    # if scall[1] == (0, 0, 1, 0):
-    #     break
+    if ((scall[1] == (0, 1, 0, 0) )| (scall[1] == (0,0,1,0))):
+        continue
     for sc in scall[0]:
         for b in blist:
             for h in hlist[hlist>=b]:
