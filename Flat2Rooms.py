@@ -8,11 +8,17 @@ matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import re
+import cPickle
 
 import fileinput
 import cProfile
 import json
 from interface2 import pl2json, json2params
+
+# загружаем словарь
+file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'rb')
+dict_res = cPickle.load(file)
+file.close()
 
 # настройки алгоритма
 timeout = 15
@@ -753,8 +759,9 @@ def visual_pl(placement_all):
                                          facecolor=comp_col[i-1]
             )
         )
-        ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
-                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
+        ax1.text(placement_all[0][2 * i] / float(B) + (abs(placement_all[0][2 * i] - placement_all[0][2 * i + 1]) / float(B)) / 2.,
+                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2 * i] - placement_all[1][2 * i + 1]) / float(H)) / 2., compartments[i] + '\n' +
+                 str(round(placement_all[0][2 * i + 1] - placement_all[0][2 * i], 1)) + 'x' + str(round(placement_all[1][2 * i + 1] - placement_all[1][2 * i], 1)))
     # plt.show()
 
 
@@ -1390,9 +1397,41 @@ def postproc(pl):
 
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
-# Todo внимание! нужно возвращать 1 наилучшую планировку!
 
 def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
+    hall_pos = 2 # пока только этот вариант рассматриваем
+
+    # B_, H_, flat_out_walls - в глобальной системе координат
+    # переводим их в локальную (относительно стены входа)
+    loc_out_walls = abs_outwalls2rel_outwalls(flat_out_walls, hall_pos, entr_wall)
+    if entr_wall[0]%2==1:
+        locB, locH = (H_, B_)
+    else:
+        locB, locH = (B_, H_)
+
+# для найденных локальных значений достаем из словаря (базы планировок) ближайшую по размерам планировку
+    pl = copy.deepcopy(dict_res[((locB - locB%0.5, locH - locH%0.5), loc_out_walls)])
+# преобразуем планировку - все стены пропорционально сдвигаем на locB%0.5 и locH%0.5
+    xlist = list(set(pl[0]))
+    xlist.sort()
+    delta = (locB % 0.5) / float(len(xlist)-1) # сдвиг для каждой стены
+    for i in range(len(pl[0])):
+        pl[0][i] += delta*xlist.index(pl[0][i])
+
+    ylist = list(set(pl[1]))
+    ylist.sort()
+    delta = (locH % 0.5) / float(len(ylist)-1) # сдвиг для каждой стены
+    for i in range(len(pl[1])):
+        pl[1][i] += delta*ylist.index(pl[1][i])
+# поворачиваем планировку
+    if hall_pos >= 1:
+        pl_rotated = rotate90(pl, entr_wall[0])
+
+    show_board = postproc(pl_rotated)
+    comp_col = ['#73DD9B', '#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC', '#ACBFEC', '#ACBFEC', '#ACBFEC']
+    return pl_rotated, comp_col[0:int(len(pl[0])/2)], show_board
+
+def Flat2Rooms_old(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
     compartments_list = ["envelope",  "hall", "corr", "bath", "kitchen"]
@@ -1439,3 +1478,6 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
         if (i>30):
             break
     return optim_scens[0], comp_col, show_board
+
+
+(6.6919917284709998, 5.3673416074831231, (3, 0), 0, 1, [0, 1, 0, 0])

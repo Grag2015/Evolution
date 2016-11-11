@@ -1,10 +1,12 @@
 import pandas as pd
 import cPickle
 import numpy as np
+import time
 
 # подготовка данных
 # список файлов для загрузки
-files_list = ["1_0001","1_0010", "1_0100", "1_0110", "2_0001", "2_0010", "2_0100", "3_0001", "3_0100"]
+files_list = ["1_0001","1_0010", "1_0011", "1_0100", "1_0101", "1_0110", "1_0111", "2_0001", "2_0010", "2_0011", "2_0100",
+              "2_0101", "2_0110", "2_0111", "3_0001", "3_0010", "3_0011", "3_0100"]
 plall_total = []
 for fl in files_list:
     file = open("d:\YandexDisk\EnkiSoft\Evolution\plall" + fl + ".txt", "rb")
@@ -23,6 +25,14 @@ data_agg = grouped.aggregate(np.min)
 
 dict_res={}
 for i in range(len(data_agg)):
-    dict_res[(data_agg.ix[i,1],data_agg.ix[i,0])] = data[(data["outwalls"] == data_agg.ix[i,0]) & (data["size"] == data_agg.ix[i,1]) & (data["funs"] == data_agg.ix[i,2])].ix[0,3]
+    dict_res[(data_agg.ix[i,1],data_agg.ix[i,0])] = data[(data["outwalls"] == data_agg.ix[i,0]) & (data["size"] == data_agg.ix[i,1]) & (data["funs"] == data_agg.ix[i,2])].reset_index().ix[0,4]
 
+# проверка времени обращения к словарю
+t1 = time.time()
+dict_res[((4.5, 6.0), (0, 0, 0, 1))]
+t2 = time.time()
+t2-t1
 
+file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'wb')
+cPickle.dump(dict_res, file)
+file.close()
