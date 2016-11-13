@@ -1201,8 +1201,9 @@ def rotate90(pl, n): # n time по часовой стрелке
         return pl
     if n==1:
         pln=[[],[]]
-        pln[0] = map(lambda x: (x/float(H))*B, pl[1])
-        pln[1] = map(lambda y: (H-(y/float(B))*H), pl[0])
+        pln[0] = pl[1]
+        B = max(pl[0])
+        pln[1] = map(lambda y: B-y, pl[0])
         for i in range(len(pl[0])/2):
             b1=min(pln[1][2*i],pln[1][2 * i+1])
             b2=max(pln[1][2*i],pln[1][2 * i+1])
@@ -1399,16 +1400,21 @@ def postproc(pl):
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
 
 def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
-    hall_pos = 2 # пока только этот вариант рассматриваем
+    #hall_pos = 2 # пока только этот вариант рассматриваем
 
     # B_, H_, flat_out_walls - в глобальной системе координат
     # переводим их в локальную (относительно стены входа)
     loc_out_walls = abs_outwalls2rel_outwalls(flat_out_walls, hall_pos, entr_wall)
-    if entr_wall[0]%2==1:
-        locB, locH = (H_, B_)
+    if hall_pos >= 1:
+        if entr_wall[0]%2==1:
+            locB, locH = (H_, B_)
+        else:
+            locB, locH = (B_, H_)
     else:
-        locB, locH = (B_, H_)
-
+        if (entr_wall[0]+entr_wall[1])%2==1:
+            locB, locH = (H_, B_)
+        else:
+            locB, locH = (B_, H_)
 # для найденных локальных значений достаем из словаря (базы планировок) ближайшую по размерам планировку
     pl = copy.deepcopy(dict_res[((locB - locB%0.5, locH - locH%0.5), loc_out_walls)])
 # преобразуем планировку - все стены пропорционально сдвигаем на locB%0.5 и locH%0.5
@@ -1426,10 +1432,12 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
 # поворачиваем планировку
     if hall_pos >= 1:
         pl_rotated = rotate90(pl, entr_wall[0])
-
+    # если прихожая только угловая
+    else:
+        pl_rotated = rotate90(pl, entr_wall[0] + entr_wall[1])
     show_board = postproc(pl_rotated)
     comp_col = ['#73DD9B', '#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC', '#ACBFEC', '#ACBFEC', '#ACBFEC']
-    return pl_rotated, comp_col[0:int(len(pl[0])/2)], show_board
+    return pl_rotated, comp_col[0:int(len(pl[0])/2-1)], show_board
 
 def Flat2Rooms_old(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
     # Поиск топологий
@@ -1480,4 +1488,4 @@ def Flat2Rooms_old(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
     return optim_scens[0], comp_col, show_board
 
 
-(6.6919917284709998, 5.3673416074831231, (3, 0), 0, 1, [0, 1, 0, 0])
+B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls=(6.6919917284709998, 5.3673416074831231, (3, 0), 0, 1, [0, 1, 0, 0])
