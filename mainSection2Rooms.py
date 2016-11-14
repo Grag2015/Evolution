@@ -99,3 +99,4 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
 
 Section2Rooms(20, 15, (0,1,0,1))
 Section2Rooms(30, 20, (0,1,0,1))
+Section2Rooms(30, 15, (0,1,0,1))
