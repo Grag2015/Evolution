@@ -15,10 +15,7 @@ import cProfile
 import json
 from interface2 import pl2json, json2params
 
-# загружаем словарь
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'rb')
-dict_res = cPickle.load(file)
-file.close()
+
 
 # настройки алгоритма
 timeout = 15
