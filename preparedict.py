@@ -11,6 +11,7 @@ plall_total = []
 for fl in files_list:
     file = open("d:\YandexDisk\EnkiSoft\Evolution\plall" + fl + ".txt", "rb")
     plall_tmp = cPickle.load(file)
+    file.close()
     print len(plall_tmp)
     plall_total += plall_tmp
 outwalls = [x[1] for x in plall_total]
