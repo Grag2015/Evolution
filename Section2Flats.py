@@ -994,34 +994,39 @@ def func2_discret(xy):
     y = xy[len(Ax[0]) - 2:len(Ax[0]) + len(Ay[0]) - 2]
     yb = np.append(y, H)
 
-    # Ограничение по площади снизу
-    #print x, y
-    res1 = Ax.dot(xb) * Ay.dot(yb) - areaconstr
-    # Ограничение по площади сверху
-    res1max = areaconstrmax - Ax.dot(xb) * Ay.dot(yb)
+    # # Ограничение по площади снизу
+    # #print x, y
+    # res1 = Ax.dot(xb) * Ay.dot(yb) - areaconstr
+    # # Ограничение по площади сверху
+    # res1max = areaconstrmax - Ax.dot(xb) * Ay.dot(yb)
 
     # Ограничение на расположение соседних стен
     res2 = Bx.dot(x) - [min_margin]*len(Bx)#np.sign(Bx.dot(xy[0:len(Ax[0])-1]))*min_margin
     res3 = By.dot(y) - [min_margin]*len(By) #- np.sign(By.dot(xy[len(Ax[0])-1:len(Ax[0]) + len(Ay[0])-2]))*min_margin
     # ограничение на соотношение сторон
     res4 = map(lambda d: int((d>=1./2.5)&(d<=2.5))-1, Ay.dot(yb)/Ax.dot(xb))*np.array(sides_ratio)
-    # ограничение на минимальную ширину
-    res5 = Ax.dot(xb) - widthconstrmin
-    res6 = Ay.dot(yb) - widthconstrmin
+    # # ограничение на минимальную ширину
+    # res5 = Ax.dot(xb) - widthconstrmin
+    # res6 = Ay.dot(yb) - widthconstrmin
 
     # ограничение на максимальную ширину
-    res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(xb),Ay.dot(yb))))
+    # res7 = np.array(widthconstrmax) - np.array(map(min, zip(Ax.dot(xb),Ay.dot(yb))))
 
-    res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
-    res1maxsign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1max))
+    # res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
+    # res1maxsign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1max))
     res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
     res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
     res4sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res4))
-    res5sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res5))
-    res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
-    res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
+    # res5sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res5))
+    # res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
+    # res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
 
-    return res1sign.dot(rooms_weights)*5 + sum(res2sign)*15 + sum(res3sign)*15 + sum(res4sign)*10 + sum(res5sign)*7 + sum(res6sign)*7+ sum(res7sign)*5 + sum(res1maxsign)
+    xlistnew = list(res.x[0:len(Ax[0]) - 1])
+    ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
+    # print i
+    optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+
+    return sum(res2sign) + sum(res3sign) + sum(res4sign)
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
