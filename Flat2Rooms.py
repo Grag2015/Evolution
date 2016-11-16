@@ -14,8 +14,8 @@ import fileinput
 import cProfile
 import json
 from interface2 import pl2json, json2params
-
-
+from preparedict import get_dict_res
+import ipdb
 
 # настройки алгоритма
 timeout = 15
@@ -1401,6 +1401,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
 
     # B_, H_, flat_out_walls - в глобальной системе координат
     # переводим их в локальную (относительно стены входа)
+    #import ipdb; ipdb.set_trace()
     loc_out_walls = abs_outwalls2rel_outwalls(flat_out_walls, hall_pos, entr_wall)
     if hall_pos >= 1:
         if entr_wall[0]%2==1:
@@ -1413,7 +1414,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
         else:
             locB, locH = (B_, H_)
 # для найденных локальных значений достаем из словаря (базы планировок) ближайшую по размерам планировку
-    pl = copy.deepcopy(dict_res[((locB - locB%0.5, locH - locH%0.5), loc_out_walls, hall_pos)])
+    pl = copy.deepcopy(get_dict_res(((locB - locB%0.5, locH - locH%0.5), loc_out_walls, hall_pos)))
 # преобразуем планировку - все стены пропорционально сдвигаем на locB%0.5 и locH%0.5
     xlist = list(set(pl[0]))
     xlist.sort()
