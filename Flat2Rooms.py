@@ -4,9 +4,9 @@ import numpy as np
 import time
 import copy
 import matplotlib
-matplotlib.use('Qt4Agg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+# matplotlib.use('Qt4Agg')
+# import matplotlib.pyplot as plt
+# import matplotlib.patches as mpatches
 import re
 import cPickle
 
@@ -15,7 +15,7 @@ import cProfile
 import json
 from interface2 import pl2json, json2params
 from preparedict import get_dict_res
-import ipdb
+# import ipdb
 
 # настройки алгоритма
 timeout = 15
