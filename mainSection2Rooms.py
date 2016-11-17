@@ -6,9 +6,9 @@ import numpy as np
 
 import matplotlib
 import time
-matplotlib.use('Qt4Agg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+# matplotlib.use('Qt4Agg')
+# import matplotlib.pyplot as plt
+# import matplotlib.patches as mpatches
 
 def Section2Rooms(B_, H_, out_walls):
     # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)
@@ -97,6 +97,7 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
 # дополнительно
 # для ускорения можно поработать с глобальными переменными - например, передавать Ay, Ax в целевую функцию
 
-Section2Rooms(20, 15, (0,1,0,1))
-Section2Rooms(30, 20, (0,1,0,1))
-Section2Rooms(30, 15, (0,1,0,1))
+if __name__ == '__main__':
+    Section2Rooms(20, 15, (0,1,0,1))
+    #Section2Rooms(30, 20, (0,1,0,1))
+    #Section2Rooms(30, 15, (0,1,0,1))
