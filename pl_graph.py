@@ -93,10 +93,9 @@ def dijkstra_shortest_path_general(graph, start, p={}, u=[], d={}):
         if (x != start): # рассматриваем ТАКЖЕ окрашенных соседей
             if (graph[start][x] + p[start] < p[x]):
                 if x in u:
-                    u.pop(x)
-                    startnode_will_uncolor = True
-                else:
-                    p[x] = graph[start][x] + p[start]
+                    u.remove(x)
+                    #startnode_will_uncolor = True
+                p[x] = graph[start][x] + p[start]
 
     if (not startnode_will_uncolor):
         u.append(start)
@@ -115,8 +114,61 @@ def dijkstra_shortest_path_general(graph, start, p={}, u=[], d={}):
     print "NEXT"
     # если нет непосещенных вершин, то завершаем работу
     if(len(u) < len(graph)):
-        return dijkstra_shortest_path(graph, min_x, p, u)
+        return dijkstra_shortest_path_general(graph, min_x, p, u)
     else:
+        return p
+
+def optimGraphPath(graph, start, p={}, u=[], minim = True):
+    # p - метки вершин
+    # u - список посещенных вершин
+    # d - ?
+
+    infinity = 100000 # заведомо большое число
+    # Инициализация. Метка самой вершины a полагается равной 0, метки остальных вершин — бесконечности.
+    if len(p) == 0:
+        print "инициализация"
+        for i in range(len(graph)):
+            p[i] = infinity
+        p[start] = 0
+        # если minim != True, то надо все веса ребер умножить на -1
+        if not minim:
+            for dct in graph:
+                for k in dct:
+                    dct[k] = -dct[k]
+
+    # Шаг алгоритма
+
+    startnode_will_uncolor = False
+    for x in graph[start]: # для всех соседей выбранной вершины
+        if (x != start): # рассматриваем ТАКЖЕ окрашенных соседей
+            if (graph[start][x] + p[start] < p[x]):
+                if x in u:
+                    u.remove(x)
+                    #startnode_will_uncolor = True
+                p[x] = graph[start][x] + p[start]
+
+    if (not startnode_will_uncolor):
+        u.append(start)
+
+    # из ещё не посещённых вершин выбирается вершина u, имеющая минимальную метку.
+    min_v = infinity
+    min_x = None
+    for x in p:
+        # print "x: %d, p[x]: %d, mv %d" % (x, p[x], min_v)
+        if (p[x] < min_v ) and (x not in u):
+                min_x = x
+                min_v = p[x]
+    print "p: ", p
+    print "min_x: ", min_x
+    print "u: ", u
+    print "NEXT"
+    # если нет непосещенных вершин, то завершаем работу
+    if(len(u) < len(graph)):
+        return optimGraphPath(graph, min_x, p, u, minim)
+    else:
+        if not minim:
+            for k in p:
+                p[k] = -p[k]
         return p
 
 if __name__ == '__main__':
@@ -146,8 +198,9 @@ minwidth = [] # минимальные ширины без оболочки
 from Flat2Rooms import place2scen
 import numpy as np
 
-def pl2graph(pl):
-
+def pl2graph(pl, left2right = True):
+    #left2right = True - граф строится слева направо, при этом длина ребра (i,j) равна размеру помещения i
+    #left2right = False - граф строится справа налево, при этом длина ребра (i,j) равна размеру помещения j
     def pl2graphloc(vertex_iter, graphmin=[], processed = set()):
         if len(vertex_iter) == 0:
             return graphmin
@@ -158,15 +211,30 @@ def pl2graph(pl):
             # все смежные с v вершины
             v_adj = filter(lambda x: sc[v][x][0] in adj_list, range(len(pl[0])/2))
             for vi in v_adj:
-                graphmin[v][vi] = maxwidth[v]
+                if left2right:
+                    graphmin[v][vi] = maxwidth[v]
+                else:
+                    graphmin[v][vi] = maxwidth[vi]
             # вершины примыкающие к правой стороне оболочки
             if sc[0][v][0] in adj_right_envel:
-                graphmin[v][len(pl[0])/2] = maxwidth[v]
+                if left2right:
+                    graphmin[v][len(pl[0])/2] = maxwidth[v]
+                else:
+                    graphmin[v][len(pl[0]) / 2] = 0
             vertex_iter_new = vertex_iter_new | set(v_adj)
         vertex_iter_new = vertex_iter_new - processed
         processed = processed | vertex_iter
 
         return pl2graphloc(vertex_iter_new, graphmin, processed)
+
+    # елси left2right = False, то планировку надо отразить относительно вертикали
+    plnew = [[],[]]
+    if not left2right:
+        plnew[1] = pl[1]
+        for i in range(len(pl[0])/2):
+            plnew[0].append(min(max(pl[0])-pl[0][i*2], max(pl[0])-pl[0][i*2 + 1]))
+            plnew[0].append(max(max(pl[0])-pl[0][i*2], max(pl[0])-pl[0][i*2 + 1]))
+        pl = plnew
 
     sc = place2scen(pl)
     # надо 4 графа - для миним/макс * вертикал/горизонтал
@@ -192,7 +260,11 @@ def pl2graph(pl):
 
     # для стартового элемента добавляем смежные с ним вершины с ребрами веса 0
     for i in v_adj:
-        graphmin[0][i] = 0
+        if left2right:
+            graphmin[0][i] = 0
+        else:
+            graphmin[0][i] = maxwidth[i]
+
 
     processed.add(0)
     vertex_iter = vertex_iter | set(v_adj)
@@ -218,6 +290,19 @@ G = [{3: 0, 7: 0}, #0
  {1: 10}, #8
  {6: 10, 10: 10}, #9
  {11: 10}, #10
+ {}] #11
+
+Gnegative = [{3: 0, 7: 0}, #0
+ {9: -10}, #1
+ {6: -10, 10: -10}, #2
+ {2: -10, 4: -10, 8: -10}, #3
+ {5: -10}, #4
+ {6: -10, 10: -10}, #5
+ {11: -10}, #6
+ {2: -10, 4: -10, 8: -10}, #7
+ {1: -10}, #8
+ {6: -10, 10: -10}, #9
+ {11: -10}, #10
  {}] #11
 
 [{3: 0, 7: 0},
@@ -262,18 +347,24 @@ Gtest3 = [{1: 1, 2: 3},
  ]
 Gtest4 = [{1: 1, 2: 3},
  {3: 2},
- {1:1, 3: 4},
+ {1:3, 3: 4},
 {}
  ]
 Gtest4negative = [{1: -20, 2: -20},
  {3: 2},
- {1:1, 3: 4},
+ {3: 4},
 {}
  ]
+
+Gtest5negative = [{1: 2, 2: 1},
+ {2: -2},
+{}
+ ]
+
 
 dijkstra_shortest_path(Gtest3, 0)
 dijkstra_shortest_path(Gtest4, 0)
 dijkstra_shortest_path2(Gtest3, 0, {}, [])
 dijkstra_shortest_path2(G, 0, {}, [])
 dijkstra_shortest_path(G, 0, {}, [])
-dijkstra_shortest_path_general(Gtest4negative, 0, {}, [])
+dijkstra_shortest_path_general(Gnegative, 0, {}, [])
