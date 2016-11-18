@@ -7,9 +7,13 @@
 #   Матрица задается как список словарей смежности вершин
 # Описание алгоритма http://goo.gl/KsqC
 
+# U — множество посещённых вершин
+# d[u] — по окончании работы алгоритма равно длине кратчайшего пути из {\displaystyle a} a до вершины {\displaystyle u} u
+# p[u] — по окончании работы алгоритма содержит кратчайший путь из {\displaystyle a} a в {\displaystyle u} u
 
-def dijkstra_shortest_path(graph, start, p={}, u=[], d={}):
-    if len(p) == 0: p[start] = 0 # инициализация начального пути
+def dijkstra_shortest_path2(graph, start, p={}, u=[], d={}):
+    if len(p) == 0: p[start] = 0; print "инициализация начального пути"
+    print p
     # print "start V: %d, " % (start)
     for x in graph[start]:
         if (x not in u and x != start):
@@ -27,6 +31,90 @@ def dijkstra_shortest_path(graph, start, p={}, u=[], d={}):
                 min_v = p[x]
 
     if(len(u) < len(graph) and min_x):
+        return dijkstra_shortest_path2(graph, min_x, p, u)
+    else:
+        return p
+
+def dijkstra_shortest_path(graph, start, p={}, u=[], d={}):
+    # p - метки вершин
+    # u - список посещенных вершин
+    # d - ?
+    infinity = 100000 # заведомо большое число
+    # Инициализация. Метка самой вершины a полагается равной 0, метки остальных вершин — бесконечности.
+    if len(p) == 0:
+        print "инициализация"
+        for i in range(len(graph)):
+            p[i] = infinity
+        p[start] = 0
+
+    # Шаг алгоритма
+
+    for x in graph[start]: # для всех соседей выбранной вершины
+        if (x not in u and x != start): # рассматриваем только неокрашенных соседей
+            if (graph[start][x] + p[start] < p[x]):
+                p[x] = graph[start][x] + p[start]
+
+    u.append(start)
+
+    # из ещё не посещённых вершин выбирается вершина u, имеющая минимальную метку.
+    min_v = infinity
+    min_x = None
+    for x in p:
+        # print "x: %d, p[x]: %d, mv %d" % (x, p[x], min_v)
+        if (p[x] < min_v ) and (x not in u):
+                min_x = x
+                min_v = p[x]
+    print "p: ", p
+    print "min_x: ", min_x
+    print "u: ", u
+    print "NEXT"
+    # если нет непосещенных вершин, то завершаем работу
+    if(len(u) < len(graph)):
+        return dijkstra_shortest_path(graph, min_x, p, u)
+    else:
+        return p
+
+def dijkstra_shortest_path_general(graph, start, p={}, u=[], d={}):
+    # p - метки вершин
+    # u - список посещенных вершин
+    # d - ?
+    infinity = 100000 # заведомо большое число
+    # Инициализация. Метка самой вершины a полагается равной 0, метки остальных вершин — бесконечности.
+    if len(p) == 0:
+        print "инициализация"
+        for i in range(len(graph)):
+            p[i] = infinity
+        p[start] = 0
+
+    # Шаг алгоритма
+
+    startnode_will_uncolor = False
+    for x in graph[start]: # для всех соседей выбранной вершины
+        if (x != start): # рассматриваем ТАКЖЕ окрашенных соседей
+            if (graph[start][x] + p[start] < p[x]):
+                if x in u:
+                    u.pop(x)
+                    startnode_will_uncolor = True
+                else:
+                    p[x] = graph[start][x] + p[start]
+
+    if (not startnode_will_uncolor):
+        u.append(start)
+
+    # из ещё не посещённых вершин выбирается вершина u, имеющая минимальную метку.
+    min_v = infinity
+    min_x = None
+    for x in p:
+        # print "x: %d, p[x]: %d, mv %d" % (x, p[x], min_v)
+        if (p[x] < min_v ) and (x not in u):
+                min_x = x
+                min_v = p[x]
+    print "p: ", p
+    print "min_x: ", min_x
+    print "u: ", u
+    print "NEXT"
+    # если нет непосещенных вершин, то завершаем работу
+    if(len(u) < len(graph)):
         return dijkstra_shortest_path(graph, min_x, p, u)
     else:
         return p
@@ -111,7 +199,7 @@ def pl2graph(pl):
 
     return pl2graphloc(vertex_iter, graphmin, processed)
 
-pl2graph(pl2)
+G = pl2graph(pl2)
 
 pl = [[0,10,2,4,1,5,0,1,1,3,3,5,5,10,0,2,4,10],[0,10,0,1,1,2,1,10,2,10,2,10,1,10,0,1,0,1]]
 
@@ -119,17 +207,18 @@ pl2 = [[0,10,2,4,1,5,0,1,1,3,3,5,5,10,0,1,1,2,4,5,5,10],[0,10,0,1,1,3,2,10,3,10,
 len(pl2[0])
 len(pl2[1])
 
-G = [{3: 0, 7: 0},
- {9: 10},
- {6: 10, 10: 10},
- {2: 10, 4: 10, 8: 10},
- {5: 10},
- {6: 10, 10: 10},
- {11: 10},
- {2: 10, 4: 10, 8: 10},
- {1: 10},
- {6: 10, 10: 10},
- {11: 10}]
+G = [{3: 0, 7: 0}, #0
+ {9: 10}, #1
+ {6: 10, 10: 10}, #2
+ {2: 10, 4: 10, 8: 10}, #3
+ {5: 10}, #4
+ {6: 10, 10: 10}, #5
+ {11: 10}, #6
+ {2: 10, 4: 10, 8: 10}, #7
+ {1: 10}, #8
+ {6: 10, 10: 10}, #9
+ {11: 10}, #10
+ {}] #11
 
 [{3: 0, 7: 0},
  {9: 10},
@@ -144,4 +233,47 @@ G = [{3: 0, 7: 0},
  {11: 10},
  {}]
 
+dijkstra_shortest_path(Gtest2, 0)
 dijkstra_shortest_path(G, 0)
+
+Gtest = [{1: 1, 2: 3, 5: 3, 3: 5},
+ {2: 3, 3: 2},
+ {3: 4, 2: 4},
+ {4: 1, 5: 5},
+ {5: 2},
+         {}
+ ]
+
+Gtest2 = [{1: 1, 2: 7, 5: 3, 3: 5},
+ {2: 3, 3: 2},
+ {4: 4},
+ {2: 0.2, 5: 5, 4: 1},
+ {5: 2},
+{}
+ ]
+maxwidth = [10]*(len(Gtest2))
+dijkstra_shortest_path(Gtest2, 0)
+
+# граф диодный мостик
+Gtest3 = [{1: 1, 2: 3},
+ {2: 1, 3: 2},
+ {3: 4},
+{}
+ ]
+Gtest4 = [{1: 1, 2: 3},
+ {3: 2},
+ {1:1, 3: 4},
+{}
+ ]
+Gtest4negative = [{1: -20, 2: -20},
+ {3: 2},
+ {1:1, 3: 4},
+{}
+ ]
+
+dijkstra_shortest_path(Gtest3, 0)
+dijkstra_shortest_path(Gtest4, 0)
+dijkstra_shortest_path2(Gtest3, 0, {}, [])
+dijkstra_shortest_path2(G, 0, {}, [])
+dijkstra_shortest_path(G, 0, {}, [])
+dijkstra_shortest_path_general(Gtest4negative, 0, {}, [])
