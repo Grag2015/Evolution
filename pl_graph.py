@@ -191,16 +191,21 @@ if __name__ == '__main__':
 # N[a][b] - вес (a,b)
 # print N[a][b]
 
-maxwidth = [10]*(len(pl2[0])/2) # максимальные ширины без оболочки
-minwidth = [] # минимальные ширины без оболочки
+
 
 # граф смежности
 from Flat2Rooms import place2scen
 import numpy as np
 
-def pl2graph(pl, left2right = True):
+def pl2graph(pl, left2right = True, maxim = True):
     #left2right = True - граф строится слева направо, при этом длина ребра (i,j) равна размеру помещения i
     #left2right = False - граф строится справа налево, при этом длина ребра (i,j) равна размеру помещения j
+    global maxwidth, minwidth
+    if maxim:
+        optwidth = maxwidth
+    else:
+        optwidth = minwidth
+
     def pl2graphloc(vertex_iter, graphmin=[], processed = set()):
         if len(vertex_iter) == 0:
             return graphmin
@@ -212,13 +217,13 @@ def pl2graph(pl, left2right = True):
             v_adj = filter(lambda x: sc[v][x][0] in adj_list, range(len(pl[0])/2))
             for vi in v_adj:
                 if left2right:
-                    graphmin[v][vi] = maxwidth[v]
+                    graphmin[v][vi] = optwidth[v]
                 else:
-                    graphmin[v][vi] = maxwidth[vi]
+                    graphmin[v][vi] = optwidth[vi]
             # вершины примыкающие к правой стороне оболочки
             if sc[0][v][0] in adj_right_envel:
                 if left2right:
-                    graphmin[v][len(pl[0])/2] = maxwidth[v]
+                    graphmin[v][len(pl[0])/2] = optwidth[v]
                 else:
                     graphmin[v][len(pl[0]) / 2] = 0
             vertex_iter_new = vertex_iter_new | set(v_adj)
@@ -263,7 +268,7 @@ def pl2graph(pl, left2right = True):
         if left2right:
             graphmin[0][i] = 0
         else:
-            graphmin[0][i] = maxwidth[i]
+            graphmin[0][i] = optwidth[i]
 
 
     processed.add(0)
@@ -368,3 +373,59 @@ dijkstra_shortest_path2(Gtest3, 0, {}, [])
 dijkstra_shortest_path2(G, 0, {}, [])
 dijkstra_shortest_path(G, 0, {}, [])
 dijkstra_shortest_path_general(Gnegative, 0, {}, [])
+
+def createbounds(pl, B, H):
+    # ToDo выносить в настройки
+    maxwidth = [30, 6, 20] + [15]*(len(pl[0]) / 2 - 3)  # максимальные ширины
+    minwidth = [30, 6, 6]+ [4.5]*(len(pl[0]) / 2 - 3) # минимальные ширины
+    # на входе планировка pl
+
+    # готовим графы
+    Gminleft = pl2graph(pl, left2right=True, maxim=False) # граф с минимальными ширинами на ребрах, старт слева
+    Gminright = pl2graph(pl, left2right=False, maxim=False)
+    Gmaxleft = pl2graph(pl, left2right=True, maxim=True)
+    Gmaxright = pl2graph(pl, left2right=False, maxim=True)
+
+    # список мин/макс путей
+    p00 = optimGraphPath(Gminleft, start=0, p={}, u=[], minim = False)
+    p01 = optimGraphPath(Gmaxright, start=0, p={}, u=[], minim = True)
+    p10 = optimGraphPath(Gmaxleft, start=0, p={}, u=[], minim = True)
+    p11 = optimGraphPath(Gminright, start=0, p={}, u=[], minim = False)
+
+    # выделим уровни, кроме крайних
+    xlist = list(set(pl[0]))
+    xlist.sort()
+    xlist.remove(0)
+    xlist.remove(max(xlist))
+
+    plnp = np.array(pl[0])
+    levmin = []
+    levmax = []
+    for lev in xlist:
+    # для каждого уровня берем все правые смежные элементы
+        plnptmp = np.array(range(len(plnp)))[plnp==lev]
+        plnptmp = filter(lambda x: x%2 == 0, plnptmp)
+        plnptmp = map(lambda x: x//2, plnptmp)
+    # и для каждого элемента рассчитываем pxx
+        mininterdown = []
+        mininterup = []
+        maxinterdown = []
+        maxinterup = []
+        for i in plnptmp:
+            mininterdown.append(p00[i])
+            mininterup.append(p01[i])
+            maxinterdown.append(p10[i])
+            maxinterup.append(p11[i])
+        print "mininterdown: ", mininterdown
+        print "mininterup: ", mininterup
+        print "maxinterdown: ", maxinterdown
+        print "maxinterup: ", maxinterup
+        levmin.append(max(max(mininterdown),B - min(mininterup)))
+        levmax.append(min(min(maxinterdown),B - max(maxinterup)))
+    return zip(levmin, levmax)
+
+def testf(x):
+    print x**3
+
+copyf = testf
+pl= [[0,30,0,15,15,30,0,15,15,30],[0,20,10,20,10,20,0,10,0,10]]
