@@ -17,6 +17,7 @@ from Flat2Rooms import place2scen
 from preparedict import getplfun
 
 from knapsack import Knapsack
+from pl_graph import createbounds
 # настройки алгоритма
 timeout = 15
 depth_recurs = 100000
@@ -911,16 +912,7 @@ def makeconst(pl, discret=True):
 
     xlist, ylist = makematr(placemnt)
 
-    bounds = []
-    if (discret):
-        matrlist =  [len(Ax[0])-1, len(Ay[0])-1]
-        boundslist = [(min_margin, B-min_margin), (min_margin, H-min_margin)]
-    else:
-        matrlist =  [len(Ax[0])-1, len(Ay[0])-1, len(Ax), len(Bx), len(By)]
-        boundslist = [(0, B), (0, H), (0,B*H), (min_margin,B), (min_margin,H)]
-    for matr in range(len(matrlist)):
-        for i in range(matrlist[matr]):
-            bounds.append(boundslist[matr])
+    bounds = createbounds(pl, B, H)
     print bounds
 
     # bounds[x1ind] = (B/2. - B1/2., B/2. - B1/2.)
