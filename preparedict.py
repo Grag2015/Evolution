@@ -51,10 +51,12 @@ def preparedict():
 # получить оценку планировки
 def getplfun(flatparams):
     #flatparams = ((4.5, 6.0), (0, 0, 0, 1), 0)
+    # округляем до 0.5
+    flatparams_new = ((flatparams[0][0] - flatparams[0][0] % 0.5, flatparams[0][1] - flatparams[0][1] % 0.5), flatparams[1], flatparams[2])
     try:
-        res = dict_res[flatparams][1]
+        res = dict_res[flatparams_new][1]
     except KeyError:
-        res = 100  # заведомо большая ошибка, т.к. такой планировки нет в базе
+        res = 50  # заведомо большая ошибка, т.к. такой планировки нет в базе
     return res
 
 def get_dict_res(flatparams):

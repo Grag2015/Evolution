@@ -1017,8 +1017,11 @@ def func2_discret(xy):
     # res1sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1))
     # res1maxsign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res1max))
     res2sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res2))
+    #print "res2sign ", res2sign
     res3sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res3))
+    #print "res3sign ", res3sign
     res4sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res4))
+    #print "res4sign ", res4sign
     # res5sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res5))
     # res6sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res6))
     # res7sign = np.array(map(lambda x: np.sign(x)*(np.sign(x)-1)/2, res7))
@@ -1028,8 +1031,8 @@ def func2_discret(xy):
     hlist = Ay.dot(yb)[2:] #вектор длины по всем квартирам кроме подъезда и коридора
     #print zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)
     totalfuns = sum(map(lambda x: getplfun(((x[0], x[1]), tuple(x[2]), x[3])), zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)))
-
-    return sum(res2sign) + sum(res3sign) + sum(res4sign) + totalfuns
+    #print "totalfuns ", totalfuns
+    return sum(res2sign)*50 + sum(res3sign)*50 + sum(res4sign) + totalfuns
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
@@ -1146,8 +1149,12 @@ def withoutgapes3(N):
         return False
 
 def my_differential_evolution(func2_discret, bounds):
-    res = opt.differential_evolution(func2_discret, bounds, popsize=15, tol=0.0001, strategy="randtobest1bin", init='random')
-    #print res, type(res)
+    #res_fun = 10
+    res = opt.differential_evolution(func2_discret, bounds, popsize=30, tol=0.01, strategy="randtobest1bin", init='random')
+    # while (res_fun >=10):
+    #     res = opt.differential_evolution(func2_discret, bounds, popsize=30, tol=0.01, strategy="randtobest1bin", init='random')
+    #     res_fun = res.fun
+    #     print res.fun
     res.x = np.insert(res.x, x2ind, res.x[x1ind] + B1)
     return res
 
@@ -1275,7 +1282,7 @@ def main_size(width, height, scens):
             #print i
             optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
         except ValueError:
-            print('Планировка '+str(i)+' не была рассчитана!')
+            print('ОШИБКА: Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
