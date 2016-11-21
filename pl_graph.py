@@ -114,7 +114,7 @@ def optimGraphPath(graph, start, p={}, u=[], minim = True):
     infinity = 100000 # заведомо большое число
     # Инициализация. Метка самой вершины a полагается равной 0, метки остальных вершин — бесконечности.
     if len(p) == 0:
-        print "инициализация"
+        #print "инициализация"
         for i in range(len(graph)):
             p[i] = infinity
         p[start] = 0
@@ -146,10 +146,10 @@ def optimGraphPath(graph, start, p={}, u=[], minim = True):
         if (p[x] < min_v ) and (x not in u):
                 min_x = x
                 min_v = p[x]
-    print "p: ", p
-    print "min_x: ", min_x
-    print "u: ", u
-    print "NEXT"
+    # print "p: ", p
+    # print "min_x: ", min_x
+    # print "u: ", u
+    # print "NEXT"
     # если нет непосещенных вершин, то завершаем работу
     if(len(u) < len(graph)):
         return optimGraphPath(graph, min_x, p, u, minim)
@@ -172,7 +172,6 @@ def createbounds(pl, B, H):
             BH = B
         else:
             BH = H
-        print "BH: ", BH
         # готовим графы
         Gminleft = pl2graph(pl, maxwidth, minwidth, left2right=True, maxim=False, dim=dim) # граф с минимальными ширинами на ребрах, старт слева
         Gminright = pl2graph(pl, maxwidth, minwidth, left2right=False, maxim=False, dim=dim)
@@ -209,11 +208,11 @@ def createbounds(pl, B, H):
                 mininterup.append(p01[i])
                 maxinterdown.append(p10[i])
                 maxinterup.append(p11[i])
-            print "mininterdown: ", mininterdown
-            print "mininterup: ", mininterup
-            print "maxinterdown: ", maxinterdown
-            print "maxinterup: ", maxinterup
-            print BH
+            # print "mininterdown: ", mininterdown
+            # print "mininterup: ", mininterup
+            # print "maxinterdown: ", maxinterdown
+            # print "maxinterup: ", maxinterup
+            # print BH
             levmin.append(max(max(mininterdown),BH - min(mininterup)))
             levmax.append(min(min(maxinterdown),BH - max(maxinterup)))
         return zip(levmin, levmax)

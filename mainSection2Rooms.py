@@ -6,9 +6,9 @@ import numpy as np
 
 import matplotlib
 import time
-# matplotlib.use('Qt4Agg')
-# import matplotlib.pyplot as plt
-# import matplotlib.patches as mpatches
+matplotlib.use('Qt4Agg')
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 def Section2Rooms(B_, H_, out_walls):
     # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)

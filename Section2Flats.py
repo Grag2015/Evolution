@@ -16,7 +16,7 @@ import re
 from Flat2Rooms import place2scen
 from preparedict import getplfun
 
-from knapsack import Knapsack
+#from knapsack import Knapsack
 from pl_graph import createbounds
 # настройки алгоритма
 timeout = 15
@@ -913,7 +913,7 @@ def makeconst(pl, discret=True):
     xlist, ylist = makematr(placemnt)
 
     bounds = createbounds(pl, B, H)
-    print bounds
+    print B, H, bounds
 
     # bounds[x1ind] = (B/2. - B1/2., B/2. - B1/2.)
     # bounds[x2ind] = (B/2. + B1/2., B/2. + B1/2.)
@@ -947,25 +947,6 @@ def makeconst(pl, discret=True):
     flats_outwalls_constr= flats_outwalls(pl, section_out_walls)
 
     return True
-
-# подготовка ограничений
-def calcbounds(pl):
-    xlist = list(set(pl[0]))
-    xlist.sort()
-    xlist.remove(0)
-    # xlist.remove(B)
-
-    ylist = list(set(pl[1]))
-    ylist.sort()
-    ylist.remove(0)
-
-    # для xlist
-    baza = (0,0)
-    for xl in xlist:
-        # ищем нижнюю границу
-        ## по нижним элементам
-
-        ## по верхним элементам
 
 # непрерывная функция с фиктивными переменными для описания ограничений-неравенств
 def func2_contin(xys):
@@ -1045,7 +1026,7 @@ def func2_discret(xy):
     # параметры для базы/словаря планировок
     blist = Ax.dot(xb)[2:] #вектор ширины по всем квартирам кроме подъезда и коридора
     hlist = Ay.dot(yb)[2:] #вектор длины по всем квартирам кроме подъезда и коридора
-    print zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)
+    #print zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)
     totalfuns = sum(map(lambda x: getplfun(((x[0], x[1]), tuple(x[2]), x[3])), zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)))
 
     return sum(res2sign) + sum(res3sign) + sum(res4sign) + totalfuns
@@ -1660,57 +1641,5 @@ def check_pl(scen, pl):
     return new_scen, hall_pos, entrwall
 
 
-# sects_topols = {}
-# for i in [6]:#[6,7,8,9,10]:
-#     sects_topols[i] = main_topology(10, 10, 10, i, printres=True, usetemplate=False)
-
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# Алгоритм Дейкстры
-#   Находит кратчайшее расстояние от одной из вершин графа до всех остальных.
-#   Алгоритм работает только для графов без рёбер отрицательного веса.
-#   Матрица задается как список словарей смежности вершин
-# Описание алгоритма http://goo.gl/KsqC
 
 
-def dijkstra_shortest_path(graph, start, p={}, u=[], d={}):
-    if len(p) == 0: p[start] = 0 # инициализация начального пути
-    # print "start V: %d, " % (start)
-    for x in graph[start]:
-        if (x not in u and x != start):
-            if (x not in p.keys() or (graph[start][x] + p[start]) < p[x]):
-                p[x] = graph[start][x] + p[start]
-
-    u.append(start)
-
-    min_v = 0
-    min_x = None
-    for x in p:
-        # print "x: %d, p[x]: %d, mv %d" % (x, p[x], min_v)
-        if (p[x] < min_v or min_v == 0) and x not in u:
-                min_x = x
-                min_v = p[x]
-
-    if(len(u) < len(graph) and min_x):
-        return dijkstra_shortest_path(graph, min_x, p, u)
-    else:
-        return p
-
-if __name__ == '__main__':
-    # инициализация графа с помощью словаря смежности
-    a, b, c, d, e, f, g, h = range(8)
-    N = [
-        {b: 7, c: 9, f: 14},
-        {c: 10, d: 15},
-        {d: 11, f: 2},
-        {e: 6},
-        {f: 9},
-        {h: 2}
-    ]
-    for i in range(1):
-        print dijkstra_shortest_path(N, a)
-# b in N[a] - смежность
-# len(N[f]) - степень
-# N[a][b] - вес (a,b)
-# print N[a][b]
