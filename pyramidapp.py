@@ -13,7 +13,7 @@ def hello_world(request):
     file_obj.write(json_string)
     file_obj.close()
     return Response(
-       calculation(json_string),
+       #calculation(json_string),
         content_type = 'application/json'
     )
 

@@ -129,6 +129,7 @@ class WSGIServer(object):
             ))
             self.client_connection.sendall(response)
         finally:
+            #print "connection keeps alive"
             self.client_connection.close()
 
 
@@ -151,3 +152,18 @@ if __name__ == '__main__':
     httpd = make_server(SERVER_ADDRESS, application)
     print('WSGIServer: Serving HTTP on port {port} ...\n'.format(port=PORT))
     httpd.serve_forever()
+
+# Для тестирования сервера
+# import urllib2
+# import json
+#
+# # send json request
+# json_payload = json.dumps({'arrrrrrrrrr':1})
+# headers = {'Content-Type':'application/json'}
+# req = urllib2.Request('http://localhost:8888/', json_payload, headers)
+# resp = urllib2.urlopen(req)
+# response = resp.read()
+# f.close()
+# resp.getcode()
+# resp.info()
+# resp.geturl()
