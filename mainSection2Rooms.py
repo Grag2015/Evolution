@@ -28,6 +28,8 @@ def Section2Rooms(B_, H_, out_walls):
     fill_ = []
     for i, fl in enumerate(prepflats):
         tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i])
+        if tmp == 0:
+            return (0, 0)
         res1.append((fl[0],fl[1]))
         res2.append(tmp[0])
         col_list += ["#f7f01d"]+tmp[1]
@@ -96,6 +98,8 @@ def calculation(json_string):
     optim_pls_pos = []
     for bh in Sizes_out_walls_unique:
         tmp1, tmp2 = Section2Rooms(bh[0][0], bh[0][1], bh[1])
+        if tmp1 == 0:
+            return ""
         optim_pls.append(map(lambda x: [x[0][2:],x[1][2:]],tmp2))  # exclude envelop
         optim_pls_pos.append(tmp1)
 

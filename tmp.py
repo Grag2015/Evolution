@@ -355,7 +355,20 @@ for pl in place:
     i+=1
 plt.show()
 
+import urllib2
+import json
 
-# http://matthiaseisen.com/pp/patterns/p0203/
-# все 50 особей очень похожи, мы будто бы уперлись в локальный минимум, как из него выйти?
-# также возможно мой декодер в принципе не способен выложить улитку? надо проверять.
+json_dict = [{"BimType": "section", "Deep": 20.0, "Height": 3.0, "Id": 18, "Position": {"X": 0.0, "Y": 0.6, "Z": 0.0},
+              "Width": 40.0,
+              "ParentId": 4},
+             {"BimType": "section", "Deep": 20.0, "Height": 3.0, "Id": 19, "Position": {"X": 40.0, "Y": 0.6, "Z": 0.0},
+              "Width": 40.0, "ParentId": 4},
+             {"BimType": "section", "Deep": 20.0, "Height": 3.0, "Id": 20, "Position": {"X": 80.0, "Y": 0.6, "Z": 0.0},
+              "Width": 30.0, "ParentId": 4}]
+json_string = json.dumps(json_dict)
+
+# send json request
+json_payload = json.dumps(json_dict)
+headers = {'Content-Type':'application/json'}
+req = urllib2.Request('http://localhost:8888/', json_payload, headers)
+resp = urllib2.urlopen(req)

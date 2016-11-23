@@ -64,5 +64,5 @@ def get_dict_res(flatparams):
         res = dict_res[flatparams][0]
     except KeyError:
         res = 0
-        print "Ошибка: в базе планировок нет значения: " , flatparams
+        print "Error: there isn't value: " , flatparams
     return res
