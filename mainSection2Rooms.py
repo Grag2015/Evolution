@@ -4,11 +4,11 @@ from Flat2Rooms import Flat2Rooms
 from Flat2Rooms import visual_pl
 import numpy as np
 
-import matplotlib
 import time
-matplotlib.use('Qt4Agg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+# import matplotlib
+# matplotlib.use('Qt4Agg')
+# import matplotlib.pyplot as plt
+# import matplotlib.patches as mpatches
 from interface2 import pl2json
 from interface2 import json2params
 import json

@@ -2,7 +2,7 @@
 import cPickle
 
 # загружаем словарь
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'rb')
+file = open("dict_res.txt", 'rb')
 dict_res = cPickle.load(file)
 file.close()
 
@@ -66,5 +66,3 @@ def get_dict_res(flatparams):
         res = 0
         print "Ошибка: в базе планировок нет значения: " , flatparams
     return res
-
-get_dict_res(((8.0, 11.0), (0, 0, 1, 0), 0))

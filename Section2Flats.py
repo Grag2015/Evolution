@@ -8,10 +8,10 @@ import cPickle
 # import PySide
 # import matplotlib
 # matplotlib.use('Agg')
-import matplotlib
-matplotlib.use('Qt4Agg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+# import matplotlib
+# matplotlib.use('Qt4Agg')
+# import matplotlib.pyplot as plt
+# import matplotlib.patches as mpatches
 import re
 from Flat2Rooms import place2scen
 from preparedict import getplfun
@@ -1219,7 +1219,7 @@ def main_topology(max_results, B_, H_, printres = True, usetemplate = True):
 
     if usetemplate:
         # загружаем шаблоны
-        file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_sect2flats.txt", "rb")
+        file = open("dict_sect2flats.txt", "rb")
         dict_sect2flats = cPickle.load(file)
         file.close()
         # ЗАГЛУШКИ

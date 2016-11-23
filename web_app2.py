@@ -45,38 +45,60 @@ class WSGIServer(object):
             self.handle_one_request()
 
     def handle_one_request(self):
-        self.request_data = request_data = self.client_connection.recv(100000)#.decode('utf-8')
-        # Print formatted request data a la 'curl -v'
-        print(''.join(
-            '< {line}\n'.format(line=line)
-            for line in request_data.splitlines()
-        ))
+        try:
+            self.request_data = request_data = self.client_connection.recv(100000)#.decode('utf-8')
+            # Print formatted request data a la 'curl -v'
+            print(''.join(
+                '< {line}\n'.format(line=line)
+                for line in request_data.splitlines()
+            ))
 
-        self.parse_request(request_data)
+            self.parse_request(request_data)
 
-        # Construct environment dictionary using request data
-        env = self.get_environ()
+            # Construct environment dictionary using request data
+            env = self.get_environ()
 
-        # It's time to call our application callable and get
-        # back a result that will become HTTP response body
-        result = self.application(env, self.start_response)
+            # It's time to call our application callable and get
+            # back a result that will become HTTP response body
+            result = self.application(env, self.start_response)
 
-        # Construct a response and send it back to the client
-        self.finish_response(result)
+            # Construct a response and send it back to the client
+            self.finish_response(result)
+        except AttributeError:
+            self.client_connection.close()
+            print "Error handle_one_request 1"
+        except:
+            # Construct a response and send it back to the client
+            self.client_connection.close()
+            print "Unknown error handle_one_request"
+
 
     def parse_request(self, text):
-        print "print text:" + text
-        request_line = text.splitlines()[0]
-        request_line2 = text.splitlines()[2]
-        request_line = request_line.rstrip('\r\n')
-        request_line2 = request_line2.rstrip('\r\n')
-        # Break down the request line into components
-        (self.request_method,  # GET
-         self.path,            # /hello
-         self.request_version  # HTTP/1.1
-         ) = request_line.split()
-        self.content_length = int(request_line2.replace("Content-Length: ", ""))
-        self.data = text[-self.content_length:]
+        try:
+            print "print text:" + text
+            request_line = text.splitlines()[0]
+            request_line2 = text.splitlines()[2]
+            request_line = request_line.rstrip('\r\n')
+            request_line2 = request_line2.rstrip('\r\n')
+            # Break down the request line into components
+            (self.request_method,  # GET
+             self.path,            # /hello
+             self.request_version  # HTTP/1.1
+             ) = request_line.split()
+            self.content_length = int(request_line2.replace("Content-Length: ", ""))
+            self.data = text[-self.content_length:]
+        except ValueError:
+            # Construct a response and send it back to the client
+            print "Error request1"
+            self.client_connection.close()
+        except IndexError:
+            # Construct a response and send it back to the client
+            self.client_connection.close()
+            print "Error request1"
+        except:
+            # Construct a response and send it back to the client
+            self.client_connection.close()
+            print "Unknown error"
 
     def get_environ(self):
         env = {}
