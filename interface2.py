@@ -45,4 +45,6 @@ def json2params(json_data):
 
     Sizes = map(lambda x: (x['Width'], x['Deep']), json_data)
     StartPosId = map(lambda x: [x['Position']['X'], x['Position']['Y'], x['Id']], json_data)
-    return Sizes, StartPosId
+    # Первая и последняя секция имеют внешние стены (1,1,0,1)/(0,1,1,1), остальные - (0,1,0,1)
+    out_walls = [(1,1,0,1)] + [(0,1,0,1)]*(len(Sizes)-2) + [(0,1,1,1)]
+    return Sizes, StartPosId, out_walls

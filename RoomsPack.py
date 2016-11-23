@@ -1072,15 +1072,15 @@ def calculation(json_string):
     print "beforerroe"
     data = json.loads(json_string)
     print "aftererroe"
-    Sizes, StartPosId = json2params(data)
-    # Расчет топологий
-    scens = main_topology(1, ["envelope", "hall", "corr", "bath", "kitchen", "room", "room2"])
+    Sizes, StartPosId, out_walls = json2params(data)
 
-    # Расчитываем планировки для каждого элемента из списка (Для каждой топологии)
-    SizesUnique = list(set(Sizes))
+    # ищем различные уникальные значения пар Размеры-Внешние_стены
+    Sizes_out_walls = zip(Sizes, out_walls)
+    Sizes_out_walls_unique = list(set(Sizes_out_walls))
+
+    # Рассчитываем планировки секции для каждого элемента из списка Sizes_out_walls_unique
     optim_scens = []
-    for bh in SizesUnique:
-        # Беру первую рассчитанную планировку (в дальнейшем их сортируем в порядке возр. кол-ва нарушенных ограничений)
+    for bh in Sizes_out_walls_unique:
         tmp = main_size(bh[0], bh[1], scens)[0]
         optim_scens.append([tmp[0][2:], tmp[1][2:]])  # exclude envelop
 
