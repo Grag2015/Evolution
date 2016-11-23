@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Найденные планировки в JSON
 import json
-def pl2json(list_pl, compartments,  StartPosId):
+# преобразует список планировок КВАРТИР в список словарей, который конвертится в json
+def pl2json(list_pl, StartPosId, addshift = (0,0)):
 
     """
     >>> compartments = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
@@ -11,6 +12,7 @@ def pl2json(list_pl, compartments,  StartPosId):
     >>> (ss['BimType'], ss['rooms'][0]['Deep'], ss['rooms'][0]['Position']['X'])
     ('functionalzone', 2.4, 1.36)
     """
+    compartments = ["envelope", "hall", "corr", "bath", "kitchen", "room", "room", "room", "room", "room"]
     newres = []
     for pl, i in zip(list_pl, range(len(StartPosId))):
         locd = {}
@@ -20,13 +22,14 @@ def pl2json(list_pl, compartments,  StartPosId):
             deep = round(pl[1][2 * t + 1] - pl[1][2 * t], 2)
             width = round(pl[0][2 * t + 1] - pl[0][2 * t], 2)
             locd_room.append({"BimType": "room", 'name': compartments[t + 1], "Deep": deep, "Width": width,
-                              "Position": {"X": round(StartPosId[i][0] + width,2), "Y": round(StartPosId[i][1] + deep,2)}})
+                              "Position": {"X": round(StartPosId[i][0] + width + addshift[0],2), "Y": round(StartPosId[i][1] + deep + addshift[1],2)}})
 
         locd["BimType"] = "functionalzone"
-        locd["Id"] = StartPosId[i][2]
+        #locd["ParentId"] = StartPosId[i][2]
         locd["rooms"] = locd_room
         newres.append(locd)
-    return json.dumps(newres)
+    return newres #json.dumps(newres)
+
 
 # Преобразует входные данные о секциях во вход для алгоритма.
 def json2params(json_data):

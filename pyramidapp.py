@@ -2,18 +2,18 @@
 from pyramid.config import Configurator
 from pyramid.response import Response
 
-from RoomsPack import calculation
+from mainSection2Rooms import calculation
 
 def hello_world(request):
     print "request3333"
     # param = request.path.split('/')
     json_string = request.environ['data']
     print "/request3333"
-    file_obj = open('write_to_file.txt', "w")
+    file_obj = open('json_in.txt', "w")
     file_obj.write(json_string)
     file_obj.close()
     return Response(
-       #calculation(json_string),
+       calculation(json_string),
         content_type = 'application/json'
     )
 
