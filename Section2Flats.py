@@ -1223,8 +1223,8 @@ def main_topology(max_results, B_, H_, printres = True, usetemplate = True):
         dict_sect2flats = cPickle.load(file)
         file.close()
         # ЗАГЛУШКИ
-        print "dict_sect2flats[n]", n
-        print dict_sect2flats[n][0:min(max_results, len(dict_sect2flats[n]))]
+        #print "dict_sect2flats[n]", n
+        #print dict_sect2flats[n][0:min(max_results, len(dict_sect2flats[n]))]
         return dict_sect2flats[n][0:min(max_results, len(dict_sect2flats[n]))]
 
     # /ГОТОВЫЕ СЦЕНАРИИ ДЛЯ РАЗЛИЧНОГО ЧИСЛА КВАРТИР
@@ -1267,16 +1267,16 @@ def main_size(width, height, scens):
     for i in range(len(scens)):
         try:
             makeconst(quickplacement(scens[i]))
-            print quickplacement(scens[i])
+            #print quickplacement(scens[i])
             res = my_differential_evolution(func2_discret, bounds)
             res_x.append(func2_discret_results(res.x))
-            print res_x[-1]
+            #print res_x[-1]
             if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
                 bestmin = res.fun
                 bestmini = i
                 print 'bestmini', bestmini
-            print res.message, "nit: ", res.nit
-            print 'bounds', bounds
+            #print res.message, "nit: ", res.nit
+            #print 'bounds', bounds
             xlistnew = list(res.x[0:len(Ax[0]) - 1])
             ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
             #print i

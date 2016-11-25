@@ -372,3 +372,18 @@ json_payload = json.dumps(json_dict)
 headers = {'Content-Type':'application/json'}
 req = urllib2.Request('http://localhost:8888/', json_payload, headers)
 resp = urllib2.urlopen(req)
+
+str1 = "%7B%22BimType%22:%22section%22,%22Deep%22:20.0,%22Height%22:3.0,%22Id%22:18,%22Position%22:%7B%22X%22:0.0,%22Y%22:0.6,%22Z%22:0.0%7D,%22Width%22:40.0,%22ParentId%22:4%7D"
+
+
+def decode_geturl(urlstr):
+    urlstr = urlstr.replace("%7B", "{")
+    urlstr = urlstr.replace("%7D", "}")
+    urlstr = urlstr.replace("%5B", "[")
+    urlstr = urlstr.replace("%5D", "]")
+    urlstr = urlstr.replace("%22", '"')
+    return urlstr
+
+decode_geturl(str1)
+json.loads(decode_geturl(str1))
+("%7B", "{")
