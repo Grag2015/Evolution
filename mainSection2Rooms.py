@@ -39,7 +39,7 @@ def Section2Rooms(B_, H_, out_walls):
     visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_)
 
 def prepareflats(flats):
-    # output - x1,y1, H,B, count_rooms
+    # output - x1,y1, B, H, count_rooms
     prepflats = []
     for i in range(3, int(len(flats[0])/2)):
         x1 = flats[0][i*2]
@@ -97,4 +97,7 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
 # дополнительно
 # для ускорения можно поработать с глобальными переменными - например, передавать Ay, Ax в целевую функцию
 
-Section2Rooms(20, 15, (0,1,0,1))
+if __name__ == '__main__':
+    Section2Rooms(20, 15, (0,1,0,1))
+    #Section2Rooms(30, 20, (0,1,0,1))
+    #Section2Rooms(30, 15, (0,1,0,1))

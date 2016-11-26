@@ -4,15 +4,18 @@ import numpy as np
 import time
 import copy
 import matplotlib
-matplotlib.use('Qt4Agg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+# matplotlib.use('Qt4Agg')
+# import matplotlib.pyplot as plt
+# import matplotlib.patches as mpatches
 import re
+import cPickle
 
 import fileinput
 import cProfile
 import json
 from interface2 import pl2json, json2params
+from preparedict import get_dict_res
+# import ipdb
 
 # настройки алгоритма
 timeout = 15
@@ -101,8 +104,8 @@ def prepare_tc(tc_src):
     # верхний треугольник оставляем без изменений
     # диагональ заполняем значением (6,6)
     global len_comp
-    # print "len_comp"
-    # print len_comp
+    print "len_comp"
+    print len_comp
     for i in range(len_comp):
         tc[i][i].append((6,6))
 
@@ -753,8 +756,9 @@ def visual_pl(placement_all):
                                          facecolor=comp_col[i-1]
             )
         )
-        ax1.text(placement_all[0][2*i]/float(B)+(abs(placement_all[0][2*i] - placement_all[0][2*i+1])/float(B))/2.,
-                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
+        ax1.text(placement_all[0][2 * i] / float(B) + (abs(placement_all[0][2 * i] - placement_all[0][2 * i + 1]) / float(B)) / 2.,
+                 placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2 * i] - placement_all[1][2 * i + 1]) / float(H)) / 2., compartments[i] + '\n' +
+                 str(round(placement_all[0][2 * i + 1] - placement_all[0][2 * i], 1)) + 'x' + str(round(placement_all[1][2 * i + 1] - placement_all[1][2 * i], 1)))
     # plt.show()
 
 
@@ -1194,8 +1198,9 @@ def rotate90(pl, n): # n time по часовой стрелке
         return pl
     if n==1:
         pln=[[],[]]
-        pln[0] = map(lambda x: (x/float(H))*B, pl[1])
-        pln[1] = map(lambda y: (H-(y/float(B))*H), pl[0])
+        pln[0] = pl[1]
+        B = max(pl[0])
+        pln[1] = map(lambda y: B-y, pl[0])
         for i in range(len(pl[0])/2):
             b1=min(pln[1][2*i],pln[1][2 * i+1])
             b2=max(pln[1][2*i],pln[1][2 * i+1])
@@ -1225,61 +1230,11 @@ def diag_rotate(pl,main_diag):
     return res
 
 # Учет ограничений по площади/длине
-def main_size(B_, H_, scens, entr_wall, hall_pos, count_rooms):
+def main_size(B_, H_, scens, entr_wall, hall_pos):
     global B, H, res_x
-
-    # добавил подготовку ограничений из main_topology
-
-    global max_res, compartments, envel_hall, recur_int, nres, stop, rooms_weights, areaconstr, sides_ratio, comp_col, len_comp, areaconstrmax, \
-        widthconstrmin, widthconstrmax
-
-    compartments_list = ["envelope", "hall", "corr", "bath", "kitchen"]
-    # ToDo надо добавлять еще 3-х и 4-хкомнатные квартиры
-    if count_rooms == 1:
-        compartments_list += ["room"]
-    else:
-        if count_rooms == 2:
-            compartments_list += ["room", "room2"]
-        else:
-            if count_rooms == 3:
-                compartments_list += ["room", "room2", "room3"]
-            else:
-                compartments_list += ["room", "room2", "room3", "room4"]
-
-    compartments = copy.deepcopy(compartments_src)
-    rooms_weights = copy.deepcopy(rooms_weights_src)
-    areaconstr = copy.deepcopy(areaconstr_src)
-    areaconstrmax = copy.deepcopy(areaconstrmax_src)
-    widthconstrmin = copy.deepcopy(widthconstrmin_src)
-    widthconstrmax = copy.deepcopy(widthconstrmax_src)
-    sides_ratio = copy.deepcopy(sides_ratio_src)
-    comp_col = copy.deepcopy(comp_col_src)
-
-    # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
-    changing_lists = [rooms_weights, areaconstr, sides_ratio, comp_col, areaconstrmax, widthconstrmin, widthconstrmax]
-    new_lists=[]
-    for i in range(len(changing_lists)): new_lists.append([])
-    for i in range(len(compartments[1:])):
-        if (compartments[1:][i] in set(compartments_list)):
-            for j in range(len(changing_lists)):
-                new_lists[j].append(changing_lists[j][i])
-
-    rooms_weights = new_lists[0]
-    areaconstr = new_lists[1]
-    sides_ratio = new_lists[2]
-    comp_col = new_lists[3]
-    areaconstrmax = new_lists[4]
-    widthconstrmin = new_lists[5]
-    widthconstrmax = new_lists[6]
-
-    compartments = compartments_list
-    len_comp = len(compartments)
-
-    # /добавил подготовку ограничений из main_topology
-
     B = B_
     H = H_
-    #t1 = time.clock()
+    t1 = time.clock()
     optim_scens=[]
     res_x=[]
     bestmin = 1000
@@ -1300,11 +1255,11 @@ def main_size(B_, H_, scens, entr_wall, hall_pos, count_rooms):
         optim_scens.append(res_tmp)
         #except ValueError:
         #    print('Планировка '+str(i)+' не была рассчитана!')
-    #t2 = time.clock()
-    #print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
+    t2 = time.clock()
+    print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
     res_tmp.append(optim_scens[bestmini])
-    return res_tmp, res.fun, res_x
+    return res_tmp
 
 
 def calculation(json_string):
@@ -1440,9 +1395,49 @@ def postproc(pl):
 
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
-# Todo внимание! нужно возвращать 1 наилучшую планировку!
 
 def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
+    #hall_pos = 2 # пока только этот вариант рассматриваем
+
+    # B_, H_, flat_out_walls - в глобальной системе координат
+    # переводим их в локальную (относительно стены входа)
+    #import ipdb; ipdb.set_trace()
+    loc_out_walls = abs_outwalls2rel_outwalls(flat_out_walls, hall_pos, entr_wall)
+    if hall_pos >= 1:
+        if entr_wall[0]%2==1:
+            locB, locH = (H_, B_)
+        else:
+            locB, locH = (B_, H_)
+    else:
+        if (entr_wall[0]+entr_wall[1])%2==1:
+            locB, locH = (H_, B_)
+        else:
+            locB, locH = (B_, H_)
+# для найденных локальных значений достаем из словаря (базы планировок) ближайшую по размерам планировку
+    pl = copy.deepcopy(get_dict_res(((locB - locB%0.5, locH - locH%0.5), loc_out_walls, hall_pos)))
+# преобразуем планировку - все стены пропорционально сдвигаем на locB%0.5 и locH%0.5
+    xlist = list(set(pl[0]))
+    xlist.sort()
+    delta = (locB % 0.5) / float(len(xlist)-1) # сдвиг для каждой стены
+    for i in range(len(pl[0])):
+        pl[0][i] += delta*xlist.index(pl[0][i])
+
+    ylist = list(set(pl[1]))
+    ylist.sort()
+    delta = (locH % 0.5) / float(len(ylist)-1) # сдвиг для каждой стены
+    for i in range(len(pl[1])):
+        pl[1][i] += delta*ylist.index(pl[1][i])
+# поворачиваем планировку
+    if hall_pos >= 1:
+        pl_rotated = rotate90(pl, entr_wall[0])
+    # если прихожая только угловая
+    else:
+        pl_rotated = rotate90(pl, entr_wall[0] + entr_wall[1])
+    show_board = postproc(pl_rotated)
+    comp_col = ['#73DD9B', '#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC', '#ACBFEC', '#ACBFEC', '#ACBFEC']
+    return pl_rotated, comp_col[0:int(len(pl[0])/2-1)], show_board
+
+def Flat2Rooms_old(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
     compartments_list = ["envelope",  "hall", "corr", "bath", "kitchen"]
@@ -1489,3 +1484,6 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
         if (i>30):
             break
     return optim_scens[0], comp_col, show_board
+
+
+B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls=(6.6919917284709998, 5.3673416074831231, (3, 0), 0, 1, [0, 1, 0, 0])
