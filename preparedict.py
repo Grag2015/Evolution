@@ -76,6 +76,24 @@ def get_dict_res(flatparams):
         print "Ошибка: в базе планировок квартир нет значения: " , flatparams
     return res
 
+# exploratory analysis
+
+# выделим столбцы с нужными значениями
+import pandas as pd
+sizes = [x[0] for x in dict_res.keys()]
+out_walls = [x[1] for x in dict_res.keys()]
+hall_pos = [x[2] for x in dict_res.keys()]
+values = [x[1] for x in dict_res.values()]
+# добавим все в датафрейм
+df = pd.DataFrame({"sizes":sizes, "out_walls":out_walls, "hall_pos":hall_pos, "values":values})
+
+import ggplot
+from ggplot import aes
+from ggplot import *
+from ggplot import diamonds
+
+ggplot(df, aes(x='values', color='out_walls')) + \
+    geom_density() + facet_wrap('hall_pos')
 # БЛОК для обработки планировок секции
 def preparesectdict():
     """
