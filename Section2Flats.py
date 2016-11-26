@@ -14,7 +14,7 @@ import cPickle
 # import matplotlib.patches as mpatches
 import re
 from Flat2Rooms import place2scen
-from preparedict import getplfun
+from preparedict import get_dict_sect_res
 
 #from knapsack import Knapsack
 from pl_graph import createbounds
@@ -1305,35 +1305,34 @@ def Section2Flats(B_, H_, out_walls, showgraph = True):
     # Параметры - количество результатов, список комнат
     global section_out_walls
     section_out_walls = out_walls
-    scens = main_topology(3, B_, H_)
-
-    # save
-    # file = open("dump.txt", 'w')
-    # cPickle.dump(scens, file)
-    # file.close()
-
-    # Визуализация
-    if showgraph:
-        i=0
-        n=1
-        for t,pl in enumerate(scens):
-            if i%(n**2)==0:
-                fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
-            ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i))
-            visual2(quickplacement(pl),ax1)
-            i+=1
-            if (i>100):
-                break
-
-        plt.show()
-    # print scens
-
-    # Учет ограничений по площади
-    # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens, bestmini = main_size(B_, H_, scens)
-    print "scens[bestmini]", scens[bestmini]
-    print "optim_scens[0]", optim_scens[0]
-    new_scen_res, hall_pos_res, entrwall_res = check_pl(scens[bestmini], optim_scens[0])
+    # scens = main_topology(3, B_, H_)
+    #
+    # # save
+    # # file = open("dump.txt", 'w')
+    # # cPickle.dump(scens, file)
+    # # file.close()
+    #
+    # # Визуализация
+    # if showgraph:
+    #     i=0
+    #     n=1
+    #     for t,pl in enumerate(scens):
+    #         if i%(n**2)==0:
+    #             fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
+    #         ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i))
+    #         visual2(quickplacement(pl),ax1)
+    #         i+=1
+    #         if (i>100):
+    #             break
+    #
+    #     plt.show()
+    # # print scens
+    #
+    # # Учет ограничений по площади
+    # # Параметры - ширина, высота, сценарии (топологические)
+    # optim_scens, bestmini = main_size(B_, H_, scens)
+    optim_scens = get_dict_sect_res(((B_, H_), section_out_walls))
+    new_scen_res, hall_pos_res, entrwall_res = check_pl(quickplacement(optim_scens), optim_scens)
 
 
     # расчет внешних стен для квартир
