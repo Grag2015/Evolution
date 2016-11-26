@@ -7,7 +7,7 @@ dict_res = cPickle.load(file)
 file.close()
 
 # загружаем словарь планировок секций
-file = open("D:\YandexDisk\EnkiSoft\Evolution\dict_sect_res.txt", 'r')
+file = open("D:\YandexDisk\EnkiSoft\Evolution\dict_res_sect.txt", 'r')
 dict_sect_res = cPickle.load(file)
 file.close()
 
@@ -88,7 +88,7 @@ def preparesectdict():
 
     # подготовка данных
     # список файлов для загрузки
-    files_list = ["sections0101.txt", "sections1101.txt", "sections0111.txt", "sections1111.txt"]
+    files_list = ["sections1101.txt", "sections1111.txt"] #["sections0101.txt", "sections1101.txt", "sections0111.txt", "sections1111.txt"]
     plall_total = []
     for fl in files_list:
         file = open("d:\YandexDisk\EnkiSoft\Evolution\plall_" + fl, "rb")
@@ -109,12 +109,11 @@ def preparesectdict():
 
     dict_res = {}
     for i in range(len(data_agg)):
-        dict_res[(data_agg.ix[i, 1], data_agg.ix[i, 0])] =
-        data[(data["outwalls"] == data_agg.ix[i, 0]) &
+        dict_res[(data_agg.ix[i, 1], data_agg.ix[i, 0])] = data[(data["outwalls"] == data_agg.ix[i, 0]) &
              (data["size"] == data_agg.ix[i, 1]) &
-             (data["funs"] == data_agg.ix[i, 2])].reset_index().ix[0, 3]
+             (data["funs"] == data_agg.ix[i, 2])].reset_index().ix[0, 4]
     file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_sect.txt", 'wb')
-    cPickle.dump(dict_sect_res, file)
+    cPickle.dump(dict_res, file)
     file.close()
 
 # получить оценку планировки секции
@@ -127,8 +126,10 @@ def get_dict_sect_res(sectparams):
     (newb, newh) = (sectparams[0][0] - sectparams[0][0] % 0.5, sectparams[0][1] - sectparams[0][1] % 0.5)
     try:
 
-        res = dict_sect_res[((newb, newh), sectparams[1])]
+        res = dict_sect_res[((newb, newh), sectparams[1])][0]
     except KeyError:
         res = 0
-        print "Ошибка: в базе планировок секций нет значения: " , flatparams
+        print "Ошибка: в базе планировок секций нет значения: " , sectparams
     return res
+
+get_dict_sect_res(((30,20), (1,1,1,1)))
