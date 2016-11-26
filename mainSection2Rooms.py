@@ -98,6 +98,6 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
 # для ускорения можно поработать с глобальными переменными - например, передавать Ay, Ax в целевую функцию
 
 if __name__ == '__main__':
-    Section2Rooms(20, 15, (0,1,0,1))
+    Section2Rooms(20, 15, (1,1,1,1))
     #Section2Rooms(30, 20, (0,1,0,1))
     #Section2Rooms(30, 15, (0,1,0,1))

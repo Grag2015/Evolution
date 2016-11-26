@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import re
 from Flat2Rooms import place2scen
-from preparedict import getplfun
+from preparedict import get_dict_sect_res
 
 #from knapsack import Knapsack
 from pl_graph import createbounds
@@ -1299,81 +1299,48 @@ def flats_outwalls(new_scen_res,section_out_walls):
         flats_out_walls.append(map(lambda x: x[0] * x[1], zip(will_put_walls[sc_tmp[0][i][0]], section_out_walls)))
     return flats_out_walls
 
-# Section2Flats(25, 15)
-def Section2Flats(B_, H_, out_walls):
+def Section2Flats(B_, H_, out_walls, showgraph = True):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    global section_out_walls
-    section_out_walls = out_walls
-    scens = main_topology(3, B_, H_)
-
-    # save
-    # file = open("dump.txt", 'w')
-    # cPickle.dump(scens, file)
-    # file.close()
-
-    # Визуализация
-    i=0
-    n=1
-    for t,pl in enumerate(scens):
-        if i%(n**2)==0:
-            fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
-        ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i))
-        visual2(quickplacement(pl),ax1)
-        i+=1
-        if (i>100):
-            break
-
-    plt.show()
-    # print scens
-
-    # Учет ограничений по площади
-    # Параметры - ширина, высота, сценарии (топологические)
-    optim_scens, bestmini = main_size(B_, H_, scens)
-    print "scens[bestmini]", scens[bestmini]
-    print "optim_scens[0]", optim_scens[0]
-    new_scen_res, hall_pos_res, entrwall_res = check_pl(scens[bestmini], optim_scens[0])
-
+    global len_comp, max_res, B, H, stop, tc_src
+    B = B_
+    H = H_
+    create_constr()
+    optim_scens = get_dict_sect_res(((B_, H_), out_walls))
+    new_scen_res, hall_pos_res, entrwall_res = check_pl(place2scen(optim_scens), optim_scens)
 
     # расчет внешних стен для квартир
 
-    flats_out_walls = flats_outwalls(new_scen_res,out_walls)
-
-    print "new_scen_res", new_scen_res
-    # заглушка
-    # new_scen_res =[[0,25,11.832458301964532,18.186082541575203,0,18.186082541575203,18.186082541575203,25,0,9.0930412707876016,
-    #                 9.0930412707876016,18.186082541575203,0,5.9162291509822662,5.9162291509822662,11.832458301964532],
-    #                [0,15,0,5.2908772211446049,5.2908772211446049,7.4294138335360795,0,15,7.4294138335360795,15,
-    #                 7.4294138335360795,15,0,5.2908772211446049,0,5.2908772211446049]]
+    flats_out_walls = flats_outwalls(new_scen_res, out_walls)
 
     # Визуализация
-    i=0
-    n=1
-    tt= []
-    tt.append(new_scen_res)
-    for pl in tt:
-        if i%n**2==0:
-            fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
-        ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]))
-        visual(pl, ax1)
-        i+=1
-        if (i>30):
-            break
+    if showgraph:
+        i = 0
+        n = 1
+        tt = []
+        tt.append(new_scen_res)
+        for pl in tt:
+            if i % n ** 2 == 0:
+                fig1 = plt.figure(figsize=(20, 20 * float(H_) / B_))
+            ax1 = fig1.add_subplot(n, n, i % n ** 2 + 1, title='scen ' + str(i))
+            visual(pl, ax1)
+            i += 1
+            if (i > 30):
+                break
 
-    i = 0
-    n = 1
-    for pl in optim_scens:
-        if i % n ** 2 == 0:
-            fig1 = plt.figure(figsize=(20, 20 * float(H_) / B_))
-        ax1 = fig1.add_subplot(n, n, i % n ** 2 + 1, title='scen ' + str(i) + " " + str(res_x[i]))
-        visual(pl, ax1)
-        i += 1
-        if (i > 30):
-            break
+        i = 0
+        n = 1
+        for pl in [optim_scens]:
+            if i % n ** 2 == 0:
+                fig1 = plt.figure(figsize=(20, 20 * float(H_) / B_))
+            ax1 = fig1.add_subplot(n, n, i % n ** 2 + 1, title='scen ' + str(i))
+            visual(pl, ax1)
+            i += 1
+            if (i > 30):
+                break
+        plt.show()
 
-    plt.show()
-
-    return new_scen_res, hall_pos_res, entrwall_res, flats_out_walls
+        return new_scen_res, hall_pos_res, entrwall_res, flats_out_walls
 
 # функция возвращает позицию угла и входную стену принимая отношения корр-комната, подъезд-комната
 def entrwall_hall_pos(corr_flat, podezd_flat):

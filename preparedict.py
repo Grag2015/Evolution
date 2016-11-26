@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
 import cPickle
 
-# загружаем словарь
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'rb')
+# загружаем словарь планировок квартир
+file = open("D:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'r')
 dict_res = cPickle.load(file)
 file.close()
 
+# загружаем словарь планировок секций
+file = open("D:\YandexDisk\EnkiSoft\Evolution\dict_res_sect.txt", 'r')
+dict_sect_res = cPickle.load(file)
+file.close()
+
 def preparedict():
+    """
+    Функция обрабатывает файлы с различными планировками квартир и для каждого ключа выбирает планировку с наименьшим числом
+    нарушенных ограничений
+    """
     import numpy as np
     import pandas as pd
     # подготовка данных
@@ -48,7 +57,7 @@ def preparedict():
     cPickle.dump(dict_res, file)
     file.close()
 
-# получить оценку планировки
+# получить оценку планировки квартиры
 def getplfun(flatparams):
     #flatparams = ((4.5, 6.0), (0, 0, 0, 1), 0)
     # округляем до 0.5
@@ -64,7 +73,63 @@ def get_dict_res(flatparams):
         res = dict_res[flatparams][0]
     except KeyError:
         res = 0
-        print "Ошибка: в базе планировок нет значения: " , flatparams
+        print "Ошибка: в базе планировок квартир нет значения: " , flatparams
     return res
 
-get_dict_res(((8.0, 11.0), (0, 0, 1, 0), 0))
+# БЛОК для обработки планировок секции
+def preparesectdict():
+    """
+    Считываем файлы со списками [(b, h), flat_out_walls, nflats, bestfun, bestpl]
+    объединяем, группируем по уникальной паре ((b, h), flat_out_walls) и берем вариант с минимальным bestfun
+    Словарь планировок имеет формат ("size", "outwalls") = "pls"
+    """
+    import numpy as np
+    import pandas as pd
+
+    # подготовка данных
+    # список файлов для загрузки
+    files_list = ["sections1101.txt", "sections1111.txt"] #["sections0101.txt", "sections1101.txt", "sections0111.txt", "sections1111.txt"]
+    plall_total = []
+    for fl in files_list:
+        file = open("d:\YandexDisk\EnkiSoft\Evolution\plall_" + fl, "rb")
+        plall_tmp = cPickle.load(file)
+        file.close()
+        print len(plall_tmp)
+        plall_total += plall_tmp
+    outwalls = [x[1] for x in plall_total]
+    size = [x[0] for x in plall_total]
+    funs = [x[3] for x in plall_total]
+    pls = [x[4] for x in plall_total]
+
+    data = pd.DataFrame(data=zip(outwalls, size, funs, pls),
+                        columns=["outwalls", "size", "funs", "pls"])
+
+    grouped = data[["outwalls", "size", "funs"]].groupby(["outwalls", "size"], as_index=False)
+    data_agg = grouped.aggregate(np.min)
+
+    dict_res = {}
+    for i in range(len(data_agg)):
+        dict_res[(data_agg.ix[i, 1], data_agg.ix[i, 0])] = data[(data["outwalls"] == data_agg.ix[i, 0]) &
+             (data["size"] == data_agg.ix[i, 1]) &
+             (data["funs"] == data_agg.ix[i, 2])].reset_index().ix[0, 4]
+    file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_sect.txt", 'wb')
+    cPickle.dump(dict_res, file)
+    file.close()
+
+# получить оценку планировки секции
+def get_dict_sect_res(sectparams):
+    """
+    :param sectparams: ((b,h), (0,1,0,1))
+    :return: pl
+    """
+    # округляем размеры секции до полуметра
+    (newb, newh) = (sectparams[0][0] - sectparams[0][0] % 0.5, sectparams[0][1] - sectparams[0][1] % 0.5)
+    try:
+
+        res = dict_sect_res[((newb, newh), sectparams[1])][0]
+    except KeyError:
+        res = 0
+        print "Ошибка: в базе планировок секций нет значения: " , sectparams
+    return res
+
+get_dict_sect_res(((30,20), (1,1,1,1)))
