@@ -115,7 +115,7 @@ tc_src_s = [[[], envel_podezd, envel_corr],# envel_flat, envel_flat, envel_flat,
         # [[], [], [], [], [], [], []]] #"flat4"
 
 
-def create_constr():
+def create_constr(nflats):
     global compartments, rooms_weights, areaconstr, areaconstrmax, widthconstrmin, widthconstrmax, sides_ratio, comp_col, tc_src
     # B1 = 2.5
     # H1 = 15
@@ -127,7 +127,7 @@ def create_constr():
     #todo надо выносить в настройки
     r1 = int(round((B/7.),0))#int(round((B/2.-1)*10/55,0))
     r2 = int(round((H/7.),0))#int(round((B/2.-1)*H/55,0))
-    nflats = min(max(r1*r2-2,4),8)# в алгоритме рассчитаны планировки максимум для 8 квартир в секции, минимум - 4 квартиры
+    #nflats = min(max(r1*r2-2,4),8)# в алгоритме рассчитаны планировки максимум для 8 квартир в секции, минимум - 4 квартиры
     varres= [1]*nflats
     areasres= [50]*nflats
     print varres, areasres
@@ -1219,8 +1219,7 @@ def main_topology(max_results, B_, H_, nflats, printres = True, usetemplate = Tr
     max_res = max_results
     B = B_
     H = H_
-    n = nflats #
-    create_constr()
+    n = create_constr(nflats)
     len_comp = len(compartments)
     tc = prepare_tc(tc_src)
 
