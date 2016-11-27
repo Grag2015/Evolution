@@ -387,3 +387,7 @@ def decode_geturl(urlstr):
 decode_geturl(str1)
 json.loads(decode_geturl(str1))
 ("%7B", "{")
+
+json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
+ {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''
+calculation(json_string)

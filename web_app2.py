@@ -4,6 +4,7 @@ import StringIO
 import sys
 import json
 import os
+import re
 
 
 class WSGIServer(object):
@@ -55,16 +56,18 @@ class WSGIServer(object):
             for line in request_data.splitlines()
         ))
         self.parse_request(request_data)
-
+        print "выполніл parse_request(request_data)"
         # Construct environment dictionary using request data
         env = self.get_environ()
+        print "выполніл self.get_environ()"
 
         # It's time to call our application callable and get
         # back a result that will become HTTP response body
         result = self.application(env, self.start_response)
-
+        print "выполніл self.application(env, self.start_response)"
         # Construct a response and send it back to the client
         self.finish_response(result)
+        print "выполніл self.finish_response(result)"
         # except AttributeError:
         #     self.client_connection.close()
         #     print "Error handle_one_request 1"
@@ -86,10 +89,11 @@ class WSGIServer(object):
         (self.request_method,  # GET
          self.path,            # /hello
          self.request_version  # HTTP/1.1
-         ) = request_line.split()
-        print "self.path: ", self.path
+         ) = request_line.split()[0:3]
         #self.content_length = int(request_line2.replace("Content-Length: ", ""))
-        self.data = self.decode_geturl(self.path.replace("/section/?name=", ""))
+        self.data = self.decode_geturl(re.search("name\=(.*?) HTTP", text).group(1))
+        print "self.data", self.data
+        print "self.data type ", type(self.data)
         #print json.loads(self.data)
         # except ValueError:
         #     # Construct a response and send it back to the client
@@ -203,3 +207,28 @@ if __name__ == '__main__':
 # resp.getcode()
 # resp.info()
 # resp.geturl()
+
+#     json_dict = [
+#         {"BimType": "section", "Deep": 20.0, "Height": 3.0, "Id": 18, "Position": {"X": 0.0, "Y": 0.6, "Z": 0.0},
+#          "Width": 30.0,
+#          "ParentId": 4},
+#         {"BimType": "section", "Deep": 15.0, "Height": 3.0, "Id": 19, "Position": {"X": 40.0, "Y": 0.6, "Z": 0.0},
+#          "Width": 15.0, "ParentId": 4},
+#         {"BimType": "section", "Deep": 20.0, "Height": 3.0, "Id": 20, "Position": {"X": 80.0, "Y": 0.6, "Z": 0.0},
+#          "Width": 30.0, "ParentId": 4}]
+# json_string = json.dumps(json_dict)
+#
+# # Для тестирования сервера
+# import urllib2
+# import json
+#
+# # send json request
+# json_payload = json.dumps(json_dict)
+# headers = {'Content-Type': 'application/json'}
+# req = urllib2.Request('http://192.168.1.3:8888/section/', json_payload, headers)
+# resp = urllib2.urlopen(req)
+# response = resp.read()
+#
+# headers = {'Content-Type': 'text/plain'}
+# req = urllib2.Request('http://192.168.1.3:8888/section?name=' + json_payload, headers=headers)
+# resp = urllib2.urlopen(req)

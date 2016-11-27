@@ -18,6 +18,8 @@ def Section2Rooms(B_, H_, out_walls):
     # выходные данные: list [((x1,y1), pl),...]
     t1 = time.clock()
     flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, showgraph = False)
+    if len(flats)==0:
+        return 0,0
     prepflats = prepareflats(flats)
 
     res1=[] # тут храним координаты нижн.лев. угол квартир
@@ -112,4 +114,5 @@ def calculation(json_string):
     file_obj.write(json.dumps(data))
     file_obj.close()
     return json.dumps(data)
+
 

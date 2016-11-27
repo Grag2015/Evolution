@@ -1303,7 +1303,8 @@ def flats_outwalls(new_scen_res,section_out_walls):
 def Section2Flats(B_, H_, out_walls, showgraph = True):
     # Поиск топологий
     # Параметры - количество результатов, список комнат
-    global section_out_walls
+    global section_out_walls, B, H
+    B,H = (B_,H_)
     section_out_walls = out_walls
     # scens = main_topology(3, B_, H_)
     #
@@ -1332,7 +1333,10 @@ def Section2Flats(B_, H_, out_walls, showgraph = True):
     # # Параметры - ширина, высота, сценарии (топологические)
     # optim_scens, bestmini = main_size(B_, H_, scens)
     optim_scens = get_dict_sect_res(((B_, H_), section_out_walls))
-    new_scen_res, hall_pos_res, entrwall_res = check_pl(quickplacement(optim_scens), optim_scens)
+    if optim_scens == 0:
+        return ([],[],[],[])
+
+    new_scen_res, hall_pos_res, entrwall_res = check_pl(place2scen(optim_scens), optim_scens)
 
 
     # расчет внешних стен для квартир
