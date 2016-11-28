@@ -88,7 +88,8 @@ def preparesectdict():
 
     # подготовка данных
     # список файлов для загрузки
-    files_list = ["sections0101.txt", "sections1101.txt", "sections0111.txt", "sections1111.txt"]
+    files_list = ["sections0101.txt", "sections1101.txt", "sections0111.txt", "sections1111.txt", "sections_30_40_0101.txt",
+                  "sections_30_40_1101.txt", "sections_30_40_0111.txt"]
     plall_total = []
     for fl in files_list:
         file = open("plall_" + fl, "rb")

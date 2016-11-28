@@ -89,6 +89,7 @@ def calculation(json_string):
     print "beforerroe"
     data = json.loads(json_string)
     print "aftererroe"
+
     Sizes, StartPosId, out_walls = json2params(data)
 
     # ищем различные уникальные значения пар Размеры-Внешние_стены
@@ -115,6 +116,8 @@ def calculation(json_string):
     file_obj.close()
     return json.dumps(data)
 
-json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
- {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''
-calculation(json_string)
+# json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
+#  {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''
+# calculation(json_string)
+# json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
+# calculation(json_string)
