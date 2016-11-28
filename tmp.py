@@ -359,10 +359,10 @@ import urllib2
 import json
 
 json_dict = [{"BimType": "section", "Deep": 20.0, "Height": 3.0, "Id": 18, "Position": {"X": 0.0, "Y": 0.6, "Z": 0.0},
-              "Width": 40.0,
+              "Width": 30.0,
               "ParentId": 4},
              {"BimType": "section", "Deep": 20.0, "Height": 3.0, "Id": 19, "Position": {"X": 40.0, "Y": 0.6, "Z": 0.0},
-              "Width": 40.0, "ParentId": 4},
+              "Width": 20.0, "ParentId": 4},
              {"BimType": "section", "Deep": 20.0, "Height": 3.0, "Id": 20, "Position": {"X": 80.0, "Y": 0.6, "Z": 0.0},
               "Width": 30.0, "ParentId": 4}]
 json_string = json.dumps(json_dict)

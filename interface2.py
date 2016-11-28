@@ -5,6 +5,9 @@ import json
 def pl2json(list_pl, StartPosId, addshift = (0,0)):
 
     """
+    list_pl - список планировок квартир для секции
+    StartPosId - список координат левого нижнего угла для каждой квартиры
+    addshift - координаты нижнего левого угла секции
     >>> compartments = ["envelope",  "hall", "corr", "bath", "kitchen", "room", "room2"]
     >>> tt=[[0.0,1.3636363636363635,0.0,3.1818181818181817,1.3636363636363635,2.2727272727272729,2.2727272727272729,3.1818181818181817,0.0,3.1818181818181817,3.1818181818181817,5.0],
     ... [0.0,2.3999999999999999,2.3999999999999999,4.7999999999999998,0.0,2.3999999999999999,0.0,2.3999999999999999,4.7999999999999998,6.0,0.0,6.0]]
@@ -22,10 +25,13 @@ def pl2json(list_pl, StartPosId, addshift = (0,0)):
             deep = round(pl[1][2 * t + 1] - pl[1][2 * t], 2)
             width = round(pl[0][2 * t + 1] - pl[0][2 * t], 2)
             locd_room.append({"BimType": "room", 'name': compartments[t + 1], "Deep": deep, "Width": width,
-                              "Position": {"X": round(StartPosId[i][0] + width + addshift[0],2), "Y": round(StartPosId[i][1] + deep + addshift[1],2)}})
+                              "Position": {"X": round(StartPosId[i][0] + pl[0][2 * t] + addshift[0],2), "Z": round(StartPosId[i][1] + pl[1][2 * t] + addshift[1],2),
+                                 "Y": addshift[2]}})
 
         locd["BimType"] = "functionalzone"
-        #locd["ParentId"] = StartPosId[i][2]
+        locd["name"] = "flat"
+        locd["Position"] = {"X": round(StartPosId[i][0],2), "Z": round(StartPosId[i][1],2), "Y": round(addshift[2],2)}
+        locd["ParentId"] = addshift[3]
         locd["rooms"] = locd_room
         newres.append(locd)
     return newres #json.dumps(newres)
@@ -47,7 +53,8 @@ def json2params(json_data):
     """
 
     Sizes = map(lambda x: (x['Width'], x['Deep']), json_data)
-    StartPosId = map(lambda x: [x['Position']['X'], x['Position']['Y'], x['Id']], json_data)
+    # X - координата ширины, Z - глубины, Y - высоты
+    StartPosId = map(lambda x: [x['Position']['X'], x['Position']['Z'], x['Id'], x['Position']['Y']], json_data)
     # Первая и последняя секция имеют внешние стены (1,1,0,1)/(0,1,1,1), остальные - (0,1,0,1)
     out_walls = [(1,1,0,1)] + [(0,1,0,1)]*(len(Sizes)-2) + [(0,1,1,1)]
     return Sizes, StartPosId, out_walls

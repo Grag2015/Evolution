@@ -109,10 +109,12 @@ def calculation(json_string):
     plac_ls = map(lambda x: optim_pls[Sizes_out_walls_unique.index(x)], Sizes_out_walls)
     plac_pos_ls = map(lambda x: optim_pls_pos[Sizes_out_walls_unique.index(x)], Sizes_out_walls)
     for i in range(len(plac_ls)):
-        data[i]["functionalzones"] = pl2json(plac_ls[i], plac_pos_ls[i], (StartPosId[i][0],StartPosId[i][1]))
+        data[i]["functionalzones"] = pl2json(plac_ls[i], plac_pos_ls[i], (StartPosId[i][0],StartPosId[i][1],StartPosId[i][3],StartPosId[i][2]))
     file_obj = open('json_out.txt', "w")
     file_obj.write(json.dumps(data))
     file_obj.close()
     return json.dumps(data)
 
-
+json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
+ {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''
+calculation(json_string)
