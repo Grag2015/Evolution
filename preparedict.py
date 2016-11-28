@@ -2,7 +2,7 @@
 import cPickle
 
 # загружаем словарь планировок квартир
-file = open("dict_res.txt", 'rb')
+file = open("dict_res.txt", 'r')
 dict_res = cPickle.load(file)
 file.close()
 

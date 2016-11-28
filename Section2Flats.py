@@ -1225,7 +1225,7 @@ def main_topology(max_results, B_, H_, nflats, printres = True, usetemplate = Tr
 
     if usetemplate:
         # загружаем шаблоны
-        file = open("dict_sect2flats.txt", "rb")
+        file = open("dict_sect2flats.txt", "r")
         dict_sect2flats = cPickle.load(file)
         file.close()
         # ЗАГЛУШКИ
