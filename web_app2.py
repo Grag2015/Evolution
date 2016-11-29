@@ -91,7 +91,7 @@ class WSGIServer(object):
          self.request_version  # HTTP/1.1
          ) = request_line.split()[0:3]
         #self.content_length = int(request_line2.replace("Content-Length: ", ""))
-        self.data = self.decode_geturl(re.search("name\=(.*?) HTTP", text).group(1))
+        self.data = (int(self.decode_geturl(re.search("width\=(\d+)", text).group(1))), int(self.decode_geturl(re.search("deep\=(\d+)", text).group(1))))
         print "self.data", self.data
         print "self.data type ", type(self.data)
         #print json.loads(self.data)
@@ -173,7 +173,7 @@ class WSGIServer(object):
         urlstr = urlstr.replace("%22", '"')
         return urlstr
 
-SERVER_ADDRESS = (HOST, PORT) = '', 8888
+SERVER_ADDRESS = (HOST, PORT) = '', 7788
 
 
 def make_server(server_address, application):

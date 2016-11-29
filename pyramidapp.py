@@ -7,15 +7,12 @@ from mainSection2Rooms import calculation
 def hello_world(request):
     print "request3333"
     # param = request.path.split('/')
-    json_string = request.environ['data']
-    print "json_string ", json_string
-    print "type(json_string)", type(json_string)
-    print "/request3333"
-    file_obj = open('json_in.txt', "w")
-    file_obj.write(json_string)
+    data_tuple = request.environ['data']
+    file_obj = open('json_in_pl3.txt', "w")
+    file_obj.write(data_tuple)
     file_obj.close()
     return Response(
-       calculation(json_string),
+       calculation(data_tuple),
         content_type = 'application/json'
     )
 
