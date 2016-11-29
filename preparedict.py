@@ -2,13 +2,13 @@
 import cPickle
 
 # загружаем словарь планировок квартир
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'r')
-dict_res = cPickle.load(file)
+file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_3pl.txt", 'r')
+dict_res_3pl = cPickle.load(file)
 file.close()
 
 # загружаем словарь планировок секций
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_sect.txt", 'r')
-dict_sect_res = cPickle.load(file)
+file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_sect_3pl.txt", 'r')
+dict_sect_res_3pl = cPickle.load(file)
 file.close()
 
 def preparedict():
@@ -55,20 +55,10 @@ def preparedict():
     cPickle.dump(dict_res, file)
     file.close()
 
-# получить оценку планировки квартиры
-def getplfun(flatparams):
-    #flatparams = ((4.5, 6.0), (0, 0, 0, 1), 0)
-    # округляем до 0.5
-    flatparams_new = ((flatparams[0][0] - flatparams[0][0] % 0.5, flatparams[0][1] - flatparams[0][1] % 0.5), flatparams[1], flatparams[2])
-    try:
-        res = dict_res[flatparams_new][1]
-    except KeyError:
-        res = 50  # заведомо большая ошибка, т.к. такой планировки нет в базе
-    return res
 
-def get_dict_res(flatparams):
+def get_dict_res_3pl(flatparams):
     try:
-        res = dict_res[flatparams][0]
+        res = map(lambda x: x[0], dict_res_3pl[flatparams])
     except KeyError:
         res = 0
         print "Ошибка: в базе планировок квартир нет значения: " , flatparams
@@ -90,7 +80,7 @@ def preparesectdict():
                   "sections_30_40_1101.txt", "sections_30_40_0111.txt"]
     plall_total = []
     for fl in files_list:
-        file = open("plall_" + fl, "rb")
+        file = open("d:\YandexDisk\EnkiSoft\Evolution\plall_" + fl, "rb")
         plall_tmp = cPickle.load(file)
         file.close()
         print len(plall_tmp)
@@ -103,20 +93,24 @@ def preparesectdict():
     data = pd.DataFrame(data=zip(outwalls, size, funs, pls),
                         columns=["outwalls", "size", "funs", "pls"])
 
-    grouped = data[["outwalls", "size", "funs"]].groupby(["outwalls", "size"], as_index=False)
-    data_agg = grouped.aggregate(np.min)
+    grouped = data[["outwalls", "size", "funs", "pls"]].groupby(["outwalls", "size"], as_index=False)
 
     dict_res = {}
-    for i in range(len(data_agg)):
-        dict_res[(data_agg.ix[i, 1], data_agg.ix[i, 0])] = data[(data["outwalls"] == data_agg.ix[i, 0]) &
-             (data["size"] == data_agg.ix[i, 1]) &
-             (data["funs"] == data_agg.ix[i, 2])].reset_index().ix[0, 4]
-    file = open("dict_res_sect.txt", 'wb')
+    # идем по ключам словаря групп grouped и берем в каждой группе 3 наилучшие планировки
+    for gr in grouped.groups.keys():
+        df = grouped.get_group(gr)
+        df = df.sort_values("funs")[0:3]
+        dict_res[(df.values[0][1], df.values[0][0])] = []
+        for d in df.values:
+            if len(d[3])!=0:
+                dict_res[(df.values[0][1], df.values[0][0])].append(d[3][0])
+
+    file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_sect_3pl.txt", 'wb')
     cPickle.dump(dict_res, file)
     file.close()
 
 # получить оценку планировки секции
-def get_dict_sect_res(sectparams):
+def get_dict_sect_res_3pl(sectparams):
     """
     :param sectparams: ((b,h), (0,1,0,1))
     :return: pl
@@ -125,7 +119,7 @@ def get_dict_sect_res(sectparams):
     (newb, newh) = (sectparams[0][0] - sectparams[0][0] % 0.5, sectparams[0][1] - sectparams[0][1] % 0.5)
     try:
 
-        res = dict_sect_res[((newb, newh), sectparams[1])][0]
+        res = dict_sect_res_3pl[((newb, newh), sectparams[1])]
     except KeyError:
         res = 0
         print "Ошибка: в базе планировок секций нет значения: " , sectparams

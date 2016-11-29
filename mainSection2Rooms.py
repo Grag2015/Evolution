@@ -13,34 +13,39 @@ from interface2 import pl2json
 from interface2 import json2params
 import json
 
+
 def Section2Rooms(B_, H_, out_walls):
     # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)
     # выходные данные: list [((x1,y1), pl),...]
     t1 = time.clock()
-    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, showgraph = False)
-    if len(flats)==0:
-        return 0,0
-    prepflats = prepareflats(flats)
+    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, showgraph=False)
+    if len(flats) == 0:
+        return 0, 0
+    prepflats = []
+    for flat in flats:
+        prepflats.append(prepareflats(flat))
 
-    res1=[] # тут храним координаты нижн.лев. угол квартир
-    res2=[] # тут храним планировки квартир
-    col_list =[]
-    show_board = []
-    line_width = []
-    fill_ = []
-    for i, fl in enumerate(prepflats):
-        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i])
-        if tmp == 0:
-            return (0, 0)
-        res1.append((fl[0],fl[1]))
-        res2.append(tmp[0])
-        col_list += ["#f7f01d"]+tmp[1]
-        show_board += tmp[2]
-        line_width += [2] + [None] * (len(tmp[2]) - 1)
-        fill_ += [False] + [True] * (len(tmp[2]) - 1)
-    t2 = time.clock()
-    print "РАСЧЕТ СЕКЦИИ ЗАКОНЧЕН! " + "Время выполнения программы sec.- " + str(t2-t1)
-
+    res1 = []  # тут храним координаты нижн.лев. угол квартир
+    res2 = []  # тут храним планировки квартир
+    for j, prepflat in enumerate(prepflats):
+        res1tmp = []
+        res2tmp = []
+        col_list = []
+        show_board = []
+        line_width = []
+        fill_ = []
+        for i, fl in enumerate(prepflat):
+            tmp = Flat2Rooms(fl[2], fl[3], entrwall[j][i], hall_pos[j][i], fl[4], flats_out_walls[j][i])
+            if tmp == 0:
+                return (0, 0)
+            res1tmp.append((fl[0], fl[1]))
+            res2tmp.append(tmp[0])
+            col_list += ["#f7f01d"] + tmp[1]
+            show_board += tmp[2]
+            line_width += [2] + [None] * (len(tmp[2]) - 1)
+            fill_ += [False] + [True] * (len(tmp[2]) - 1)
+        res1.append(res1tmp)
+        res2.append(res2tmp)
     return res1, res2
 
 def prepareflats(flats):
@@ -121,3 +126,16 @@ def calculation(json_string):
 # calculation(json_string)
 # json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
 # calculation(json_string)
+
+res2 = Section2Rooms(30, 15, (1,1,1,1))[1]
+res1 = Section2Rooms(30, 15, (1,1,1,1))[0]
+
+sect_pl = []
+for i in range(len(res2)): # идем по планировкам секций
+    for k in range(3):# идем по номерам планировок квартир
+        sect_pl.append({})
+        list_pl = map(lambda x: x[k],res2[i])
+        list_pos = map(lambda x: x, res1[i])
+        sect_pl[-1]["functionalzones"] = pl2json(list_pl, list_pos)
+        sect_pl[-1]["BimType"] = "section"
+        sect_pl[-1]["Position"] = {"X": 0, "Z": 0, "Y": 0}
