@@ -1454,202 +1454,201 @@ def check_pl(scen, pl):
     print hall_pos, entrwall
     # берем коридор и смотрим, что есть выше и ниже
     # если есть часть общей стены сверху коридора
-    up_corr = []
-    down_corr = []
-    for i in range(3, len(scen[0])):
-        if scen[2][i][0] in {(2,1),(7,1),(8,1),(9,1),(10,1),(6,1)}:
-            up_corr.append(i)
-        else:
-            # если есть часть общей стены снизу коридора
-            if scen[2][i][0] in {(2,11),(7,11),(8,11),(9,11),(10,11),(6,11)}:
-                down_corr.append(i)
-    # делаем предплоложение, что объединение всех комнат в up_corr и down_corr представляют прямоугольник
-    # подсчет площади объед-х комнат
-    will_deleted = []
-    print up_corr, down_corr
-    # проверка для up_corr
-    a = 0
-    b = 0
-    for i in range(len(up_corr)):
-        a += (pl[0][up_corr[i]*2+1]-pl[0][up_corr[i]*2])
-        b = (pl[1][up_corr[i]*2+1]-pl[1][up_corr[i]*2])
-    print "a,b", a, b
-# проверка площади объединения, ratio
-    if (a*b < 60) & (a*b > 0): # объединяем все в одну квартиру
-        for t, i in enumerate(up_corr):
-            # new_scen[0].pop(2*i - t*2)
-            # new_scen[0].pop(2*i - t*2)
-            # new_scen[1].pop(2*i - t*2)
-            # new_scen[1].pop(2*i - t*2)
-            will_deleted.append(i)
-        new_scen[0].append(min(map(lambda x: pl[0][2*x], up_corr)))
-        new_scen[0].append(max(map(lambda x: pl[0][2*x+1], up_corr)))
-        new_scen[1].append(pl[1][2*up_corr[0]])
-        new_scen[1].append(pl[1][2*up_corr[0] + 1])
-        hall_pos.append(1)
-        entrwall.append((3,1))
-    else:
-        if a*b >= 60:
-            if float(a)/b > 2.5:
-                # делим на 2
-                for t, i in enumerate(up_corr):
-                    #print t, i
-                    # new_scen[0].pop(2*i - t * 2)
-                    # new_scen[0].pop(2*i - t * 2)
-                    # new_scen[1].pop(2*i - t * 2)
-                    # new_scen[1].pop(2*i - t * 2)
-                    will_deleted.append(i)
-                tmp_min = min(map(lambda x: pl[0][2 * x], up_corr))
-                tmp_max = max(map(lambda x: pl[0][2 * x + 1], up_corr))
-                new_scen[0].append(tmp_min)
-                new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
-                new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
-                new_scen[0].append(tmp_max)
-                new_scen[1].append(pl[1][2 * up_corr[0]])
-                new_scen[1].append(pl[1][2 * up_corr[0] + 1])
-                new_scen[1].append(pl[1][2 * up_corr[0]])
-                new_scen[1].append(pl[1][2 * up_corr[0] + 1])
-                hall_pos.append(0)
-                hall_pos.append(0)
-                entrwall.append((3, 0))
-                entrwall.append((3, 0))
-            else:
-                if float(2*b)/a <= 2.5:
-                    # делим на 2
-                    for t, i in enumerate(up_corr):
-                        #print t, i
-                        # new_scen[0].pop(2*i - t * 2)
-                        # new_scen[0].pop(2*i - t * 2)
-                        # new_scen[1].pop(2*i - t * 2)
-                        # new_scen[1].pop(2*i - t * 2)
-                        will_deleted.append(i)
-                    tmp_min = min(map(lambda x: pl[0][2 * x], up_corr))
-                    tmp_max = max(map(lambda x: pl[0][2 * x + 1], up_corr))
-                    print tmp_min,tmp_max
-                    new_scen[0].append(tmp_min)
-                    new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
-                    new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
-                    new_scen[0].append(tmp_max)
-                    new_scen[1].append(pl[1][2 * up_corr[0]])
-                    new_scen[1].append(pl[1][2 * up_corr[0] + 1])
-                    new_scen[1].append(pl[1][2 * up_corr[0]])
-                    new_scen[1].append(pl[1][2 * up_corr[0] + 1])
-                    hall_pos.append(0)
-                    hall_pos.append(0)
-                    entrwall.append((3, 0))
-                    entrwall.append((3, 0))
-                else: # объединяем в одну квартиру
-                    for t, i in enumerate(up_corr):
-                        # new_scen[0].pop(i - t * 2)
-                        # new_scen[0].pop(i - t * 2)
-                        # new_scen[1].pop(i - t * 2)
-                        # new_scen[1].pop(i - t * 2)
-                        will_deleted.append(i)
-                    new_scen[0].append(min(map(lambda x: pl[0][2 * x], up_corr)))
-                    new_scen[0].append(max(map(lambda x: pl[0][2 * x + 1], up_corr)))
-                    new_scen[1].append(pl[1][2 * up_corr[0]])
-                    new_scen[1].append(pl[1][2 * up_corr[0] + 1])
-                    hall_pos.append(1)
-                    entrwall.append((3, 0))
+#     up_corr = []
+#     down_corr = []
+#     for i in range(3, len(scen[0])):
+#         if scen[2][i][0] in {(2,1),(7,1),(8,1),(9,1),(10,1),(6,1)}:
+#             up_corr.append(i)
+#         else:
+#             # если есть часть общей стены снизу коридора
+#             if scen[2][i][0] in {(2,11),(7,11),(8,11),(9,11),(10,11),(6,11)}:
+#                 down_corr.append(i)
+#     # делаем предплоложение, что объединение всех комнат в up_corr и down_corr представляют прямоугольник
+#     # подсчет площади объед-х комнат
+#     will_deleted = []
+#     print up_corr, down_corr
+#     # проверка для up_corr
+#     a = 0
+#     b = 0
+#     for i in range(len(up_corr)):
+#         a += (pl[0][up_corr[i]*2+1]-pl[0][up_corr[i]*2])
+#         b = (pl[1][up_corr[i]*2+1]-pl[1][up_corr[i]*2])
+#     print "a,b", a, b
+# # проверка площади объединения, ratio
+#     if (a*b < 60) & (a*b > 0): # объединяем все в одну квартиру
+#         for t, i in enumerate(up_corr):
+#             # new_scen[0].pop(2*i - t*2)
+#             # new_scen[0].pop(2*i - t*2)
+#             # new_scen[1].pop(2*i - t*2)
+#             # new_scen[1].pop(2*i - t*2)
+#             will_deleted.append(i)
+#         new_scen[0].append(min(map(lambda x: pl[0][2*x], up_corr)))
+#         new_scen[0].append(max(map(lambda x: pl[0][2*x+1], up_corr)))
+#         new_scen[1].append(pl[1][2*up_corr[0]])
+#         new_scen[1].append(pl[1][2*up_corr[0] + 1])
+#         hall_pos.append(1)
+#         entrwall.append((3,1))
+#     else:
+#         if a*b >= 60:
+#             if float(a)/b > 2.5:
+#                 # делим на 2
+#                 for t, i in enumerate(up_corr):
+#                     #print t, i
+#                     # new_scen[0].pop(2*i - t * 2)
+#                     # new_scen[0].pop(2*i - t * 2)
+#                     # new_scen[1].pop(2*i - t * 2)
+#                     # new_scen[1].pop(2*i - t * 2)
+#                     will_deleted.append(i)
+#                 tmp_min = min(map(lambda x: pl[0][2 * x], up_corr))
+#                 tmp_max = max(map(lambda x: pl[0][2 * x + 1], up_corr))
+#                 new_scen[0].append(tmp_min)
+#                 new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
+#                 new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
+#                 new_scen[0].append(tmp_max)
+#                 new_scen[1].append(pl[1][2 * up_corr[0]])
+#                 new_scen[1].append(pl[1][2 * up_corr[0] + 1])
+#                 new_scen[1].append(pl[1][2 * up_corr[0]])
+#                 new_scen[1].append(pl[1][2 * up_corr[0] + 1])
+#                 hall_pos.append(0)
+#                 hall_pos.append(0)
+#                 entrwall.append((3, 0))
+#                 entrwall.append((3, 0))
+#             else:
+#                 if float(2*b)/a <= 2.5:
+#                     # делим на 2
+#                     for t, i in enumerate(up_corr):
+#                         #print t, i
+#                         # new_scen[0].pop(2*i - t * 2)
+#                         # new_scen[0].pop(2*i - t * 2)
+#                         # new_scen[1].pop(2*i - t * 2)
+#                         # new_scen[1].pop(2*i - t * 2)
+#                         will_deleted.append(i)
+#                     tmp_min = min(map(lambda x: pl[0][2 * x], up_corr))
+#                     tmp_max = max(map(lambda x: pl[0][2 * x + 1], up_corr))
+#                     print tmp_min,tmp_max
+#                     new_scen[0].append(tmp_min)
+#                     new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
+#                     new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
+#                     new_scen[0].append(tmp_max)
+#                     new_scen[1].append(pl[1][2 * up_corr[0]])
+#                     new_scen[1].append(pl[1][2 * up_corr[0] + 1])
+#                     new_scen[1].append(pl[1][2 * up_corr[0]])
+#                     new_scen[1].append(pl[1][2 * up_corr[0] + 1])
+#                     hall_pos.append(0)
+#                     hall_pos.append(0)
+#                     entrwall.append((3, 0))
+#                     entrwall.append((3, 0))
+#                 else: # объединяем в одну квартиру
+#                     for t, i in enumerate(up_corr):
+#                         # new_scen[0].pop(i - t * 2)
+#                         # new_scen[0].pop(i - t * 2)
+#                         # new_scen[1].pop(i - t * 2)
+#                         # new_scen[1].pop(i - t * 2)
+#                         will_deleted.append(i)
+#                     new_scen[0].append(min(map(lambda x: pl[0][2 * x], up_corr)))
+#                     new_scen[0].append(max(map(lambda x: pl[0][2 * x + 1], up_corr)))
+#                     new_scen[1].append(pl[1][2 * up_corr[0]])
+#                     new_scen[1].append(pl[1][2 * up_corr[0] + 1])
+#                     hall_pos.append(1)
+#                     entrwall.append((3, 0))
+#
+#     # # проверка для down_corr
+#     # a = 0
+#     # b = 0
+#     # for i in range(len(down_corr)):
+#     #     a += (pl[0][down_corr[i] * 2 + 1] - pl[0][down_corr[i] * 2])
+#     #     b = (pl[1][down_corr[i] * 2 + 1] - pl[1][down_corr[i] * 2])
+#     # print "a,b", a, b
+#     # # проверка площади объединения, ratio
+#     # if (a * b < 60) & (a*b > 0):  # объединяем все в одну квартиру
+#     #     for t, i in enumerate(down_corr):
+#     #         # new_scen[0].pop(2*i - t*2)
+#     #         # new_scen[0].pop(2*i - t*2)
+#     #         # new_scen[1].pop(2*i - t*2)
+#     #         # new_scen[1].pop(2*i - t*2)
+#     #         will_deleted.append(i)
+#     #     new_scen[0].append(min(map(lambda x: pl[0][2 * x], down_corr)))
+#     #     new_scen[0].append(max(map(lambda x: pl[0][2 * x + 1], down_corr)))
+#     #     new_scen[1].append(pl[1][2 * down_corr[0]])
+#     #     new_scen[1].append(pl[1][2 * down_corr[0] + 1])
+#     #     hall_pos.append(1)
+#     #     entrwall.append((1, 1))
+#     # else:
+#     #     if a * b >= 60:
+#     #         if float(a) / b > 2.5:
+#     #             # делим на 2
+#     #             for t, i in enumerate(down_corr):
+#     #                 #print t, i
+#     #                 # new_scen[0].pop(2*i - t * 2)
+#     #                 # new_scen[0].pop(2*i - t * 2)
+#     #                 # new_scen[1].pop(2*i - t * 2)
+#     #                 # new_scen[1].pop(2*i - t * 2)
+#     #                 will_deleted.append(i)
+#     #             tmp_min = min(map(lambda x: pl[0][2 * x], down_corr))
+#     #             tmp_max = max(map(lambda x: pl[0][2 * x + 1], down_corr))
+#     #             new_scen[0].append(tmp_min)
+#     #             new_scen[0].append(tmp_min + (tmp_max - tmp_min) / 2.)
+#     #             new_scen[0].append(tmp_min + (tmp_max - tmp_min) / 2.)
+#     #             new_scen[0].append(tmp_max)
+#     #             new_scen[1].append(pl[1][2 * down_corr[0]])
+#     #             new_scen[1].append(pl[1][2 * down_corr[0] + 1])
+#     #             new_scen[1].append(pl[1][2 * down_corr[0]])
+#     #             new_scen[1].append(pl[1][2 * down_corr[0] + 1])
+#     #             hall_pos.append(0)
+#     #             hall_pos.append(0)
+#     #             entrwall.append((1, 0))
+#     #             entrwall.append((1, 0))
+#     #         else:
+#     #             if float(2 * b) / a <= 2.5:
+#     #                 # делим на 2
+#     #                 for t, i in enumerate(down_corr):
+#     #                     #print t, i
+#     #                     # new_scen[0].pop(2*i - t * 2)
+#     #                     # new_scen[0].pop(2*i - t * 2)
+#     #                     # new_scen[1].pop(2*i - t * 2)
+#     #                     # new_scen[1].pop(2*i - t * 2)
+#     #                     will_deleted.append(i)
+#     #                 tmp_min = min(map(lambda x: pl[0][2 * x], down_corr))
+#     #                 tmp_max = max(map(lambda x: pl[0][2 * x + 1], down_corr))
+#     #                 print tmp_min, tmp_max
+#     #                 new_scen[0].append(tmp_min)
+#     #                 new_scen[0].append(tmp_min + (tmp_max - tmp_min) / 2.)
+#     #                 new_scen[0].append(tmp_min + (tmp_max - tmp_min) / 2.)
+#     #                 new_scen[0].append(tmp_max)
+#     #                 new_scen[1].append(pl[1][2 * down_corr[0]])
+#     #                 new_scen[1].append(pl[1][2 * down_corr[0] + 1])
+#     #                 new_scen[1].append(pl[1][2 * down_corr[0]])
+#     #                 new_scen[1].append(pl[1][2 * down_corr[0] + 1])
+#     #                 hall_pos.append(0)
+#     #                 hall_pos.append(0)
+#     #                 entrwall.append((1, 0))
+#     #                 entrwall.append((1, 0))
+#     #             else:
+#     #                 for t, i in enumerate(down_corr):
+#     #                     # new_scen[0].pop(2*i - t * 2)
+#     #                     # new_scen[0].pop(2*i - t * 2)
+#     #                     # new_scen[1].pop(2*i - t * 2)
+#     #                     # new_scen[1].pop(2*i - t * 2)
+#     #                     will_deleted.append(i)
+#     #                 new_scen[0].append(min(map(lambda x: pl[0][2 * x], down_corr)))
+#     #                 new_scen[0].append(max(map(lambda x: pl[0][2 * x + 1], down_corr)))
+#     #                 new_scen[1].append(pl[1][2 * down_corr[0]])
+#     #                 new_scen[1].append(pl[1][2 * down_corr[0] + 1])
+#     #                 hall_pos.append(1)
+#     #                 entrwall.append((1, 0))
+#
+#     # удалить лишние элементы will_deleted
+#     print will_deleted
+#     will_deleted.sort()
+#     print hall_pos, entrwall
+#     for t, i in enumerate(will_deleted):
+#         new_scen[0].pop(2*i - t * 2)
+#         new_scen[0].pop(2*i - t * 2)
+#         new_scen[1].pop(2*i - t * 2)
+#         new_scen[1].pop(2*i - t * 2)
+#         hall_pos.pop(i-3-t) # 3 - число служебных элементов envelop, podezd, corr
+#         entrwall.pop(i-3-t)
 
-    # # проверка для down_corr
-    # a = 0
-    # b = 0
-    # for i in range(len(down_corr)):
-    #     a += (pl[0][down_corr[i] * 2 + 1] - pl[0][down_corr[i] * 2])
-    #     b = (pl[1][down_corr[i] * 2 + 1] - pl[1][down_corr[i] * 2])
-    # print "a,b", a, b
-    # # проверка площади объединения, ratio
-    # if (a * b < 60) & (a*b > 0):  # объединяем все в одну квартиру
-    #     for t, i in enumerate(down_corr):
-    #         # new_scen[0].pop(2*i - t*2)
-    #         # new_scen[0].pop(2*i - t*2)
-    #         # new_scen[1].pop(2*i - t*2)
-    #         # new_scen[1].pop(2*i - t*2)
-    #         will_deleted.append(i)
-    #     new_scen[0].append(min(map(lambda x: pl[0][2 * x], down_corr)))
-    #     new_scen[0].append(max(map(lambda x: pl[0][2 * x + 1], down_corr)))
-    #     new_scen[1].append(pl[1][2 * down_corr[0]])
-    #     new_scen[1].append(pl[1][2 * down_corr[0] + 1])
-    #     hall_pos.append(1)
-    #     entrwall.append((1, 1))
-    # else:
-    #     if a * b >= 60:
-    #         if float(a) / b > 2.5:
-    #             # делим на 2
-    #             for t, i in enumerate(down_corr):
-    #                 #print t, i
-    #                 # new_scen[0].pop(2*i - t * 2)
-    #                 # new_scen[0].pop(2*i - t * 2)
-    #                 # new_scen[1].pop(2*i - t * 2)
-    #                 # new_scen[1].pop(2*i - t * 2)
-    #                 will_deleted.append(i)
-    #             tmp_min = min(map(lambda x: pl[0][2 * x], down_corr))
-    #             tmp_max = max(map(lambda x: pl[0][2 * x + 1], down_corr))
-    #             new_scen[0].append(tmp_min)
-    #             new_scen[0].append(tmp_min + (tmp_max - tmp_min) / 2.)
-    #             new_scen[0].append(tmp_min + (tmp_max - tmp_min) / 2.)
-    #             new_scen[0].append(tmp_max)
-    #             new_scen[1].append(pl[1][2 * down_corr[0]])
-    #             new_scen[1].append(pl[1][2 * down_corr[0] + 1])
-    #             new_scen[1].append(pl[1][2 * down_corr[0]])
-    #             new_scen[1].append(pl[1][2 * down_corr[0] + 1])
-    #             hall_pos.append(0)
-    #             hall_pos.append(0)
-    #             entrwall.append((1, 0))
-    #             entrwall.append((1, 0))
-    #         else:
-    #             if float(2 * b) / a <= 2.5:
-    #                 # делим на 2
-    #                 for t, i in enumerate(down_corr):
-    #                     #print t, i
-    #                     # new_scen[0].pop(2*i - t * 2)
-    #                     # new_scen[0].pop(2*i - t * 2)
-    #                     # new_scen[1].pop(2*i - t * 2)
-    #                     # new_scen[1].pop(2*i - t * 2)
-    #                     will_deleted.append(i)
-    #                 tmp_min = min(map(lambda x: pl[0][2 * x], down_corr))
-    #                 tmp_max = max(map(lambda x: pl[0][2 * x + 1], down_corr))
-    #                 print tmp_min, tmp_max
-    #                 new_scen[0].append(tmp_min)
-    #                 new_scen[0].append(tmp_min + (tmp_max - tmp_min) / 2.)
-    #                 new_scen[0].append(tmp_min + (tmp_max - tmp_min) / 2.)
-    #                 new_scen[0].append(tmp_max)
-    #                 new_scen[1].append(pl[1][2 * down_corr[0]])
-    #                 new_scen[1].append(pl[1][2 * down_corr[0] + 1])
-    #                 new_scen[1].append(pl[1][2 * down_corr[0]])
-    #                 new_scen[1].append(pl[1][2 * down_corr[0] + 1])
-    #                 hall_pos.append(0)
-    #                 hall_pos.append(0)
-    #                 entrwall.append((1, 0))
-    #                 entrwall.append((1, 0))
-    #             else:
-    #                 for t, i in enumerate(down_corr):
-    #                     # new_scen[0].pop(2*i - t * 2)
-    #                     # new_scen[0].pop(2*i - t * 2)
-    #                     # new_scen[1].pop(2*i - t * 2)
-    #                     # new_scen[1].pop(2*i - t * 2)
-    #                     will_deleted.append(i)
-    #                 new_scen[0].append(min(map(lambda x: pl[0][2 * x], down_corr)))
-    #                 new_scen[0].append(max(map(lambda x: pl[0][2 * x + 1], down_corr)))
-    #                 new_scen[1].append(pl[1][2 * down_corr[0]])
-    #                 new_scen[1].append(pl[1][2 * down_corr[0] + 1])
-    #                 hall_pos.append(1)
-    #                 entrwall.append((1, 0))
-
-    # удалить лишние элементы will_deleted
-    print will_deleted
-    will_deleted.sort()
-    print hall_pos, entrwall
-    for t, i in enumerate(will_deleted):
-        new_scen[0].pop(2*i - t * 2)
-        new_scen[0].pop(2*i - t * 2)
-        new_scen[1].pop(2*i - t * 2)
-        new_scen[1].pop(2*i - t * 2)
-        hall_pos.pop(i-3-t) # 3 - число служебных элементов envelop, podezd, corr
-        entrwall.pop(i-3-t)
-
-    # ToDo тут надо пересчитать hall_pos, entrwall
     return new_scen, hall_pos, entrwall
 
 
