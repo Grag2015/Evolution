@@ -2,19 +2,19 @@
 import cPickle
 
 # загружаем словарь планировок квартир
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'r')
+file = open("dict_res.txt", 'r')
 dict_res = cPickle.load(file)
 file.close()
 
 # загружаем словарь планировок секций
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_sect.txt", 'r')
+file = open("dict_res_sect.txt", 'r')
 dict_sect_res = cPickle.load(file)
 file.close()
 
 def preparedict():
     """
-    Функция обрабатывает файлы с различными планировками квартир и для каждого ключа выбирает
-    3 планировки с наименьшим числом нарушенных ограничений
+    Функция обрабатывает файлы с различными планировками квартир и для каждого ключа выбирает планировку с наименьшим числом
+    нарушенных ограничений
     """
     import numpy as np
     import pandas as pd
@@ -25,14 +25,14 @@ def preparedict():
                   "wen1_0001", "wen1_0010", "wen1_0011", "wen1_0100", "wen1_0101", "wen1_0110", "wen1_0111"]
     plall_total = []
     for fl in files_list:
-        file = open("d:\YandexDisk\EnkiSoft\Evolution\plall" + fl + ".txt", "rb")
+        file = open("plall" + fl + ".txt", "rb")
         plall_tmp = cPickle.load(file)
         file.close()
         print len(plall_tmp)
         plall_total += plall_tmp
     outwalls = [x[1] for x in plall_total]
     size = [(x[3],x[4]) for x in plall_total]
-    funs = [float(x[6]/(len(x[5][0][0])/2-2)) for x in plall_total] # усредняем количество нарушенных ограничений на количество помещений
+    funs = [float(x[6]/(len(x[5][0][0])/2-2)) for x in plall_total]
     pls = [x[5][0] for x in plall_total]
     hall_pos_dict = {(9,9):0, (9,8):1}
     hall_pos = [hall_pos_dict[x[0][0][1][0]] for x in plall_total]
@@ -40,18 +40,20 @@ def preparedict():
 
     data = pd.DataFrame(data=zip(outwalls,size,hall_pos, funs,pls),columns=["outwalls","size","hall_pos","funs","pls"])
 
-    grouped = data[["outwalls","size","hall_pos","funs","pls"]].groupby(["outwalls","size","hall_pos"], as_index=False)
+    grouped = data[["outwalls","size","hall_pos","funs"]].groupby(["outwalls","size","hall_pos"], as_index=False)
+    data_agg = grouped.aggregate(np.min)
 
-    # идем по ключам словаря групп grouped и берем в каждой группе 3 наилучшие планировки
     dict_res={}
-    for gr in grouped.groups.keys():
-        df = grouped.get_group(gr)
-        df = df.sort_values("funs")[0:3]
-        dict_res[(df.values[0][1], df.values[0][0], df.values[0][2])] = []
-        for d in df.values:
-            dict_res[(df.values[0][1], df.values[0][0], df.values[0][2])].append((d[4], d[3]))
-
-    file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_3pl.txt", 'wb')
+    for i in range(len(data_agg)):
+        dict_res[(data_agg.ix[i,1],data_agg.ix[i,0],data_agg.ix[i,2])] = (data[(data["outwalls"] == data_agg.ix[i,0]) &
+                                                                              (data["size"] == data_agg.ix[i,1]) &
+                                                                              (data["funs"] == data_agg.ix[i,3]) &
+                                                                              (data["hall_pos"] == data_agg.ix[i,2])].reset_index().ix[0,5],
+                                                                        data[(data["outwalls"] == data_agg.ix[i, 0]) &
+                                                                             (data["size"] == data_agg.ix[i, 1]) &
+                                                                             (data["funs"] == data_agg.ix[i, 3]) &
+                                                                             (data["hall_pos"] == data_agg.ix[i, 2])].reset_index().ix[0, 4])
+    file = open("dict_res.txt", 'wb')
     cPickle.dump(dict_res, file)
     file.close()
 
