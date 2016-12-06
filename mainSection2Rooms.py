@@ -13,34 +13,39 @@ from interface2 import pl2json
 from interface2 import json2params
 import json
 
+
 def Section2Rooms(B_, H_, out_walls):
     # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)
     # выходные данные: list [((x1,y1), pl),...]
     t1 = time.clock()
-    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, showgraph = False)
-    if len(flats)==0:
-        return 0,0
-    prepflats = prepareflats(flats)
+    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, showgraph=False)
+    if len(flats) == 0:
+        return 0, 0
+    prepflats = []
+    for flat in flats:
+        prepflats.append(prepareflats(flat))
 
-    res1=[] # тут храним координаты нижн.лев. угол квартир
-    res2=[] # тут храним планировки квартир
-    col_list =[]
-    show_board = []
-    line_width = []
-    fill_ = []
-    for i, fl in enumerate(prepflats):
-        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i])
-        if tmp == 0:
-            return (0, 0)
-        res1.append((fl[0],fl[1]))
-        res2.append(tmp[0])
-        col_list += ["#f7f01d"]+tmp[1]
-        show_board += tmp[2]
-        line_width += [2] + [None] * (len(tmp[2]) - 1)
-        fill_ += [False] + [True] * (len(tmp[2]) - 1)
-    t2 = time.clock()
-    print "РАСЧЕТ СЕКЦИИ ЗАКОНЧЕН! " + "Время выполнения программы sec.- " + str(t2-t1)
-
+    res1 = []  # тут храним координаты нижн.лев. угол квартир
+    res2 = []  # тут храним планировки квартир
+    for j, prepflat in enumerate(prepflats):
+        res1tmp = []
+        res2tmp = []
+        col_list = []
+        show_board = []
+        line_width = []
+        fill_ = []
+        for i, fl in enumerate(prepflat):
+            tmp = Flat2Rooms(fl[2], fl[3], entrwall[j][i], hall_pos[j][i], fl[4], flats_out_walls[j][i])
+            if tmp == 0:
+                return (0, 0)
+            res1tmp.append((fl[0], fl[1]))
+            res2tmp.append(tmp[0])
+            col_list += ["#f7f01d"] + tmp[1]
+            show_board += tmp[2]
+            line_width += [2] + [None] * (len(tmp[2]) - 1)
+            fill_ += [False] + [True] * (len(tmp[2]) - 1)
+        res1.append(res1tmp)
+        res2.append(res2tmp)
     return res1, res2
 
 def prepareflats(flats):
@@ -83,41 +88,31 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
                  str(round(placement_all[0][2 * i + 1] - placement_all[0][2 * i], 1)) + 'x' + str(round(placement_all[1][2 * i + 1] - placement_all[1][2 * i], 1)))
     plt.show()
 
-def calculation(json_string):
+def calculation(bh):
     # функция получает JSON с размерами функ.зон, рассчитывает для каждой уникальной пары размеров планировку секции
     # и возвращает обратно JSON с планировками для каждой функциональной зоны
     print "beforerroe"
-    data = json.loads(json_string)
+    print bh
     print "aftererroe"
 
-    Sizes, StartPosId, out_walls = json2params(data)
+    out_walls = (1,1,1,1)
 
-    # ищем различные уникальные значения пар Размеры-Внешние_стены
-    Sizes_out_walls = zip(Sizes, out_walls)
-    Sizes_out_walls_unique = list(set(Sizes_out_walls))
+    res1, res2 = Section2Rooms(bh[0], bh[1], out_walls)
+    sect_pl = []
+    for i in range(len(res2)):  # идем по планировкам секций
+        for k in range(3):  # идем по номерам планировок квартир
+            sect_pl.append({})
+            list_pl = map(lambda x: x[k], res2[i])
+            list_pos = map(lambda x: x, res1[i])
+            sect_pl[-1]["functionalzones"] = pl2json(list_pl, list_pos)
+            sect_pl[-1]["BimType"] = "section"
+            sect_pl[-1]["Position"] = {"X": 0, "Z": 0, "Y": 0}
 
-    # Рассчитываем планировки секции для каждого элемента из списка Sizes_out_walls_unique
-    optim_pls = []
-    optim_pls_pos = []
-    for bh in Sizes_out_walls_unique:
-        tmp1, tmp2 = Section2Rooms(bh[0][0], bh[0][1], bh[1])
-        if tmp1 == 0:
-            return ""
-        optim_pls.append(map(lambda x: [x[0][2:],x[1][2:]],tmp2))  # exclude envelop
-        optim_pls_pos.append(tmp1)
-
-    # Готовим список с планировками и отправляем его в pl2json вместе с StartPosId
-    plac_ls = map(lambda x: optim_pls[Sizes_out_walls_unique.index(x)], Sizes_out_walls)
-    plac_pos_ls = map(lambda x: optim_pls_pos[Sizes_out_walls_unique.index(x)], Sizes_out_walls)
-    for i in range(len(plac_ls)):
-        data[i]["functionalzones"] = pl2json(plac_ls[i], plac_pos_ls[i], (StartPosId[i][0],StartPosId[i][1],StartPosId[i][3],StartPosId[i][2]))
-    file_obj = open('json_out.txt', "w")
-    file_obj.write(json.dumps(data))
+    file_obj = open('json_out_pl3.txt', "w")
+    file_obj.write(json.dumps(sect_pl))
     file_obj.close()
-    return json.dumps(data)
+    return json.dumps(sect_pl)
 
-# json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
-#  {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''
-# calculation(json_string)
-# json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
-# calculation(json_string)
+
+
+
