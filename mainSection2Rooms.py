@@ -46,6 +46,17 @@ def Section2Rooms(B_, H_, out_walls):
             fill_ += [False] + [True] * (len(tmp[2]) - 1)
         res1.append(res1tmp)
         res2.append(res2tmp)
+
+
+    # # visualization
+    # globplac =[[],[]]
+    # for rs in zip(res1, res2):
+    #     globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
+    #     globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
+    #
+    # visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_)
+
+
     return res1, res2
 
 def prepareflats(flats):
