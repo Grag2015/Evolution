@@ -2,7 +2,7 @@
 # Найденные планировки в JSON
 import json
 # преобразует список планировок КВАРТИР в список словарей, который конвертится в json
-def pl2json(list_pl, StartPosId, col_list, addshift = (0,0,0,0)):
+def pl2json(list_pl, StartPosId, col_list, flats_out_walls, addshift = (0,0,0,0)):
 
     """
     list_pl - список планировок квартир для секции
@@ -22,12 +22,64 @@ def pl2json(list_pl, StartPosId, col_list, addshift = (0,0,0,0)):
         locd = {}
         locd_room = []
 
+        # подготовка списка стен и флага внешняя/внутренняя IsOut = True
+        Bt = max(pl[0])
+        Ht = max(pl[1])
+        walls = []
+        for j in range(1, len(pl[0]) / 2):
+            room_out_walls = []
+            # левая стена
+            dicttmp = {}
+            dicttmp["isOut"] = False
+            if (pl[0][2 * j] == 0) and (flats_out_walls[i][0] == 1):
+                dicttmp["isOut"] = True
+            dicttmp["x1"] = round(StartPosId[i][0] + pl[0][2 * j],2)
+            dicttmp["y1"] = round(StartPosId[i][1] + pl[1][2 * j],2)
+            dicttmp["x2"] = round(StartPosId[i][0] + pl[0][2 * j],2)
+            dicttmp["y2"] = round(StartPosId[i][1] + pl[1][2 * j + 1],2)
+            room_out_walls.append(dicttmp)
+
+            # верхняя стена
+            dicttmp = {}
+            dicttmp["isOut"] = False
+            if (pl[1][2 * j + 1] == Ht) and (flats_out_walls[i][1] == 1):
+                dicttmp["isOut"] = True
+            dicttmp["x1"] = round(StartPosId[i][0] + pl[0][2 * j],2)
+            dicttmp["y1"] = round(StartPosId[i][1] + pl[1][2 * j + 1],2)
+            dicttmp["x2"] = round(StartPosId[i][0] + pl[0][2 * j + 1],2)
+            dicttmp["y2"] = round(StartPosId[i][1] + pl[1][2 * j + 1],2)
+            room_out_walls.append(dicttmp)
+
+            # правая стена
+            dicttmp = {}
+            dicttmp["isOut"] = False
+            if (pl[0][2 * j + 1] == Bt) and (flats_out_walls[i][2] == 1):
+                dicttmp["isOut"] = True
+            dicttmp["x1"] = round(StartPosId[i][0] + pl[0][2 * j + 1],2)
+            dicttmp["y1"] = round(StartPosId[i][1] + pl[1][2 * j + 1],2)
+            dicttmp["x2"] = round(StartPosId[i][0] + pl[0][2 * j + 1],2)
+            dicttmp["y2"] = round(StartPosId[i][1] + pl[1][2 * j],2)
+            room_out_walls.append(dicttmp)
+
+            # нинжняя стена
+            dicttmp = {}
+            dicttmp["isOut"] = False
+            if (pl[1][2 * j] == 0) and (flats_out_walls[i][3] == 1):
+                dicttmp["isOut"] = True
+            dicttmp["x1"] = round(StartPosId[i][0] + pl[0][2 * j + 1],2)
+            dicttmp["y1"] = round(StartPosId[i][1] + pl[1][2 * j],2)
+            dicttmp["x2"] = round(StartPosId[i][0] + pl[0][2 * j],2)
+            dicttmp["y2"] = round(StartPosId[i][1] + pl[1][2 * j],2)
+            room_out_walls.append(dicttmp)
+
+            walls.append(room_out_walls)
+
         for t in range(1,len(pl[0]) / 2):
             deep = round(pl[1][2 * t + 1] - pl[1][2 * t], 2)
             width = round(pl[0][2 * t + 1] - pl[0][2 * t], 2)
             locd_room.append({"BimType": "room", 'name': compartments[t], "color": col_list[t], "Deep": deep, "Width": width,
                               "Position": {"X": round(StartPosId[i][0] + pl[0][2 * t] + addshift[0],2), "Z": round(StartPosId[i][1] + pl[1][2 * t] + addshift[1],2),
-                                 "Y": addshift[2]}})
+                                 "Y": addshift[2]}, "walls": walls[t-1]})
 
         locd["BimType"] = "functionalzone"
         locd["name"] = "flat"
@@ -35,6 +87,8 @@ def pl2json(list_pl, StartPosId, col_list, addshift = (0,0,0,0)):
         locd["ParentId"] = addshift[3]
         locd["rooms"] = locd_room
         newres.append(locd)
+
+
     return newres #json.dumps(newres)
 
 

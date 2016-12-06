@@ -48,7 +48,7 @@ def Section2Rooms(B_, H_, out_walls):
         res1.append(res1tmp)
         res2.append(res2tmp)
         col_list.append(col_list_tmp)
-    return res1, res2, col_list
+    return res1, res2, col_list, flats_out_walls
 
 def prepareflats(flats):
     # output - x1,y1, B, H, count_rooms
@@ -99,15 +99,16 @@ def calculation(bh):
 
     out_walls = (1,1,1,1)
 
-    res1, res2, col_list = Section2Rooms(bh[0], bh[1], out_walls)
+    res1, res2, col_list, flats_out_walls = Section2Rooms(bh[0], bh[1], out_walls)
     sect_pl = []
     for i in range(len(res2)):  # идем по планировкам секций
         for k in range(3):  # идем по номерам планировок квартир
             sect_pl.append({})
             list_pl = map(lambda x: x[k], res2[i])
             list_pos = map(lambda x: x, res1[i])
+            flats_out_walls_tmp = map(lambda x: x, flats_out_walls[i])
             color_list = map(lambda x: x[k], col_list)
-            sect_pl[-1]["functionalzones"] = pl2json(list_pl, list_pos, col_list)
+            sect_pl[-1]["functionalzones"] = pl2json(list_pl, list_pos, col_list, flats_out_walls_tmp)
             sect_pl[-1]["BimType"] = "section"
             sect_pl[-1]["Position"] = {"X": 0, "Z": 0, "Y": 0}
 
@@ -120,3 +121,4 @@ def calculation(bh):
 
 
 #python web_app2_3pl.py pyramidapp_3pl:app
+
