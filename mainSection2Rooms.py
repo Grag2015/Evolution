@@ -41,6 +41,14 @@ def Section2Rooms(B_, H_, out_walls):
     t2 = time.clock()
     print "РАСЧЕТ СЕКЦИИ ЗАКОНЧЕН! " + "Время выполнения программы sec.- " + str(t2-t1)
 
+    # visualization
+    globplac =[[],[]]
+    for rs in zip(res1, res2):
+        globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
+        globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
+
+    visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_)
+
     return res1, res2
 
 def prepareflats(flats):
