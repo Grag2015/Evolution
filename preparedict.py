@@ -2,12 +2,12 @@
 import cPickle
 
 # загружаем словарь планировок квартир
-file = open("dict_res.txt", 'r')
+file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'r')
 dict_res = cPickle.load(file)
 file.close()
 
 # загружаем словарь планировок секций
-file = open("dict_res_sect.txt", 'r')
+file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_sect.txt", 'r')
 dict_sect_res = cPickle.load(file)
 file.close()
 
@@ -32,7 +32,7 @@ def preparedict():
         plall_total += plall_tmp
     outwalls = [x[1] for x in plall_total]
     size = [(x[3],x[4]) for x in plall_total]
-    funs = [x[6] for x in plall_total]
+    funs = [float(x[6]/(len(x[5][0][0])/2-2)) for x in plall_total]
     pls = [x[5][0] for x in plall_total]
     hall_pos_dict = {(9,9):0, (9,8):1}
     hall_pos = [hall_pos_dict[x[0][0][1][0]] for x in plall_total]
