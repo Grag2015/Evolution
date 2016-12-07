@@ -25,14 +25,14 @@ def preparedict():
                   "wen1_0001", "wen1_0010", "wen1_0011", "wen1_0100", "wen1_0101", "wen1_0110", "wen1_0111"]
     plall_total = []
     for fl in files_list:
-        file = open("plall" + fl + ".txt", "rb")
+        file = open("d:\YandexDisk\EnkiSoft\Evolution\plall" + fl + ".txt", "rb")
         plall_tmp = cPickle.load(file)
         file.close()
         print len(plall_tmp)
         plall_total += plall_tmp
     outwalls = [x[1] for x in plall_total]
     size = [(x[3],x[4]) for x in plall_total]
-    funs = [float(x[6]/(len(x[5][0][0])/2-2)) for x in plall_total]
+    funs = [x[6] for x in plall_total]
     pls = [x[5][0] for x in plall_total]
     hall_pos_dict = {(9,9):0, (9,8):1}
     hall_pos = [hall_pos_dict[x[0][0][1][0]] for x in plall_total]
@@ -53,7 +53,7 @@ def preparedict():
                                                                              (data["size"] == data_agg.ix[i, 1]) &
                                                                              (data["funs"] == data_agg.ix[i, 3]) &
                                                                              (data["hall_pos"] == data_agg.ix[i, 2])].reset_index().ix[0, 4])
-    file = open("dict_res.txt", 'wb')
+    file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'wb')
     cPickle.dump(dict_res, file)
     file.close()
 

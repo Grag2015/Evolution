@@ -14,7 +14,7 @@ import fileinput
 import cProfile
 import json
 from interface2 import pl2json, json2params
-from preparedict import get_dict_res_3pl
+from preparedict import get_dict_res
 # import ipdb
 
 # настройки алгоритма
@@ -1414,37 +1414,33 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
         else:
             locB, locH = (B_, H_)
 # для найденных локальных значений достаем из словаря (базы планировок) ближайшую по размерам планировку
-    pls = copy.deepcopy(get_dict_res_3pl(((locB - locB%0.5, locH - locH%0.5), loc_out_walls, hall_pos)))
+    pl = copy.deepcopy(get_dict_res(((locB - locB%0.5, locH - locH%0.5), loc_out_walls, hall_pos)))
 
-    if pls == 0:
+    if pl == 0:
         print "----------- Error: there isn't value: ", (locB - locB%0.5, locH - locH%0.5)
         return 0
-    pl_rotated_list, comp_col_list, show_board_list = ([],[],[])
-    for pl in pls:
-        # преобразуем планировку - все стены пропорционально сдвигаем на locB%0.5 и locH%0.5
-        xlist = list(set(pl[0]))
-        xlist.sort()
-        delta = (locB % 0.5) / float(len(xlist)-1) # сдвиг для каждой стены
-        for i in range(len(pl[0])):
-            pl[0][i] += delta*xlist.index(pl[0][i])
 
-        ylist = list(set(pl[1]))
-        ylist.sort()
-        delta = (locH % 0.5) / float(len(ylist)-1) # сдвиг для каждой стены
-        for i in range(len(pl[1])):
-            pl[1][i] += delta*ylist.index(pl[1][i])
-        # поворачиваем планировку
-        if hall_pos >= 1:
-            pl_rotated = rotate90(pl, entr_wall[0])
-        # если прихожая только угловая
-        else:
-            pl_rotated = rotate90(pl, entr_wall[0] + entr_wall[1])
-        show_board = postproc(pl_rotated)
-        comp_col = ['#73DD9B', '#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC', '#ACBFEC', '#ACBFEC', '#ACBFEC']
-        pl_rotated_list.append(pl_rotated)
-        comp_col_list.append(comp_col[0:int(len(pl[0])/2-1)])
-        show_board_list.append(show_board)
-    return pl_rotated_list, comp_col_list, show_board_list
+# преобразуем планировку - все стены пропорционально сдвигаем на locB%0.5 и locH%0.5
+    xlist = list(set(pl[0]))
+    xlist.sort()
+    delta = (locB % 0.5) / float(len(xlist)-1) # сдвиг для каждой стены
+    for i in range(len(pl[0])):
+        pl[0][i] += delta*xlist.index(pl[0][i])
+
+    ylist = list(set(pl[1]))
+    ylist.sort()
+    delta = (locH % 0.5) / float(len(ylist)-1) # сдвиг для каждой стены
+    for i in range(len(pl[1])):
+        pl[1][i] += delta*ylist.index(pl[1][i])
+# поворачиваем планировку
+    if hall_pos >= 1:
+        pl_rotated = rotate90(pl, entr_wall[0])
+    # если прихожая только угловая
+    else:
+        pl_rotated = rotate90(pl, entr_wall[0] + entr_wall[1])
+    show_board = postproc(pl_rotated)
+    comp_col = ['#73DD9B', '#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC', '#ACBFEC', '#ACBFEC', '#ACBFEC']
+    return pl_rotated, comp_col[0:int(len(pl[0])/2-1)], show_board
 
 def Flat2Rooms_old(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
     # Поиск топологий

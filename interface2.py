@@ -2,7 +2,7 @@
 # Найденные планировки в JSON
 import json
 # преобразует список планировок КВАРТИР в список словарей, который конвертится в json
-def pl2json(list_pl, StartPosId, addshift = (0,0,0,0)):
+def pl2json(list_pl, StartPosId, addshift = (0,0)):
 
     """
     list_pl - список планировок квартир для секции
