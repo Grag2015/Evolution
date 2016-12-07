@@ -1300,41 +1300,56 @@ def flats_outwalls(new_scen_res,section_out_walls):
     return flats_out_walls
 
 # Section2Flats(25, 15)
-def Section2Flats(B_, H_, out_walls, showgraph = True):
-    # Поиск топологий
-    # Параметры - количество результатов, список комнат
+def Section2Flats(B_, H_, out_walls, showgraph = False, mode = 3):
+    '''
+
+    # Поиск топологий секции
+    имеет 3 режима работы
+    1 - считаем топологии и планировки с 0
+    2 - топологии загружаем из базы и планировки рассчитываем с 0
+    3 - топологии и планировки загружаем из базы (по умолчанию)
+    :param B_:
+    :param H_:
+    :param out_walls:
+    :param showgraph:
+    :param mode: имеет 3 режима работы
+    :return:
+    '''
+
     global section_out_walls, B, H
     B,H = (B_,H_)
     section_out_walls = out_walls
-    # scens = main_topology(3, B_, H_)
-    #
-    # # save
-    # # file = open("dump.txt", 'w')
-    # # cPickle.dump(scens, file)
-    # # file.close()
-    #
-    # # Визуализация
-    # if showgraph:
-    #     i=0
-    #     n=1
-    #     for t,pl in enumerate(scens):
-    #         if i%(n**2)==0:
-    #             fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
-    #         ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i))
-    #         visual2(quickplacement(pl),ax1)
-    #         i+=1
-    #         if (i>100):
-    #             break
-    #
-    #     plt.show()
-    # # print scens
-    #
-    # # Учет ограничений по площади
-    # # Параметры - ширина, высота, сценарии (топологические)
-    # optim_scens, bestmini = main_size(B_, H_, scens)
-    optim_scens = get_dict_sect_res(((B_, H_), section_out_walls))
-    if optim_scens == 0:
-        return ([],[],[],[])
+
+    if mode < 3:
+        usetemplate = True
+        if mode == 1:
+            usetemplate = False
+        scens = main_topology(3, B_, H_, usetemplate = usetemplate)
+
+        # # Визуализация
+        # if showgraph:
+        #     i=0
+        #     n=1
+        #     for t,pl in enumerate(scens):
+        #         if i%(n**2)==0:
+        #             fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
+        #         ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i))
+        #         visual2(quickplacement(pl),ax1)
+        #         i+=1
+        #         if (i>100):
+        #             break
+        #
+        #     plt.show()
+        # # print scens
+
+        # Учет ограничений по площади
+        # Параметры - ширина, высота, сценарии (топологические)
+        optim_scens, bestmini = main_size(B_, H_, scens)
+
+    else:
+        optim_scens = get_dict_sect_res(((B_, H_), section_out_walls))
+        if optim_scens == 0:
+            return ([],[],[],[])
 
     new_scen_res, hall_pos_res, entrwall_res = check_pl(place2scen(optim_scens), optim_scens, active=False)
 

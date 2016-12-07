@@ -18,7 +18,7 @@ def Section2Rooms(B_, H_, out_walls):
     # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)
     # выходные данные: list [((x1,y1), pl),...]
     t1 = time.clock()
-    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, showgraph = False)
+    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, showgraph = False, mode=2)
     if len(flats)==0:
         return 0,0
     prepflats = prepareflats(flats)
