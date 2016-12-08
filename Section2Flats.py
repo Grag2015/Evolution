@@ -15,6 +15,7 @@ import cPickle
 import re
 from Flat2Rooms import place2scen
 from preparedict import get_dict_sect_res
+from preparedict import getplfun
 
 #from knapsack import Knapsack
 from pl_graph import createbounds
@@ -915,6 +916,11 @@ def makeconst(pl, discret=True):
     bounds = createbounds(pl, B, H)
     print B, H, bounds
 
+    # проверка bounds на корректность интервалов
+    # если интервалы некорректны, то возвращаем большое число
+    if len(filter(lambda x: x[1] - x[0] < 0, bounds))>0:
+        return False
+
     # bounds[x1ind] = (B/2. - B1/2., B/2. - B1/2.)
     # bounds[x2ind] = (B/2. + B1/2., B/2. + B1/2.)
     # фиксируем высоту подъезда
@@ -1219,7 +1225,7 @@ def main_topology(max_results, B_, H_, printres = True, usetemplate = True):
 
     if usetemplate:
         # загружаем шаблоны
-        file = open("dict_sect2flats.txt", "rb")
+        file = open("D:\YandexDisk\EnkiSoft\Evolution\dict_sect2flats.txt", "rb")
         dict_sect2flats = cPickle.load(file)
         file.close()
         # ЗАГЛУШКИ
@@ -1266,7 +1272,8 @@ def main_size(width, height, scens):
     bestmini = 0
     for i in range(len(scens)):
         try:
-            makeconst(quickplacement(scens[i]))
+            if not makeconst(quickplacement(scens[i])):
+                continue
             #print quickplacement(scens[i])
             res = my_differential_evolution(func2_discret, bounds)
             res_x.append(func2_discret_results(res.x))

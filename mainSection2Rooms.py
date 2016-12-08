@@ -130,3 +130,8 @@ def calculation(json_string):
 # calculation(json_string)
 # json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
 # calculation(json_string)
+
+Section2Rooms(20, 20, (0,1,0,1))
+
+# ToDo надо убрать возврат по количеству квартир, нужно сразу несколько планировок с разным числом квартир разбирать.
+# создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.
