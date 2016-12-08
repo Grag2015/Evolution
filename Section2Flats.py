@@ -117,30 +117,29 @@ tc_src_s = [[[], envel_podezd, envel_corr],# envel_flat, envel_flat, envel_flat,
 
 
 def create_constr():
+    '''
+    функция рассчитывает число квартир для секции и для данного числа квартир
+    рассчитывает все ограничения
+    актуальна только для полного рассчета (mode=1). т.к. число квартир у нас может изменяться, то беру максимальную длину
+    для каждого ограничения (8 квартир)
+
+    :return:
+    '''
     global compartments, rooms_weights, areaconstr, areaconstrmax, widthconstrmin, widthconstrmax, sides_ratio, comp_col, tc_src
     # B1 = 2.5
     # H1 = 15
     # # коридор горизонтальный
     # B2 = B / 2
     # H2 = 2
-    print (B, H, B1, H1, B2, H2)
     #varres, areasres = Knapsack(B, H, B1, H1, B2, H2)
     #todo надо выносить в настройки
     r1 = int(round((B/7.),0))#int(round((B/2.-1)*10/55,0))
     r2 = int(round((H/7.),0))#int(round((B/2.-1)*H/55,0))
     nflats = min(max(r1*r2-2,4),8)# в алгоритме рассчитаны планировки максимум для 8 квартир в секции, минимум - 4 квартиры
-    varres= [1]*nflats
-    areasres= [50]*nflats
-    print varres, areasres
+    varres = [1]*nflats
+    areasres = [50]*nflats #nflats
+
     compartments = copy.deepcopy(compartments_src)
-    rooms_weights = copy.deepcopy(rooms_weights_src)
-    areaconstr = copy.deepcopy(areaconstr_src)
-    areaconstrmax = copy.deepcopy(areaconstrmax_src)
-    widthconstrmin = copy.deepcopy(widthconstrmin_src)
-    widthconstrmax = copy.deepcopy(widthconstrmax_src)
-    sides_ratio = copy.deepcopy(sides_ratio_src)
-    comp_col = copy.deepcopy(comp_col_src)
-    # добавление доп.ограничений на комнаты полученные из задачи о рюкзаке
     k = 0
     for j, s in enumerate(areasres):
         for t in range(int(varres[j])):
@@ -148,15 +147,7 @@ def create_constr():
             # ToDO s = 40, т.е. площади не учитываем, главное чтобы минимальное для квартиры
             s = 40
             compartments.append("flat" + str(k))
-            rooms_weights.append(0)
-            areaconstr.append(s * (1 - delta))
-            areaconstrmax.append(2*s * (1 + delta))
-            widthconstrmin.append(4.5)
-            widthconstrmax.append(15)
-            sides_ratio.append(1)
-            comp_col[k + 1] = '#ACBFEC'
-    comp_col[k + 2]='#ACBFEC' # костыль, после обработки планировки иногда не хватает цветов
-    comp_col[k + 3]='#ACBFEC' # костыль, после обработки планировки иногда не хватает цветов
+
     tc_src = copy.deepcopy(tc_src_s)
     tc_src[0] += [envel_flat]*(len(compartments)-3)
     tc_src[1] += [podezd_flat]*(len(compartments)-3)
@@ -615,6 +606,7 @@ def quickplacement(scen):
     """
     BH=[B,H]
     def quickplacementdim(dim, dmin, dmax, scen):
+        len_comp = len(scen[0])
         matr=np.zeros(((len_comp) * 2,(len_comp) * 2))
         for i in range(1,len_comp*2):
             for j in range(i+1,len_comp*2):
@@ -847,13 +839,51 @@ def visual_pl(placement_all):
 
 import scipy.optimize as opt
 
-# placement example
-# pl = [[0,20,10,15,0,10,15,20,0,17,17,20], [0,20,0,10,0,10,0,10,10,20,10,20]]
-# функция формирует матрицы для целевой функции
 
 def makeconst(pl, discret=True):
+    '''
+    # placement example
+    # pl = [[0,20,10,15,0,10,15,20,0,17,17,20], [0,20,0,10,0,10,0,10,10,20,10,20]]
+    # функция формирует матрицы для целевой функции
+
+    :param pl:
+    :param discret:
+    :return:
+    '''
+    len_comp = int(len(pl[0])/2)
     placemnt = copy.deepcopy(pl)
     global Ax, Ay, Bx, By, bx, by, bounds, x1ind, x2ind, hall_pos_constr, flats_outwalls_constr, section_out_walls
+    global rooms_weights, areaconstr, areaconstrmax, widthconstrmin, widthconstrmax, sides_ratio, comp_col
+
+    # редактируем глобальные ограничения на геометрию (перенес из топологии)
+    nflats = len_comp - 3
+    varres = [1]*nflats
+    areasres = [50]*nflats #nflats
+
+    rooms_weights = copy.deepcopy(rooms_weights_src)
+    areaconstr = copy.deepcopy(areaconstr_src)
+    areaconstrmax = copy.deepcopy(areaconstrmax_src)
+    widthconstrmin = copy.deepcopy(widthconstrmin_src)
+    widthconstrmax = copy.deepcopy(widthconstrmax_src)
+    sides_ratio = copy.deepcopy(sides_ratio_src)
+    comp_col = copy.deepcopy(comp_col_src)
+    # добавление доп.ограничений на комнаты полученные из задачи о рюкзаке
+    k = 0
+    for j, s in enumerate(areasres):
+        for t in range(int(varres[j])):
+            k += 1
+            # ToDO s = 40, т.е. площади не учитываем, главное чтобы минимальное для квартиры
+            s = 40
+            rooms_weights.append(0)
+            areaconstr.append(s * (1 - delta))
+            areaconstrmax.append(2*s * (1 + delta))
+            widthconstrmin.append(4.5)
+            widthconstrmax.append(15)
+            sides_ratio.append(1)
+            comp_col[k + 1] = '#ACBFEC'
+    comp_col[k + 2]='#ACBFEC' # костыль, после обработки планировки иногда не хватает цветов
+    comp_col[k + 3]='#ACBFEC' # костыль, после обработки планировки иногда не хватает цветов
+
     # создаем матрицу для целевой функции
     def makematr(placemnt):
 
@@ -913,12 +943,11 @@ def makeconst(pl, discret=True):
 
     xlist, ylist = makematr(placemnt)
 
-    bounds = createbounds(pl, B, H)
-    print B, H, bounds
+    bounds, isCorrbounds = createbounds(pl, B, H)
 
     # проверка bounds на корректность интервалов
-    # если интервалы некорректны, то возвращаем большое число
-    if len(filter(lambda x: x[1] - x[0] < 0, bounds))>0:
+    # если интервалы некорректны, то возвращаем False
+    if not isCorrbounds:
         return False
 
     # bounds[x1ind] = (B/2. - B1/2., B/2. - B1/2.)
@@ -1228,10 +1257,44 @@ def main_topology(max_results, B_, H_, printres = True, usetemplate = True):
         file = open("D:\YandexDisk\EnkiSoft\Evolution\dict_sect2flats.txt", "rb")
         dict_sect2flats = cPickle.load(file)
         file.close()
-        # ЗАГЛУШКИ
-        #print "dict_sect2flats[n]", n
-        #print dict_sect2flats[n][0:min(max_results, len(dict_sect2flats[n]))]
-        return dict_sect2flats[n][0:min(max_results, len(dict_sect2flats[n]))]
+
+        # выбираем из шаблонов [max_results] шаблонов, которые не нарушают условия для границ,
+        res = []
+
+        r1 = int(round((B / 7.), 0))  # int(round((B/2.-1)*10/55,0))
+        r2 = int(round((H / 7.), 0))  # int(round((B/2.-1)*H/55,0))
+        nflats = min(max(r1 * r2 - 3, 4), 8)  # в алгоритме рассчитаны планировки максимум для 8 квартир в секции, минимум - 4 квартиры
+        flats_ls = [4, 5, 6, 7, 8]
+        new_flats_ls = []
+        if nflats == max(flats_ls):
+            new_flats_ls = flats_ls[::-1]
+        else:
+            if nflats != min(flats_ls):
+                new_flats_ls.append(nflats)
+                flats_ls.pop(flats_ls.index(nflats))
+                if nflats + 1 in flats_ls:
+                    new_flats_ls.append(nflats + 1)
+                    flats_ls.pop(flats_ls.index(nflats + 1))
+                if nflats - 1 in flats_ls:
+                    new_flats_ls.append(nflats - 1)
+                    flats_ls.pop(flats_ls.index(nflats - 1))
+                new_flats_ls = new_flats_ls + flats_ls
+            else:
+                new_flats_ls = flats_ls
+
+
+        flag = False
+        for ni in new_flats_ls: # пока рассматриваем от 4 до 8 кв.
+            for sc in dict_sect2flats[ni]:
+                if createbounds(quickplacement(sc),B,H)[1]:
+                    res.append(sc)
+                if (len(res)>= max_results):
+                    flag = True
+                    break
+            if flag == True:
+                break
+
+        return res
 
     # /ГОТОВЫЕ СЦЕНАРИИ ДЛЯ РАЗЛИЧНОГО ЧИСЛА КВАРТИР
 
@@ -1271,25 +1334,25 @@ def main_size(width, height, scens):
     bestmin = 1000
     bestmini = 0
     for i in range(len(scens)):
-        try:
-            if not makeconst(quickplacement(scens[i])):
-                continue
-            #print quickplacement(scens[i])
-            res = my_differential_evolution(func2_discret, bounds)
-            res_x.append(func2_discret_results(res.x))
-            #print res_x[-1]
-            if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
-                bestmin = res.fun
-                bestmini = i
-                print 'bestmini', bestmini
-            #print res.message, "nit: ", res.nit
-            #print 'bounds', bounds
-            xlistnew = list(res.x[0:len(Ax[0]) - 1])
-            ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
-            #print i
-            optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
-        except ValueError:
-            print('ОШИБКА: Планировка '+str(i)+' не была рассчитана!')
+        #try:
+        if not makeconst(quickplacement(scens[i])):
+            continue
+        #print quickplacement(scens[i])
+        res = my_differential_evolution(func2_discret, bounds)
+        res_x.append(func2_discret_results(res.x))
+        #print res_x[-1]
+        if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
+            bestmin = res.fun
+            bestmini = i
+            print 'bestmini', bestmini
+        #print res.message, "nit: ", res.nit
+        #print 'bounds', bounds
+        xlistnew = list(res.x[0:len(Ax[0]) - 1])
+        ylistnew = list(res.x[len(Ax[0]) - 1:len(Ax[0]) + len(Ay[0]) - 2])
+        #print i
+        optim_scens.append(optim_placement(quickplacement(scens[i]), xlistnew, ylistnew))
+        # except ValueError:
+        #     print('ОШИБКА: Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
     res_tmp = []
@@ -1331,7 +1394,7 @@ def Section2Flats(B_, H_, out_walls, showgraph = False, mode = 3):
         usetemplate = True
         if mode == 1:
             usetemplate = False
-        scens = main_topology(3, B_, H_, usetemplate = usetemplate)
+        scens = main_topology(7, B_, H_, usetemplate = usetemplate)
 
         # # Визуализация
         # if showgraph:
@@ -1357,7 +1420,7 @@ def Section2Flats(B_, H_, out_walls, showgraph = False, mode = 3):
         optim_scens = get_dict_sect_res(((B_, H_), section_out_walls))
         if optim_scens == 0:
             return ([],[],[],[])
-
+    optim_scens = optim_scens[0]
     new_scen_res, hall_pos_res, entrwall_res = check_pl(place2scen(optim_scens), optim_scens, active=False)
 
 

@@ -913,7 +913,7 @@ def makeconst(pl, discret=True):
 
     xlist, ylist = makematr(placemnt)
 
-    bounds = createbounds(pl, B, H)
+    bounds, isCorrbounds = createbounds(pl, B, H)
     print B, H, bounds
 
     # bounds[x1ind] = (B/2. - B1/2., B/2. - B1/2.)

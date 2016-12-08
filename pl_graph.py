@@ -218,4 +218,11 @@ def createbounds(pl, B, H):
         return zip(levmin, levmax)
     bounds = createboundsdim(pl, B, H, 0, maxwidth_x, minwidth_x)
     bounds += createboundsdim(pl, B, H, 1, maxwidth_y, minwidth_y)
-    return bounds
+
+    # проверка bounds на корректность интервалов
+    # если интервалы некорректны, то возвращаем False
+    isCorrbounds = True
+    if len(filter(lambda x: x[1] - x[0] < 0, bounds)) > 0:
+        isCorrbounds = False
+
+    return bounds, isCorrbounds
