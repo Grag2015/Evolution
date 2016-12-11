@@ -1533,6 +1533,93 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showg
 
     return new_scen_res, hall_pos_res, entrwall_res, flats_out_walls
 
+def grid_columns_closer(pl, grid_columns):
+    '''
+    Доводчик стен секции под колонны. двигает стены только близкие к колоннам - не более 30 см.
+    :param pl:
+    :param grid_columns: список уровней - grid_columns = [[6, 12, 18, 24],[7]]
+    :return:
+    '''
+    def dist(col, wall):
+        '''
+        расстояние между колонной (точка) и отрезком. возвращает -1 если перпендикуляр к прямой отрезка не лежит на отрезке
+        :param col: (x1,y1)
+        :param wall: ((x2,y2),(x3,y3))
+        :return:
+        '''
+        (x1, y1) = (col[0], col[1])
+        (x2, y2) = (wall[0][0], wall[0][1])
+        (x3, y3) = (wall[1][0], wall[1][1])
+        r1 = np.sqrt((x2-x3)**2+(y2-y3)**2)
+        r2 = np.sqrt((x1-x3)**2+(y1-y3)**2)
+        r3 = np.sqrt((x1-x2)**2+(y1-y2)**2)
+        cos_a = (r1**2+r2**2-r3**2)#/(2*r1*r2)
+        cos_b = (r1**2+r3**2-r2**2)#/(2*r1*r3)
+
+        if (cos_a>=0) and (cos_b>=0):
+            A = y2 - y3
+            B = x3 - x2
+            C = y3*(x2-x3) - x3*(y2-y3)
+            res = abs(A*x1 + B*y1 + C)/np.sqrt(A**2 + B**2)
+            return res
+        else:
+            return -1
+
+    # преобразуем уровни колонн в список координат колонн
+    columns_list = [(x,y) for x in grid_columns[0] for y in grid_columns[1]]
+    #по планировке делаем список внутренних стен
+    walls = pl2walls(pl)
+
+
+
+    # считаем для каждой колонны расстояние до стен
+    col_wall = [-1]*len(columns_list)
+    for i, col in enumerate(columns_list):
+        for wall in walls:
+            if dist(col, wall) < 0.3:
+                col_wall[i] = wall
+                break
+
+
+def pl2walls(pl):
+    '''
+    ф-я возвращает список стен по планировке
+    :param pl: pl = [[0,10,0,5,5,10],[0,10,0,10,0,10]]
+    :return: список внутренних стен
+    '''
+    # подготовка списка стен
+    Bt = max(pl[0])
+    Ht = max(pl[1])
+    walls = []
+    for j in range(1, len(pl[0]) / 2):
+        # левая стена
+        wall = ((round(pl[0][2 * j], 2), round(pl[1][2 * j], 2)), (round(pl[0][2 * j], 2), round(pl[1][2 * j + 1], 2)))
+        walls.append(wall)
+
+        # верхняя стена
+        wall = ((round(pl[0][2 * j], 2), round(pl[1][2 * j + 1], 2)), (round(pl[0][2 * j + 1], 2), round(pl[1][2 * j + 1], 2)))
+        walls.append(wall)
+
+        # правая стена
+        wall = ((round(pl[0][2 * j + 1], 2), round(pl[1][2 * j], 2)), (round(pl[0][2 * j + 1], 2),round(pl[1][2 * j + 1], 2)))
+        walls.append(wall)
+
+        # нинжняя стена
+        wall = ((round(pl[0][2 * j], 2),round(pl[1][2 * j], 2)), (round(pl[0][2 * j + 1], 2), round(pl[1][2 * j], 2)))
+        walls.append(wall)
+    # оставляем только уникальные значения
+    print walls
+    walls = list(set(walls))
+    # оставляем только внутренние стены
+    res = copy.deepcopy(walls)
+    for w in walls:
+        if (w[0][0]==w[1][0] and w[1][0] == Bt) or (w[0][0]==w[1][0] and w[1][0] == 0):
+            res.pop(res.index(w))
+        else:
+            if (w[0][1] == w[1][1] and w[0][1] == Ht) or (w[0][1] == w[1][1] and w[0][1] == 0):
+                res.pop(res.index(w))
+    return res
+
 # функция возвращает позицию угла и входную стену принимая отношения корр-комната, подъезд-комната
 def entrwall_hall_pos(corr_flat, podezd_flat):
     # пример входных данных - [(2, 11)], [(0, 3)]
