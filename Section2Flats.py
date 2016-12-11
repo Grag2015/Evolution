@@ -16,6 +16,7 @@ import re
 from Flat2Rooms import place2scen
 from preparedict import get_dict_sect_res
 from preparedict import getplfun
+from settings import *
 
 #from knapsack import Knapsack
 from pl_graph import createbounds
@@ -48,6 +49,8 @@ areaconstrmax_src = [(B1 + 0.2)*(H1 + 2), H2*B2] #[60*(1+delta),60*(1+delta),110
 widthconstrmin_src = [B1 - 0.2, 2] #4.5, 4.5, 4.5, 4.5] # минимальные без оболочки
 widthconstrmax_src = [B1 + 0.2, 3] #100, 100, 100, 100] # максимальные без оболочки
 sides_ratio_src = [0, 0] #1, 1, 1, 1] # вкл/выкл ограничение на соотношение сторон, без оболочки
+
+grid_columns_x_inner, grid_columns_y_inner = ([],[])
 
 #цвета для визуализации, без оболочки
 comp_col_src = {0: '#73DD9B',
@@ -770,8 +773,8 @@ def visual2(placement_all, ax1):
                  placement_all[1][2 * i] / float(H) + (abs(placement_all[1][2*i] - placement_all[1][2*i + 1])/float(H))/2., compartments[i])
 
 def visual_place_simple(placement_all):
-    H = max(placement_all[0])
-    B = max(placement_all[1])
+    H = max(placement_all[1])
+    B = max(placement_all[0])
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     fig1 = plt.figure(figsize=(20,20*H/B) )
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
@@ -961,14 +964,14 @@ def makeconst(pl, discret=True):
     y1ind = ylist.index(y1)
     x1ind = xlist.index(x1)
     x2ind = xlist.index(x2)
-    bounds[y1ind + len(xlist) - 1] = (H1, H1)
-    bounds[x1ind] = (B/2. - B1/2., B/2. - B1/2.)
+    bounds[y1ind + len(xlist) - 1] = (H1 - podezd_height_delta, H1 + podezd_height_delta)
+    bounds[x1ind] = (B/2. - B1/2. - podezd_position_x_delta, B/2. - B1/2. + podezd_position_x_delta)
 
     # нужно зафиксировать интервал для высоты коридора (2-3), т.к. высота подъезда фиксирована H1, то надо найти в
     # ylist переменную, которая отвечают за размеры подъезда и зафиксировать в bounds интервал изменения (B1+2,B1+3)
     y1corr = pl[1][5]
     y1indcorr = ylist.index(y1corr)
-    bounds[y1indcorr + len(xlist) - 1] = (B1+2,B1+3)
+    #bounds[y1indcorr + len(xlist) - 1] = (B1+2,B1+3)
 
     # удаляем правую границу подъезда из списка ограничений
     bounds.pop(x2ind)
@@ -1067,7 +1070,41 @@ def func2_discret(xy):
     #print zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)
     totalfuns = sum(map(lambda x: getplfun(((x[0], x[1]), tuple(x[2]), x[3])), zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)))
     #print "totalfuns ", totalfuns
-    return sum(res2sign)*50 + sum(res3sign)*50 + sum(res4sign) + totalfuns
+    # пенальти за дальность стен секции от колонн
+    diff_colwalls_x = map(lambda t: min(abs(t - x)), grid_columns_x_inner)
+    diff_colwalls_y = map(lambda t: min(abs(t - y)), grid_columns_y_inner)
+    grid_col_penalty = sum(np.array(map(mysigmoida, diff_colwalls_x))) + sum(np.array(map(mysigmoida, diff_colwalls_y)))
+    # print "func2_discret out"
+    # print "sum(res2sign)*30", sum(res2sign)*30
+    # print "sum(res3sign)*30",sum(res3sign)*30
+    # print "sum(res4sign)", sum(res4sign)
+    # print "totalfuns", totalfuns
+    # print "grid_col_penalty * sett_grid_columns_influence", grid_col_penalty * sett_grid_columns_influence/30000.
+    fl = open("d:\YandexDisk\EnkiSoft\Evolution\\xy_func.txt", "a")
+    st = ""
+    for i in list(x) + list(y):
+        st += str(i) + "\t"
+    fl.write(st + "\n")
+    fl.close()
+
+    fl = open("d:\YandexDisk\EnkiSoft\Evolution\\xy_func_res.txt", "a")
+    fl.write(str(grid_col_penalty * sett_grid_columns_influence/3000.) + "\n")
+    fl.close()
+    return sum(res2sign)*30 + sum(res3sign)*30 + sum(res4sign) + totalfuns + grid_col_penalty * sett_grid_columns_influence/3000.
+
+def mysigmoida(x):
+    '''
+    функция возвращает оценку для заданного расстояния х от стены до колонны
+    :param x:
+    :return:
+    '''
+    x = abs(x)
+    if x <=0.3:
+        return 0
+    elif x <= 1:
+        return (-30+x*100)/10.
+    else:
+        return -70 + x*100
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
@@ -1185,12 +1222,42 @@ def withoutgapes3(N):
 
 def my_differential_evolution(func2_discret, bounds):
     #res_fun = 10
-    res = opt.differential_evolution(func2_discret, bounds, popsize=30, tol=0.01, strategy="randtobest1bin", init='random')
+    res = opt.differential_evolution(func2_discret, bounds, popsize=sett_popsize, tol=sett_tol, strategy=sett_strategy, init=sett_init,
+                                     mutation = sett_mutation, recombination = sett_recombination)
     # while (res_fun >=10):
     #     res = opt.differential_evolution(func2_discret, bounds, popsize=30, tol=0.01, strategy="randtobest1bin", init='random')
     #     res_fun = res.fun
     #     print res.fun
     res.x = np.insert(res.x, x2ind, res.x[x1ind] + B1)
+    return res
+
+def my_random_search(func2_discret, bounds):
+    best_fun = 100500
+    best_x = []
+    i=0
+    max_iter = 10000
+    while (i < max_iter):
+        x=[]
+        for inter in bounds:
+            x.append(np.random.uniform(low=inter[0], high=inter[1]))
+        resf = func2_discret(x)
+        if resf < best_fun:
+            best_fun = resf
+            best_x = x
+            if  best_fun==0:
+                break
+        i+=1
+
+    best_x = np.insert(best_x, x2ind, best_x[x1ind] + B1)
+
+    class MyClass:
+        """A simple example class"""
+        x = None
+        fun = None
+    res = MyClass()
+    res.fun = best_fun
+    res.x = best_x
+
     return res
 
 # Поиск различных вариантов компоновки (топологий)
@@ -1338,7 +1405,7 @@ def main_size(width, height, scens):
         if not makeconst(quickplacement(scens[i])):
             continue
         #print quickplacement(scens[i])
-        res = my_differential_evolution(func2_discret, bounds)
+        res = my_random_search(func2_discret, bounds) #my_differential_evolution(func2_discret, bounds)
         res_x.append(func2_discret_results(res.x))
         #print res_x[-1]
         if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
@@ -1370,7 +1437,7 @@ def flats_outwalls(new_scen_res,section_out_walls):
     return flats_out_walls
 
 # Section2Flats(25, 15)
-def Section2Flats(B_, H_, out_walls, showgraph = False, mode = 3):
+def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showgraph = False, mode = 3):
     '''
 
     # Поиск топологий секции
@@ -1386,7 +1453,8 @@ def Section2Flats(B_, H_, out_walls, showgraph = False, mode = 3):
     :return:
     '''
 
-    global section_out_walls, B, H
+    global section_out_walls, B, H, grid_columns_x_inner, grid_columns_y_inner
+    grid_columns_x_inner, grid_columns_y_inner = (np.array(grid_columns_x_i), np.array(grid_columns_y_i))
     B,H = (B_,H_)
     section_out_walls = out_walls
 
@@ -1394,7 +1462,7 @@ def Section2Flats(B_, H_, out_walls, showgraph = False, mode = 3):
         usetemplate = True
         if mode == 1:
             usetemplate = False
-        scens = main_topology(7, B_, H_, usetemplate = usetemplate)
+        scens = main_topology(sett_max_results_sect_topol, B_, H_, usetemplate = usetemplate)
 
         # # Визуализация
         # if showgraph:

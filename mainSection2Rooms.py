@@ -12,13 +12,31 @@ import matplotlib.patches as mpatches
 
 from interface2 import pl2json
 from interface2 import json2params
+from settings import *
 import json
 
 def Section2Rooms(B_, H_, out_walls):
     # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)
     # выходные данные: list [((x1,y1), pl),...]
+
+    # расчет шага сетки колонн - берем шаг, остатки по с которым минимальны
+    grid_columns_steps = np.array(sett_grid_columns)
+    x_col_step = grid_columns_steps[np.argmin(B_ % grid_columns_steps)]
+    y_col_step = grid_columns_steps[np.argmin(H_ % grid_columns_steps)]
+
+    # корректировка размеров под шаг
+    B_, H_ = (B_ - B_ % x_col_step, H_ - H_ % y_col_step)
+
+    # сетка колонн
+    grid_columns_x = x_col_step * np.array(range(B_/x_col_step + 1))
+    grid_columns_x_inner = grid_columns_x[1:-1]
+    grid_columns_y = y_col_step * np.array(range(H_/y_col_step + 1))
+    grid_columns_y_inner = grid_columns_y[1:-1]
+    grid_columns = list(((x, y) for x in grid_columns_x for y in grid_columns_y))
+    grid_columns_inner = list(((x, y) for x in grid_columns_x_inner for y in grid_columns_y_inner))
+
     t1 = time.clock()
-    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, showgraph = False, mode=2)
+    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, (grid_columns_x_inner, grid_columns_y_inner), showgraph = False, mode=2)
     if len(flats)==0:
         return 0,0
     prepflats = prepareflats(flats)
@@ -48,7 +66,7 @@ def Section2Rooms(B_, H_, out_walls):
         globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
         globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
 
-    visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_)
+    visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_, grid_columns)
 
     return res1, res2
 
@@ -75,7 +93,7 @@ def prepareflats(flats):
     return prepflats
 
 
-def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
+def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_, grid_columns):
     # placement_all = [[0, 10, 0, 1, 1, 10, 0, 1, 1, 10], [0, 10, 0, 1, 1, 10, 0, 1, 1, 10]]
     fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
     # plt.axis([-0.1, 1.1, -0.1, 1.1])
@@ -90,6 +108,16 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_):
         ax1.text(placement_all[0][2 * i] / float(B_) + (abs(placement_all[0][2 * i] - placement_all[0][2 * i + 1]) / float(B_)) / 2.,
                  placement_all[1][2 * i] / float(H_) + (abs(placement_all[1][2 * i] - placement_all[1][2 * i + 1]) / float(H_)) / 2.,
                  str(round(placement_all[0][2 * i + 1] - placement_all[0][2 * i], 1)) + 'x' + str(round(placement_all[1][2 * i + 1] - placement_all[1][2 * i], 1)))
+
+    # Отрисовка колонн
+    for xy in grid_columns:
+        ax1.add_patch(
+            mpatches.Rectangle(((xy[0]-0.1)/float(B_), (xy[1] - 0.1)/float(H_)),  # (x,y)
+                               0.2/float(B_),  # width
+                               0.2/float(H_), alpha=0.9, facecolor="Black", linewidth=3, fill=True
+                               )
+            )
+
     plt.show()
 
 def calculation(json_string):
@@ -131,7 +159,7 @@ def calculation(json_string):
 # json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
 # calculation(json_string)
 
-Section2Rooms(20, 20, (0,1,0,1))
+Section2Rooms(30, 15, (0,1,0,1))
 
 # ToDo надо убрать возврат по количеству квартир, нужно сразу несколько планировок с разным числом квартир разбирать.
 # создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.

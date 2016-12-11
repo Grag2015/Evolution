@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from Flat2Rooms import place2scen
+from settings import *
 import numpy as np
 
 def pl2graph(pl, maxwidth, minwidth, left2right = True, maxim = True, dim = 0):
@@ -164,8 +165,8 @@ def createbounds(pl, B, H):
     # ToDo выносить в настройки
     maxwidth_x = [30, 6, 20] + [15]*(len(pl[0]) / 2 - 3)  # максимальные ширины
     minwidth_x = [30, 6, 6]+ [4.5]*(len(pl[0]) / 2 - 3) # минимальные ширины
-    maxwidth_y = [30, 6, 3] + [15]*(len(pl[0]) / 2 - 3)  # максимальные ширины
-    minwidth_y = [30, 6, 2]+ [4.5]*(len(pl[0]) / 2 - 3) # минимальные ширины
+    maxwidth_y = [30, 6 + podezd_height_delta, 3] + [15]*(len(pl[0]) / 2 - 3)  # максимальные глубина
+    minwidth_y = [30, 6 - podezd_height_delta, 2]+ [4.5]*(len(pl[0]) / 2 - 3) # минимальные глубина
     # на входе планировка pl
     def createboundsdim(pl, B, H, dim, maxwidth, minwidth):
         if dim == 0:
@@ -224,5 +225,5 @@ def createbounds(pl, B, H):
     isCorrbounds = True
     if len(filter(lambda x: x[1] - x[0] < 0, bounds)) > 0:
         isCorrbounds = False
-
+    print "bounds: ", bounds
     return bounds, isCorrbounds
