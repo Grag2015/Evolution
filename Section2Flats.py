@@ -1104,7 +1104,7 @@ def mysigmoida(x):
     elif x <= 1:
         return (-30+x*100)/10.
     else:
-        return -70 + x*100
+        return 43.28*np.log(x+1)
 
 def func2_discret_results(xy):
     # добавить В и Х в конце векторов у и х
