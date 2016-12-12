@@ -23,3 +23,6 @@ sett_strategy="randtobest1bin"
 sett_init='latinhypercube'
 sett_mutation = 1 # it should be in the range [0, 2].
 sett_recombination = 0.5 # should be in the range [0, 1]
+
+# Включение/выкл. доводчика секции под сетку колонн
+sett_isActive_sect_closer = True
