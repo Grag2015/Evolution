@@ -36,7 +36,7 @@ def Section2Rooms(B_, H_, out_walls):
     grid_columns_inner = list(((x, y) for x in grid_columns_x_inner for y in grid_columns_y_inner))
 
     t1 = time.clock()
-    flats, hall_pos, entrwall, flats_out_walls = Section2Flats(B_, H_, out_walls, (grid_columns_x_inner, grid_columns_y_inner), showgraph = False, mode=2)
+    flats, hall_pos, entrwall, flats_out_walls, flat_col_dict = Section2Flats(B_, H_, out_walls, (grid_columns_x_inner, grid_columns_y_inner), showgraph = False, mode=2)
     if len(flats)==0:
         return 0,0
     prepflats = prepareflats(flats)
@@ -48,7 +48,12 @@ def Section2Rooms(B_, H_, out_walls):
     line_width = []
     fill_ = []
     for i, fl in enumerate(prepflats):
-        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i])
+        # если в квартире есть колонны, передадим их список в ф-ю
+        if i+3 in flat_col_dict:
+            flat_col_list = map(lambda x: (x[0] - fl[0], x[1] - fl[1]), flat_col_dict[i+3])
+        else:
+            flat_col_list = []
+        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i], flat_col_list)
         if tmp == 0:
             return (0, 0)
         res1.append((fl[0],fl[1]))
@@ -159,7 +164,7 @@ def calculation(json_string):
 # json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
 # calculation(json_string)
 
-Section2Rooms(30, 15, (0,1,0,1))
+Section2Rooms(30, 20, (0,1,0,1))
 
 # ToDo надо убрать возврат по количеству квартир, нужно сразу несколько планировок с разным числом квартир разбирать.
 # создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.

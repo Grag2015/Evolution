@@ -4,7 +4,7 @@ import numpy as np
 import time
 import copy
 import cPickle
-import pandas as pd
+
 #import pylab
 # import PySide
 # import matplotlib
@@ -18,6 +18,7 @@ from Flat2Rooms import place2scen
 from preparedict import get_dict_sect_res
 from preparedict import getplfun
 from settings import *
+from Flat2Rooms import grid_columns_closer
 
 #from knapsack import Knapsack
 from pl_graph import createbounds
@@ -1493,7 +1494,7 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showg
     optim_scens = optim_scens[0]
     # включаем доводчик
     if sett_isActive_sect_closer:
-        optim_scens = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i])[0]
+        optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i])
 
     new_scen_res, hall_pos_res, entrwall_res = check_pl(place2scen(optim_scens), optim_scens, active=False)
 
@@ -1537,184 +1538,7 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showg
 
         plt.show()
 
-    return new_scen_res, hall_pos_res, entrwall_res, flats_out_walls
-
-def grid_columns_closer(pl_in, grid_columns):
-    '''
-    Доводчик стен секции под колонны. двигает стены только близкие к колоннам - не более 30 см.
-    :param pl_in:
-    :param grid_columns: список уровней - grid_columns = [[6, 12, 18, 24],[7]]
-    :return: pl_res - подкорректированная планировка, isCorrected - была коррекция или нет, flat_col_dict - словарь Номер_квар: Список_колонн_в_квар
-    '''
-    def dist(col, wall):
-        '''
-        расстояние между колонной (точка) и отрезком. возвращает -1 если перпендикуляр к прямой отрезка не лежит на отрезке
-        :param col: (x1,y1)
-        :param wall: ((x2,y2),(x3,y3))
-        :return:
-        '''
-        (x1, y1) = (col[0], col[1])
-        (x2, y2) = (wall[0][0], wall[0][1])
-        (x3, y3) = (wall[1][0], wall[1][1])
-        r1 = np.sqrt((x2-x3)**2+(y2-y3)**2)
-        r2 = np.sqrt((x1-x3)**2+(y1-y3)**2)
-        r3 = np.sqrt((x1-x2)**2+(y1-y2)**2)
-        cos_a = (r1**2+r2**2-r3**2)#/(2*r1*r2)
-        cos_b = (r1**2+r3**2-r2**2)#/(2*r1*r3)
-
-        if (cos_a>=0) and (cos_b>=0):
-            A = y2 - y3
-            B = x3 - x2
-            C = y3*(x2-x3) - x3*(y2-y3)
-            res = abs(A*x1 + B*y1 + C)/np.sqrt(A**2 + B**2)
-            return res
-        else:
-            return -1
-
-    pl = [[],[]]
-    pl[0] = map(lambda x: round(x,2), pl_in[0])
-    pl[1] = map(lambda x: round(x,2), pl_in[1])
-
-    # преобразуем уровни колонн в список координат колонн
-    columns_list = [(x,y) for x in grid_columns[0] for y in grid_columns[1]]
-    #по планировке делаем список внутренних стен
-    walls = pl2walls(pl)
-
-
-
-    # считаем для каждой колонны расстояние до стен
-    col_wall = [-1]*len(columns_list)
-    for i, col in enumerate(columns_list):
-        df = pd.DataFrame(columns=["wall", "dist"], index=range(len(walls)))
-        isexitbrake = False
-        for j, wall in enumerate(walls):
-            dst = dist(col, wall)
-            # ToDo вынести в настройки
-            # если расстояние меньше 0.3 м., то добавляем в таблицу колонна-стена эту стенку
-            if  dst < 0.3 and dst != -1:
-                col_wall[i] = wall
-                isexitbrake = True
-                break
-            df['wall'][j] = wall
-            df['dist'][j] = dst
-        # если не нашли стену ближе 0.3 к колонне, то рассчитываем номер помещения в которую попала колонна
-        if not isexitbrake:
-            df = df.ix[df["dist"]!=-1,:]
-            df = df.sort_values("dist")
-            df = df.head(4)
-            levx = 0
-            levy = 0
-            for t in df.index:
-                # верт. отрезок
-                if df["wall"][t][0][0] == df["wall"][t][1][0]:
-                    levx = df["wall"][t][0][0]
-                    # гориз. отрезок
-                if df["wall"][t][0][1] == df["wall"][t][1][1]:
-                    levy = df["wall"][t][0][1]
-            # определяем какую стену задает уровень первую или вторую
-            if levx > col[0]:
-                levposx = 1
-            else:
-                levposx = 0
-            if levy > col[1]:
-                levposy = 1
-            else:
-                levposy = 0
-            listx=[]
-            listy=[]
-
-            tmplist = [pl[0][x] for x in range(len(pl[0])) if x % 2 == levposx]
-            while True:
-                try:
-                    ind = tmplist.index(levx)
-                    listx.append(ind)
-                    tmplist[ind] = -1
-                except:
-                    break
-
-            tmplist = [pl[1][x] for x in range(len(pl[1])) if x % 2 == levposy]
-            while True:
-                try:
-                    ind = tmplist.index(levy)
-                    listy.append(ind)
-                    tmplist[ind] = -1
-                except:
-                    break
-            col_wall[i] = list(set(listy)& set(listx))[0]
-
-    # для всех (уникальных) стен, которые близкие к колоннам рассчитать поправку сдвига
-    ## берем только tuple из списка и оставляем уникальные
-    unique_walls = set(filter(lambda x: isinstance(x, tuple), col_wall))
-    pl_res = copy.deepcopy(pl)
-    isCorrected = False
-    for wall in unique_walls:
-        col = columns_list[col_wall.index(wall)]
-        # если отрезок вертикальный
-        if wall[0][0] == wall[1][0]:
-            dim = 0
-            lev = wall[1][0]
-            newlev = col[0]
-        # если отрезок горизонтальный
-        if wall[0][1] == wall[1][1]:
-            dim = 1
-            lev = wall[0][1]
-            newlev = col[1]
-
-        for pli in range(len(pl_res[dim])):
-            if pl_res[dim][pli] == lev:
-                pl_res[dim][pli] = newlev
-                isCorrected = True
-
-    # подготовка словаря с квартирами Номер_квартиры: список колонн
-    flat_col_dict = {}
-    for ind, i in enumerate(col_wall):
-        if isinstance(i, int):
-            if i in flat_col_dict:
-                flat_col_dict[i].append(columns_list[ind])
-            else:
-                flat_col_dict[i] = [columns_list[ind]]
-
-    print "pl_res", pl_res
-    return pl_res, isCorrected, flat_col_dict
-
-def pl2walls(pl):
-    '''
-    ф-я возвращает список стен по планировке
-    :param pl: pl = [[0,10,0,5,5,10],[0,10,0,10,0,10]]
-    :return: список внутренних стен
-    '''
-    # подготовка списка стен
-    Bt = max(pl[0])
-    Ht = max(pl[1])
-    walls = []
-    for j in range(1, len(pl[0]) / 2):
-        # левая стена
-        wall = ((round(pl[0][2 * j], 2), round(pl[1][2 * j], 2)), (round(pl[0][2 * j], 2), round(pl[1][2 * j + 1], 2)))
-        walls.append(wall)
-
-        # верхняя стена
-        wall = ((round(pl[0][2 * j], 2), round(pl[1][2 * j + 1], 2)), (round(pl[0][2 * j + 1], 2), round(pl[1][2 * j + 1], 2)))
-        walls.append(wall)
-
-        # правая стена
-        wall = ((round(pl[0][2 * j + 1], 2), round(pl[1][2 * j], 2)), (round(pl[0][2 * j + 1], 2),round(pl[1][2 * j + 1], 2)))
-        walls.append(wall)
-
-        # нинжняя стена
-        wall = ((round(pl[0][2 * j], 2),round(pl[1][2 * j], 2)), (round(pl[0][2 * j + 1], 2), round(pl[1][2 * j], 2)))
-        walls.append(wall)
-    # оставляем только уникальные значения
-    print walls
-    walls = list(set(walls))
-    # оставляем только внутренние стены
-    res = copy.deepcopy(walls)
-    for w in walls:
-        if (w[0][0]==w[1][0] and w[1][0] == Bt) or (w[0][0]==w[1][0] and w[1][0] == 0):
-            res.pop(res.index(w))
-        else:
-            if (w[0][1] == w[1][1] and w[0][1] == Ht) or (w[0][1] == w[1][1] and w[0][1] == 0):
-                res.pop(res.index(w))
-    return res
+    return new_scen_res, hall_pos_res, entrwall_res, flats_out_walls, flat_col_dict
 
 # функция возвращает позицию угла и входную стену принимая отношения корр-комната, подъезд-комната
 def entrwall_hall_pos(corr_flat, podezd_flat):
