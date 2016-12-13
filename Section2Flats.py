@@ -1082,16 +1082,16 @@ def func2_discret(xy):
     # print "sum(res4sign)", sum(res4sign)
     # print "totalfuns", totalfuns
     # print "grid_col_penalty * sett_grid_columns_influence", grid_col_penalty * sett_grid_columns_influence/30000.
-    fl = open("d:\YandexDisk\EnkiSoft\Evolution\\xy_func.txt", "a")
-    st = ""
-    for i in list(x) + list(y):
-        st += str(i) + "\t"
-    fl.write(st + "\n")
-    fl.close()
-
-    fl = open("d:\YandexDisk\EnkiSoft\Evolution\\xy_func_res.txt", "a")
-    fl.write(str(grid_col_penalty * sett_grid_columns_influence/3000.) + "\n")
-    fl.close()
+    # fl = open("d:\YandexDisk\EnkiSoft\Evolution\\xy_func.txt", "a")
+    # st = ""
+    # for i in list(x) + list(y):
+    #     st += str(i) + "\t"
+    # fl.write(st + "\n")
+    # fl.close()
+    #
+    # fl = open("d:\YandexDisk\EnkiSoft\Evolution\\xy_func_res.txt", "a")
+    # fl.write(str(grid_col_penalty * sett_grid_columns_influence/3000.) + "\n")
+    # fl.close()
     return sum(res2sign)*30 + sum(res3sign)*30 + sum(res4sign) + totalfuns + grid_col_penalty * sett_grid_columns_influence/3000.
 
 def mysigmoida(x):
@@ -1225,7 +1225,7 @@ def withoutgapes3(N):
 def my_differential_evolution(func2_discret, bounds):
     #res_fun = 10
     res = opt.differential_evolution(func2_discret, bounds, popsize=sett_popsize, tol=sett_tol, strategy=sett_strategy, init=sett_init,
-                                     mutation = sett_mutation, recombination = sett_recombination)
+                                     mutation = sett_mutation, recombination = sett_recombination, seed=sett_seed)
     # while (res_fun >=10):
     #     res = opt.differential_evolution(func2_discret, bounds, popsize=30, tol=0.01, strategy="randtobest1bin", init='random')
     #     res_fun = res.fun
@@ -1237,7 +1237,7 @@ def my_random_search(func2_discret, bounds):
     best_fun = 100500
     best_x = []
     i=0
-    max_iter = 10000
+    max_iter = sett_max_iter_random_search
     while (i < max_iter):
         x=[]
         for inter in bounds:
@@ -1407,7 +1407,7 @@ def main_size(width, height, scens):
         if not makeconst(quickplacement(scens[i])):
             continue
         #print quickplacement(scens[i])
-        res = my_random_search(func2_discret, bounds) #my_differential_evolution(func2_discret, bounds)
+        res = globals()[sett_optimiz_algorithm](func2_discret, bounds)
         res_x.append(func2_discret_results(res.x))
         #print res_x[-1]
         if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
@@ -1495,7 +1495,9 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showg
     # включаем доводчик
     if sett_isActive_sect_closer:
         optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i])
-
+        # если не было корректировок, то пробовать увеличить maxdelta
+        if not isCorrected:
+            optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i], maxdelta=0.6)
     new_scen_res, hall_pos_res, entrwall_res = check_pl(place2scen(optim_scens), optim_scens, active=False)
 
 

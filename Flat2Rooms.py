@@ -1442,7 +1442,9 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls, flat_co
     show_board = postproc(pl_rotated)
     comp_col = ['#73DD9B', '#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC', '#ACBFEC', '#ACBFEC', '#ACBFEC']
     if len(flat_col_list)!=0:
-        pl_rotated = grid_columns_closer(pl_rotated, flat_col_list)[0]
+        pl_rotated, isCorrected, tmp = grid_columns_closer(pl_rotated, flat_col_list)
+        if not isCorrected:
+            pl_rotated, isCorrected, tmp = grid_columns_closer(pl_rotated, flat_col_list, maxdelta=0.4)
     return pl_rotated, comp_col[0:int(len(pl[0])/2-1)], show_board
 
 def Flat2Rooms_old(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
@@ -1494,7 +1496,7 @@ def Flat2Rooms_old(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
     return optim_scens[0], comp_col, show_board
 
 
-def grid_columns_closer(pl_in, grid_columns):
+def grid_columns_closer(pl_in, grid_columns, maxdelta = 0.3):
     '''
     Доводчик стен секции под колонны. двигает стены только близкие к колоннам - не более 30 см.
     :param pl_in:
@@ -1517,7 +1519,7 @@ def grid_columns_closer(pl_in, grid_columns):
         cos_a = (r1**2+r2**2-r3**2)#/(2*r1*r2)
         cos_b = (r1**2+r3**2-r2**2)#/(2*r1*r3)
 
-        if (cos_a>=0) and (cos_b>=0):
+        if (cos_a>=-0.01) and (cos_b>=-0.01):
             A = y2 - y3
             B = x3 - x2
             C = y3*(x2-x3) - x3*(y2-y3)
@@ -1539,7 +1541,7 @@ def grid_columns_closer(pl_in, grid_columns):
         columns_list = [(x,y) for x in grid_columns[0] for y in grid_columns[1]]
 
     #по планировке делаем список внутренних стен
-    walls = pl2walls(pl)
+    walls = pl2walls(pl, start = 3)
 
 
 
@@ -1551,14 +1553,14 @@ def grid_columns_closer(pl_in, grid_columns):
         for j, wall in enumerate(walls):
             dst = dist(col, wall)
             # ToDo вынести в настройки
-            # если расстояние меньше 0.3 м., то добавляем в таблицу колонна-стена эту стенку
-            if  dst < 0.3 and dst != -1:
+            # если расстояние меньше maxdelta м., то добавляем в таблицу колонна-стена эту стенку
+            if  dst <= maxdelta and dst != -1:
                 col_wall[i] = wall
                 isexitbrake = True
                 break
             df['wall'][j] = wall
             df['dist'][j] = dst
-        # если не нашли стену ближе 0.3 к колонне, то рассчитываем номер помещения в которую попала колонна
+        # если не нашли стену ближе maxdelta к колонне, то рассчитываем номер помещения в которую попала колонна
         if not isexitbrake:
             df = df.ix[df["dist"]!=-1,:]
             df = df.sort_values("dist")
@@ -1642,17 +1644,17 @@ def grid_columns_closer(pl_in, grid_columns):
     print "pl_res", pl_res
     return pl_res, isCorrected, flat_col_dict
 
-def pl2walls(pl):
+def pl2walls(pl, start = 1):
     '''
     ф-я возвращает список стен по планировке
-    :param pl: pl = [[0,10,0,5,5,10],[0,10,0,10,0,10]]
+    :param pl: pl = [[0,10,0,5,5,10],[0,10,0,10,0,10]], start - с какого элемента начинать обработку (по умолчанию с 1, т.е. исключаем envelop)
     :return: список внутренних стен
     '''
     # подготовка списка стен
     Bt = max(pl[0])
     Ht = max(pl[1])
     walls = []
-    for j in range(1, len(pl[0]) / 2):
+    for j in range(start, len(pl[0]) / 2):
         # левая стена
         wall = ((round(pl[0][2 * j], 2), round(pl[1][2 * j], 2)), (round(pl[0][2 * j], 2), round(pl[1][2 * j + 1], 2)))
         walls.append(wall)

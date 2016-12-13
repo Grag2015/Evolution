@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 from Section2Flats import Section2Flats
 from Flat2Rooms import Flat2Rooms
@@ -157,14 +158,13 @@ def calculation(json_string):
     file_obj.write(json.dumps(data))
     file_obj.close()
     return json.dumps(data)
-
 # json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
 #  {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''
 # calculation(json_string)
 # json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
 # calculation(json_string)
 
-Section2Rooms(30, 20, (0,1,0,1))
+Section2Rooms(20, 20, (0,1,1,1))
 
 # ToDo надо убрать возврат по количеству квартир, нужно сразу несколько планировок с разным числом квартир разбирать.
 # создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.
