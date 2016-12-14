@@ -2,7 +2,7 @@
 # файл с настройками проекта
 
 # максимальное количество результатов при расчете топологии секции
-sett_max_results_sect_topol = 1
+sett_max_results_sect_topol = 3
 
 # сдвиг подъезда по горизонтали
 podezd_position_x_delta = 1

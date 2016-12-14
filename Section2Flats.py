@@ -1424,9 +1424,8 @@ def main_size(width, height, scens):
         #     print('ОШИБКА: Планировка '+str(i)+' не была рассчитана!')
     t2 = time.clock()
     print "Расчет размеров комнат закончен! Время выполнения программы sec.- " + str(t2 - t1)
-    res_tmp = []
-    res_tmp.append(optim_scens[bestmini])
-    return res_tmp, bestmini
+
+    return optim_scens[bestmini], bestmini
 
 # расчет внешних стен для квартир
 def flats_outwalls(new_scen_res,section_out_walls):
@@ -1438,93 +1437,61 @@ def flats_outwalls(new_scen_res,section_out_walls):
         flats_out_walls.append(map(lambda x: x[0] * x[1], zip(will_put_walls[sc_tmp[0][i][0]], section_out_walls)))
     return flats_out_walls
 
-# Section2Flats(25, 15)
-def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showgraph = False, mode = 3):
-    '''
 
-    # Поиск топологий секции
-    имеет 3 режима работы
-    1 - считаем топологии и планировки с 0
-    2 - топологии загружаем из базы и планировки рассчитываем с 0
-    3 - топологии и планировки загружаем из базы (по умолчанию)
+def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showgraph=False, mode=3):
+    '''
+	# Поиск планировок секции
     :param B_:
     :param H_:
     :param out_walls:
     :param showgraph:
-    :param mode: имеет 3 режима работы
     :return:
     '''
 
     global section_out_walls, B, H, grid_columns_x_inner, grid_columns_y_inner
     grid_columns_x_inner, grid_columns_y_inner = (np.array(grid_columns_x_i), np.array(grid_columns_y_i))
-    B,H = (B_,H_)
+    B, H = (B_, H_)
     section_out_walls = out_walls
 
-    if mode < 3:
-        usetemplate = True
-        if mode == 1:
-            usetemplate = False
-        scens = main_topology(sett_max_results_sect_topol, B_, H_, usetemplate = usetemplate)
+    # Поиск топологий (несколько штук сразу, используя шаблоны)
+    scens = main_topology(sett_max_results_sect_topol, B_, H_, usetemplate=True)
 
-        # # Визуализация
-        # if showgraph:
-        #     i=0
-        #     n=1
-        #     for t,pl in enumerate(scens):
-        #         if i%(n**2)==0:
-        #             fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
-        #         ax1 = fig1.add_subplot(n,n,i%(n**2)+1, title='scen '+str(i))
-        #         visual2(quickplacement(pl),ax1)
-        #         i+=1
-        #         if (i>100):
-        #             break
-        #
-        #     plt.show()
-        # # print scens
 
-        # Учет ограничений по площади
-        # Параметры - ширина, высота, сценарии (топологические)
-        optim_scens, bestmini = main_size(B_, H_, scens)
-
-    else:
-        optim_scens = get_dict_sect_res(((B_, H_), section_out_walls))
-        if optim_scens == 0:
-            return ([],[],[],[])
-
-    optim_scens = optim_scens[0]
-    # включаем доводчик
-    if sett_isActive_sect_closer:
-        optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i])
-        # если не было корректировок, то пробовать увеличить maxdelta
-        if not isCorrected:
-            optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i], maxdelta=0.6)
-    new_scen_res, hall_pos_res, entrwall_res = check_pl(place2scen(optim_scens), optim_scens, active=False)
-
+    new_scen_res, hall_pos_res, entrwall_res, flat_col_dict_list = ([], [], [])
+    for scen in scens:
+        optim_scen, bestmini = main_size(B_, H_, [scen])
+        # включаем доводчик
+        if sett_isActive_sect_closer:
+            optim_scen, isCorrected, flat_col_dict = grid_columns_closer(optim_scen, [grid_columns_x_i, grid_columns_y_i])
+            # если не было корректировок, то пробовать увеличить maxdelta
+            if not isCorrected:
+                optim_scen, isCorrected, flat_col_dict = grid_columns_closer(optim_scen,
+                                                                             [grid_columns_x_i, grid_columns_y_i],
+                                                                             maxdelta=0.6)
+        res = check_pl(place2scen(optim_scen), optim_scen, active=False)
+        new_scen_res.append(res[0])
+        hall_pos_res.append(res[1])
+        entrwall_res.append(res[2])
+        flat_col_dict_list.append(flat_col_dict)
 
     # расчет внешних стен для квартир
-
-    flats_out_walls = flats_outwalls(new_scen_res,out_walls)
-
-    print "new_scen_res", new_scen_res
-    # заглушка
-    # new_scen_res =[[0,25,11.832458301964532,18.186082541575203,0,18.186082541575203,18.186082541575203,25,0,9.0930412707876016,
-    #                 9.0930412707876016,18.186082541575203,0,5.9162291509822662,5.9162291509822662,11.832458301964532],
-    #                [0,15,0,5.2908772211446049,5.2908772211446049,7.4294138335360795,0,15,7.4294138335360795,15,
-    #                 7.4294138335360795,15,0,5.2908772211446049,0,5.2908772211446049]]
+    flats_out_walls = []
+    for new_scen in new_scen_res:
+        flats_out_walls.append(flats_outwalls(new_scen, out_walls))
 
     # Визуализация
     if showgraph:
-        i=0
-        n=1
-        tt= []
+        i = 0
+        n = 1
+        tt = []
         tt.append(new_scen_res)
         for pl in tt:
-            if i%n**2==0:
-                fig1 = plt.figure(figsize=(20,20*float(H_)/B_))
-            ax1 = fig1.add_subplot(n,n,i%n**2+1, title='scen '+str(i)+ " " + str(res_x[i]))
+            if i % n ** 2 == 0:
+                fig1 = plt.figure(figsize=(20, 20 * float(H_) / B_))
+            ax1 = fig1.add_subplot(n, n, i % n ** 2 + 1, title='scen ' + str(i) + " " + str(res_x[i]))
             visual(pl, ax1)
-            i+=1
-            if (i>30):
+            i += 1
+            if (i > 30):
                 break
 
         i = 0
@@ -1540,7 +1507,7 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showg
 
         plt.show()
 
-    return new_scen_res, hall_pos_res, entrwall_res, flats_out_walls, flat_col_dict
+    return new_scen_res, hall_pos_res, entrwall_res, flats_out_walls, flat_col_dict_list
 
 # функция возвращает позицию угла и входную стену принимая отношения корр-комната, подъезд-комната
 def entrwall_hall_pos(corr_flat, podezd_flat):

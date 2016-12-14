@@ -40,7 +40,10 @@ def Section2Rooms(B_, H_, out_walls):
     flats, hall_pos, entrwall, flats_out_walls, flat_col_dict = Section2Flats(B_, H_, out_walls, (grid_columns_x_inner, grid_columns_y_inner), showgraph = False, mode=2)
     if len(flats)==0:
         return 0,0
-    prepflats = prepareflats(flats)
+
+    prepflats = []
+    for flat in flats:
+        prepflats.append(prepareflats(flat))
 
     res1=[] # тут храним координаты нижн.лев. угол квартир
     res2=[] # тут храним планировки квартир
@@ -48,33 +51,47 @@ def Section2Rooms(B_, H_, out_walls):
     show_board = []
     line_width = []
     fill_ = []
-    for i, fl in enumerate(prepflats):
-        # если в квартире есть колонны, передадим их список в ф-ю
-        if i+3 in flat_col_dict:
-            flat_col_list = map(lambda x: (x[0] - fl[0], x[1] - fl[1]), flat_col_dict[i+3])
-        else:
-            flat_col_list = []
-        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i], flat_col_list)
+
+    for j, prepflat in enumerate(prepflats):
+        res1tmp = []
+        res2tmp = []
+        col_list_tmp = []
+        show_board = []
+        line_width = []
+        fill_ = []
+        for i, fl in enumerate(prepflat):
+            # если в квартире есть колонны, передадим их список в ф-ю
+            if i + 3 in flat_col_dict:
+                flat_col_list = map(lambda x: (x[0] - fl[0], x[1] - fl[1]), flat_col_dict[j][i + 3])
+            else:
+                flat_col_list = []
+        tmp = Flat2Rooms(fl[2], fl[3], entrwall[j][i], hall_pos[j][i], fl[4], flats_out_walls[j][i], flat_col_list)
         if tmp == 0:
             return (0, 0)
-        res1.append((fl[0],fl[1]))
-        res2.append(tmp[0])
-        col_list += ["#f7f01d"]+tmp[1]
+        res1tmp.append((fl[0], fl[1]))
+        res2tmp.append(tmp[0])
+        col_list_tmp += ["#f7f01d"] + tmp[1]
         show_board += tmp[2]
         line_width += [2] + [None] * (len(tmp[2]) - 1)
         fill_ += [False] + [True] * (len(tmp[2]) - 1)
+    res1.append(res1tmp)
+    res2.append(res2tmp)
+    col_list.append(col_list_tmp)
+
+
     t2 = time.clock()
-    print "РАСЧЕТ СЕКЦИИ ЗАКОНЧЕН! " + "Время выполнения программы sec.- " + str(t2-t1)
+    print "РАСЧЕТ СЕКЦИИ ЗАКОНЧЕН! " + "Время выполнения программы sec.- " + str(t2 - t1)
 
     # visualization
-    globplac =[[],[]]
+    globplac = [[], []]
     for rs in zip(res1, res2):
         globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
         globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
 
     visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_, grid_columns)
 
-    return res1, res2
+    return res1, res2, col_list, flats_out_walls
+
 
 def prepareflats(flats):
     # output - x1,y1, B, H, count_rooms
@@ -129,42 +146,38 @@ def visual_sect(placement_all, B_, H_, col_list, show_board, line_width, fill_, 
 def calculation(json_string):
     # функция получает JSON с размерами функ.зон, рассчитывает для каждой уникальной пары размеров планировку секции
     # и возвращает обратно JSON с планировками для каждой функциональной зоны
-    print "beforerroe"
+    print "calculation: json_in"
     data = json.loads(json_string)
-    print "aftererroe"
+    print "/calculation: json_in"
 
-    Sizes, StartPosId, out_walls = json2params(data)
+    out_walls = (1, 1, 1, 1)
 
-    # ищем различные уникальные значения пар Размеры-Внешние_стены
-    Sizes_out_walls = zip(Sizes, out_walls)
-    Sizes_out_walls_unique = list(set(Sizes_out_walls))
+    # НУЖНА ОБРАБОТКА DATA
 
-    # Рассчитываем планировки секции для каждого элемента из списка Sizes_out_walls_unique
-    optim_pls = []
-    optim_pls_pos = []
-    for bh in Sizes_out_walls_unique:
-        tmp1, tmp2 = Section2Rooms(bh[0][0], bh[0][1], bh[1])
-        if tmp1 == 0:
-            return ""
-        optim_pls.append(map(lambda x: [x[0][2:],x[1][2:]],tmp2))  # exclude envelop
-        optim_pls_pos.append(tmp1)
+    res1, res2, col_list, flats_out_walls = Section2Rooms(bh[0], bh[1], out_walls)
+    sect_pl = []
+    for i in range(len(res2)):  # идем по планировкам секций
+        for k in range(3):  # идем по номерам планировок квартир
+            sect_pl.append({})
+            list_pl = map(lambda x: x[k], res2[i])
+            list_pos = map(lambda x: x, res1[i])
+            flats_out_walls_tmp = map(lambda x: x, flats_out_walls[i])
+            color_list = map(lambda x: x[k], col_list)
+            sect_pl[-1]["functionalzones"] = pl2json(list_pl, list_pos, col_list, flats_out_walls_tmp)
+            sect_pl[-1]["BimType"] = "section"
+            sect_pl[-1]["Position"] = {"X": 0, "Z": 0, "Y": 0}
 
-    # Готовим список с планировками и отправляем его в pl2json вместе с StartPosId
-    plac_ls = map(lambda x: optim_pls[Sizes_out_walls_unique.index(x)], Sizes_out_walls)
-    plac_pos_ls = map(lambda x: optim_pls_pos[Sizes_out_walls_unique.index(x)], Sizes_out_walls)
-    for i in range(len(plac_ls)):
-        data[i]["functionalzones"] = pl2json(plac_ls[i], plac_pos_ls[i], (StartPosId[i][0],StartPosId[i][1],StartPosId[i][3],StartPosId[i][2]))
-    file_obj = open('json_out.txt', "w")
-    file_obj.write(json.dumps(data))
+    file_obj = open('json_out_pl3.txt', "w")
+    file_obj.write(json.dumps(sect_pl))
     file_obj.close()
-    return json.dumps(data)
+    return json.dumps(sect_pl)
 # json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
 #  {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''
 # calculation(json_string)
 # json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
 # calculation(json_string)
 
-Section2Rooms(20, 20, (0,1,1,1))
+#Section2Rooms(20, 20, (0,1,1,1))
 
 # ToDo надо убрать возврат по количеству квартир, нужно сразу несколько планировок с разным числом квартир разбирать.
 # создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.
