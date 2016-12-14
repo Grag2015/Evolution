@@ -2,7 +2,7 @@
 # файл с настройками проекта
 
 # максимальное количество результатов при расчете топологии секции
-sett_max_results_sect_topol = 1
+sett_max_results_sect_topol = 3
 
 # сдвиг подъезда по горизонтали
 podezd_position_x_delta = 1
@@ -23,7 +23,7 @@ sett_strategy="randtobest1bin"
 sett_init='latinhypercube'
 sett_mutation = (0.5, 1) # it should be in the range [0, 2].
 sett_recombination = 0.7 # should be in the range [0, 1]
-sett_seed = 1
+sett_seed = 5
 
 # настройки рандомного алгоритма для планировок секции
 sett_max_iter_random_search = 3000
@@ -33,3 +33,6 @@ sett_isActive_sect_closer = True
 
 # Выбор алгоритма отпимизации для поиска оптимальной планировки (для секции)
 sett_optimiz_algorithm = "my_differential_evolution"  #"my_random_search"
+
+# заведомо большая ошибка, т.к. такой планировки нет в базе
+sett_penalty_nores = 50

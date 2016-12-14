@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import cPickle
+from settings import *
 
 # загружаем словарь планировок квартир
 file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'r')
@@ -64,8 +65,7 @@ def getplfun(flatparams, best_flat):
     try:
         res = dict_res[flatparams_new][best_flat][1]
     except KeyError:
-        res = 50  # заведомо большая ошибка, т.к. такой планировки нет в базе
-        print "getplfun", flatparams, best_flat
+        res = sett_penalty_nores
     return res
 
 def get_dict_res(flatparams, best_flat):
@@ -73,7 +73,7 @@ def get_dict_res(flatparams, best_flat):
         res = dict_res[flatparams][best_flat][0]
     except KeyError:
         res = 0
-        print "Ошибка: в базе планировок квартир нет значения: " , flatparams
+        print "Ошибка: в базе планировок квартир нет значения: " , flatparams, "best_flat", best_flat
     return res
 
 # БЛОК для обработки планировок секции
