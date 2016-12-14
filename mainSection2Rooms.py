@@ -16,7 +16,16 @@ from interface2 import json2params
 from settings import *
 import json
 
-def Section2Rooms(B_, H_, out_walls):
+def Section2Rooms(B_, H_, out_walls, best_sect=0, best_flat=0):
+    '''
+    Головная функция рассчета планировок секции
+    :param B_:
+    :param H_:
+    :param out_walls:
+    :param best_sect: номер результата из базы планировок секций
+    :param best_flat: номер результата из базы планировок квартир
+    :return: res1, res2 - координата нижнего левого угла секции; планировка секции
+    '''
     # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)
     # выходные данные: list [((x1,y1), pl),...]
 
@@ -37,7 +46,8 @@ def Section2Rooms(B_, H_, out_walls):
     grid_columns_inner = list(((x, y) for x in grid_columns_x_inner for y in grid_columns_y_inner))
 
     t1 = time.clock()
-    flats, hall_pos, entrwall, flats_out_walls, flat_col_dict = Section2Flats(B_, H_, out_walls, (grid_columns_x_inner, grid_columns_y_inner), showgraph = False, mode=2)
+    flats, hall_pos, entrwall, flats_out_walls, flat_col_dict = Section2Flats(B_, H_, out_walls, (grid_columns_x_inner, grid_columns_y_inner),
+                                                                              best_sect, best_flat, showgraph = False, mode=2)
     if len(flats)==0:
         return 0,0
     prepflats = prepareflats(flats)
@@ -54,7 +64,7 @@ def Section2Rooms(B_, H_, out_walls):
             flat_col_list = map(lambda x: (x[0] - fl[0], x[1] - fl[1]), flat_col_dict[i+3])
         else:
             flat_col_list = []
-        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i], flat_col_list)
+        tmp = Flat2Rooms(fl[2], fl[3], entrwall[i], hall_pos[i], fl[4], flats_out_walls[i], flat_col_list, best_flat)
         if tmp == 0:
             return (0, 0)
         res1.append((fl[0],fl[1]))

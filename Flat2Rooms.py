@@ -1397,7 +1397,7 @@ def postproc(pl):
 # hall_pos - позиция коридора 0 -левый нижн, 1 - центр левый, 2- обе позиции возможны,
 # entr_wall - стена входа 2-tuple (стена,угол), стена: 0-лево, 1-верх, 2-право, 3-низ; угол: 0 - первый угол при обходе контура по час.стрелке, 1 - 2-й угол
 
-def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls, flat_col_list=[]):
+def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls, flat_col_list=[], best_flat=0):
     #hall_pos = 2 # пока только этот вариант рассматриваем
 
     # B_, H_, flat_out_walls - в глобальной системе координат
@@ -1415,7 +1415,7 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls, flat_co
         else:
             locB, locH = (B_, H_)
 # для найденных локальных значений достаем из словаря (базы планировок) ближайшую по размерам планировку
-    pl = copy.deepcopy(get_dict_res(((locB - locB%0.5, locH - locH%0.5), loc_out_walls, hall_pos)))
+    pl = copy.deepcopy(get_dict_res(((locB - locB%0.5, locH - locH%0.5), loc_out_walls, hall_pos), best_flat))
 
     if pl == 0:
         print "----------- Error: there isn't value: ", (locB - locB%0.5, locH - locH%0.5)

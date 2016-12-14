@@ -57,19 +57,20 @@ def preparedict():
     file.close()
 
 # получить оценку планировки квартиры
-def getplfun(flatparams):
+def getplfun(flatparams, best_flat):
     #flatparams = ((4.5, 6.0), (0, 0, 0, 1), 0)
     # округляем до 0.5
     flatparams_new = ((flatparams[0][0] - flatparams[0][0] % 0.5, flatparams[0][1] - flatparams[0][1] % 0.5), flatparams[1], flatparams[2])
     try:
-        res = dict_res[flatparams_new][1]
+        res = dict_res[flatparams_new][best_flat][1]
     except KeyError:
         res = 50  # заведомо большая ошибка, т.к. такой планировки нет в базе
+        print "getplfun", flatparams, best_flat
     return res
 
-def get_dict_res(flatparams):
+def get_dict_res(flatparams, best_flat):
     try:
-        res = map(lambda x: x[0], dict_res_3pl[flatparams])
+        res = dict_res[flatparams][best_flat][0]
     except KeyError:
         res = 0
         print "Ошибка: в базе планировок квартир нет значения: " , flatparams

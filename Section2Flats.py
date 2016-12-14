@@ -1015,7 +1015,7 @@ def func2_contin(xys):
 
 # дискретная ф-я, в т.ч. для ген.алгоритма
 # TODO нарушается топология при оптимизации, т.к. не учитывается взаимное расположение стен разных комнат
-def func2_discret(xy):
+def func2_discret(xy, best_flat):
     # добавить В и Х в конце векторов у и х
     global Ax
     global Ay
@@ -1070,7 +1070,7 @@ def func2_discret(xy):
     blist = Ax.dot(xb)[2:] #вектор ширины по всем квартирам кроме подъезда и коридора
     hlist = Ay.dot(yb)[2:] #вектор длины по всем квартирам кроме подъезда и коридора
     #print zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)
-    totalfuns = sum(map(lambda x: getplfun(((x[0], x[1]), tuple(x[2]), x[3])), zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)))
+    totalfuns = sum(map(lambda x: getplfun(((x[0], x[1]), tuple(x[2]), x[3]), best_flat), zip(blist, hlist, flats_outwalls_constr, hall_pos_constr)))
     #print "totalfuns ", totalfuns
     # пенальти за дальность стен секции от колонн
     diff_colwalls_x = map(lambda t: min(abs(t - x)), grid_columns_x_inner)
@@ -1222,9 +1222,9 @@ def withoutgapes3(N):
     else:
         return False
 
-def my_differential_evolution(func2_discret, bounds):
+def my_differential_evolution(func2_discret, bounds, best_flat):
     #res_fun = 10
-    res = opt.differential_evolution(func2_discret, bounds, popsize=sett_popsize, tol=sett_tol, strategy=sett_strategy, init=sett_init,
+    res = opt.differential_evolution(func2_discret, bounds, args=(best_flat,), popsize=sett_popsize, tol=sett_tol, strategy=sett_strategy, init=sett_init,
                                      mutation = sett_mutation, recombination = sett_recombination, seed=sett_seed)
     # while (res_fun >=10):
     #     res = opt.differential_evolution(func2_discret, bounds, popsize=30, tol=0.01, strategy="randtobest1bin", init='random')
@@ -1264,55 +1264,12 @@ def my_random_search(func2_discret, bounds):
 
 # Поиск различных вариантов компоновки (топологий)
 # ЗАГЛУШКА
-def main_topology(max_results, B_, H_, printres = True, usetemplate = True):
+def main_topology(max_results, B_, H_, best_sect, printres = True, usetemplate = True):
     """
     >>> main_topology(10, ["envelope",  "hall", "corr", "room", "room2", "bath", "kitchen"], False)[0][1]
     [[(3, 6)], [(6, 6)], [(1, 7)], [(0, 9)], [(1, 9)], [(0, 9)], [(0, 9)]]
     """
-    # global max_res, compartments, recur_int, nres, stop, rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, len_comp, areaconstrmax
-    # max_res = max_results
-    #
-    # # sc = [[[[(6, 6)], [(9, 9)], [(8, 8)], [(7, 9)], [(7, 8)], [(9, 7)], [(7, 7)]],
-    # #  [[(3, 3)], [(6, 6)], [(1, 7)], [(1, 9)], [(0, 7)], [(3, 1)], [(0, 1)]],
-    # #  [[(4, 4)], [(11, 5)], [(6, 6)], [(3, 11)], [(1, 6)], [(5, 1)], [(1, 1)]],
-    # #  [[(5, 3)], [(11, 3)], [(9, 1)], [(6, 6)], [(7, 1)], [(10, 0)], [(7, 0)]],
-    # #  [[(5, 4)], [(12, 5)], [(11, 6)], [(5, 11)], [(6, 6)], [(11, 1)], [(6, 1)]],
-    # #  [[(3, 5)], [(9, 11)], [(7, 11)], [(2, 12)], [(1, 11)], [(6, 6)], [(1, 6)]],
-    # #  [[(5, 5)], [(12, 11)], [(11, 11)], [(5, 12)], [(6, 11)], [(11, 6)], [(6, 6)]]]]
-    # # return sc
-    #
-    # # подготовка списков и таблиц с ограничениями TODO добавить здесь новые ограничения
-    # changing_lists = [rooms_weights, areaconstr, areaconstr_opt, sides_ratio, comp_col, areaconstrmax]
-    # new_lists=[]
-    # for i in range(len(changing_lists)): new_lists.append([])
-    # for i in range(len(compartments[1:])):
-    #     if (compartments[1:][i] in set(compartments_list)):
-    #         for j in range(len(changing_lists)):
-    #             new_lists[j].append(changing_lists[j][i])
-    #
-    # rooms_weights = new_lists[0]
-    # areaconstr = new_lists[1]
-    # areaconstr_opt = new_lists[2]
-    # sides_ratio = new_lists[3]
-    # comp_col = new_lists[4]
-    #
-    # k = 0
-    # for i in range(len(compartments)):
-    #     if (not (compartments[i] in set(compartments_list))):
-    #         # удаляем строку i
-    #         # print k
-    #         tc_src.pop(k)
-    #         # удаляем столбец i
-    #         for j in range(len(tc_src)):
-    #             tc_src[j].pop(k)
-    #         k -= 1
-    #     k += 1
-    #
-    # compartments = compartments_list
-    # len_comp = len(compartments)
-    # ГОТОВЫЕ СЦЕНАРИИ ДЛЯ РАЗЛИЧНОГО ЧИСЛА КВАРТИР
 
-    #n=
     global len_comp, max_res, B, H, stop, tc_src
     max_res = max_results
     B = B_
@@ -1363,7 +1320,7 @@ def main_topology(max_results, B_, H_, printres = True, usetemplate = True):
             if flag == True:
                 break
 
-        return res
+        return [res[best_sect]]
 
     # /ГОТОВЫЕ СЦЕНАРИИ ДЛЯ РАЗЛИЧНОГО ЧИСЛА КВАРТИР
 
@@ -1393,7 +1350,7 @@ def main_topology(max_results, B_, H_, printres = True, usetemplate = True):
     return scens
 
 # Учет ограничений по площади/длине
-def main_size(width, height, scens):
+def main_size(width, height, scens, best_flat):
     global B, H, res_x
     B = width
     H = height
@@ -1407,7 +1364,7 @@ def main_size(width, height, scens):
         if not makeconst(quickplacement(scens[i])):
             continue
         #print quickplacement(scens[i])
-        res = globals()[sett_optimiz_algorithm](func2_discret, bounds)
+        res = globals()[sett_optimiz_algorithm](func2_discret, bounds, best_flat)
         res_x.append(func2_discret_results(res.x))
         #print res_x[-1]
         if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
@@ -1439,7 +1396,7 @@ def flats_outwalls(new_scen_res,section_out_walls):
     return flats_out_walls
 
 # Section2Flats(25, 15)
-def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showgraph = False, mode = 3):
+def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), best_sect, best_flat, showgraph = False, mode = 3):
     '''
 
     # Поиск топологий секции
@@ -1450,6 +1407,8 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showg
     :param B_:
     :param H_:
     :param out_walls:
+    :param best_sect:
+    :param best_flat:
     :param showgraph:
     :param mode: имеет 3 режима работы
     :return:
@@ -1464,7 +1423,7 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showg
         usetemplate = True
         if mode == 1:
             usetemplate = False
-        scens = main_topology(sett_max_results_sect_topol, B_, H_, usetemplate = usetemplate)
+        scens = main_topology(sett_max_results_sect_topol, B_, H_, best_sect, usetemplate = usetemplate)
 
         # # Визуализация
         # if showgraph:
@@ -1484,7 +1443,7 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), showg
 
         # Учет ограничений по площади
         # Параметры - ширина, высота, сценарии (топологические)
-        optim_scens, bestmini = main_size(B_, H_, scens)
+        optim_scens, bestmini = main_size(B_, H_, scens, best_flat)
 
     else:
         optim_scens = get_dict_sect_res(((B_, H_), section_out_walls))
