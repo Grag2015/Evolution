@@ -2,7 +2,7 @@
 # файл с настройками проекта
 
 # максимальное количество результатов при расчете топологии секции
-sett_max_results_sect_topol = 3
+sett_max_results_sect_topol = 1
 
 # сдвиг подъезда по горизонтали
 podezd_position_x_delta = 1
@@ -23,7 +23,7 @@ sett_strategy="randtobest1bin"
 sett_init='latinhypercube'
 sett_mutation = (0.5, 1) # it should be in the range [0, 2].
 sett_recombination = 0.7 # should be in the range [0, 1]
-sett_seed = 5
+sett_seed = 1
 
 # настройки рандомного алгоритма для планировок секции
 sett_max_iter_random_search = 3000

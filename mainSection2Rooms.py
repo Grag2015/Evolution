@@ -13,10 +13,11 @@ import matplotlib.patches as mpatches
 
 from interface2 import pl2json
 from interface2 import json2params
+from interface2 import json_colomns2params
 from settings import *
 import json
 
-def Section2Rooms(B_, H_, out_walls, best_sect=0, best_flat=0):
+def Section2Rooms(B_, H_, out_walls, best_sect=0, best_flat=0, grid_columns_in = (), isVisual = True):
     '''
     Головная функция рассчета планировок секции
     :param B_:
@@ -24,26 +25,41 @@ def Section2Rooms(B_, H_, out_walls, best_sect=0, best_flat=0):
     :param out_walls:
     :param best_sect: номер результата из базы планировок секций
     :param best_flat: номер результата из базы планировок квартир
-    :return: res1, res2 - координата нижнего левого угла секции; планировка секции
+    :param grid_columns: список координат центров колонн [(6,12),(8,16)] в т.ч. внешние колонны
+    :return: res1, res2 - список координат нижнего левого угла квартиры; список планировок квартиры
     '''
     # out_walls - список флагов внешняя/внутренняя стена отсчет по часовой стрелке от левой стены, прим. (0,1,1,0)
     # выходные данные: list [((x1,y1), pl),...]
 
-    # расчет шага сетки колонн - берем шаг, остатки по с которым минимальны
-    grid_columns_steps = np.array(sett_grid_columns)
-    x_col_step = grid_columns_steps[np.argmin(B_ % grid_columns_steps)]
-    y_col_step = grid_columns_steps[np.argmin(H_ % grid_columns_steps)]
+    # обработка сетки колонн сетка колонн
+    if len(grid_columns_in)==0:
+        # расчет шага сетки колонн - берем шаг, остатки по с которым минимальны
+        grid_columns_steps = np.array(sett_grid_columns)
+        x_col_step = grid_columns_steps[np.argmin(B_ % grid_columns_steps)]
+        y_col_step = grid_columns_steps[np.argmin(H_ % grid_columns_steps)]
 
-    # корректировка размеров под шаг
-    B_, H_ = (B_ - B_ % x_col_step, H_ - H_ % y_col_step)
+        # корректировка размеров под шаг
+        B_, H_ = (B_ - B_ % x_col_step, H_ - H_ % y_col_step)
 
-    # сетка колонн
-    grid_columns_x = x_col_step * np.array(range(B_/x_col_step + 1))
-    grid_columns_x_inner = grid_columns_x[1:-1]
-    grid_columns_y = y_col_step * np.array(range(H_/y_col_step + 1))
-    grid_columns_y_inner = grid_columns_y[1:-1]
-    grid_columns = list(((x, y) for x in grid_columns_x for y in grid_columns_y))
-    grid_columns_inner = list(((x, y) for x in grid_columns_x_inner for y in grid_columns_y_inner))
+        grid_columns_x = x_col_step * np.array(range(B_/x_col_step + 1))
+        grid_columns_x_inner = grid_columns_x[1:-1]
+        grid_columns_y = y_col_step * np.array(range(H_/y_col_step + 1))
+        grid_columns_y_inner = grid_columns_y[1:-1]
+        grid_columns = list(((x, y) for x in grid_columns_x for y in grid_columns_y))
+        grid_columns_inner = list(((x, y) for x in grid_columns_x_inner for y in grid_columns_y_inner))
+
+    else:
+        # при это берем только внутренние колонны
+        xmax = max(map(lambda x: x[0], grid_columns_in))
+        xmin = min(map(lambda x: x[0], grid_columns_in))
+        ymax = max(map(lambda x: x[1], grid_columns_in))
+        ymin = min(map(lambda x: x[1], grid_columns_in))
+        grid_columns_inner = filter(lambda x: x[0] != xmax and x[0] != xmin and x[1] != ymax and x[1] != ymin, grid_columns_in)
+        grid_columns_x_inner = list(set(map(lambda x: x[0], grid_columns_inner)))
+        grid_columns_y_inner = list(set(map(lambda x: x[1], grid_columns_inner)))
+        grid_columns_x_inner.sort()
+        grid_columns_y_inner.sort()
+        grid_columns = grid_columns_in
 
     t1 = time.clock()
     flats, hall_pos, entrwall, flats_out_walls, flat_col_dict = Section2Flats(B_, H_, out_walls, (grid_columns_x_inner, grid_columns_y_inner),
@@ -77,14 +93,15 @@ def Section2Rooms(B_, H_, out_walls, best_sect=0, best_flat=0):
     print "РАСЧЕТ СЕКЦИИ ЗАКОНЧЕН! " + "Время выполнения программы sec.- " + str(t2-t1)
 
     # visualization
-    globplac =[[],[]]
-    for rs in zip(res1, res2):
-        globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
-        globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
+    if isVisual:
+        globplac =[[],[]]
+        for rs in zip(res1, res2):
+            globplac[0] += list(np.array(rs[1][0]) + rs[0][0])
+            globplac[1] += list(np.array(rs[1][1]) + rs[0][1])
 
-    visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_, grid_columns)
+        visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_, grid_columns)
 
-    return res1, res2
+    return res1, res2, col_list, flats_out_walls
 
 def prepareflats(flats):
     # output - x1,y1, B, H, count_rooms
@@ -143,29 +160,43 @@ def calculation(json_string):
     data = json.loads(json_string)
     print "aftererroe"
 
-    Sizes, StartPosId, out_walls = json2params(data)
+    out_walls = (1,1,1,1)
+    Size, grid_columns = json_colomns2params(data)
 
-    # ищем различные уникальные значения пар Размеры-Внешние_стены
-    Sizes_out_walls = zip(Sizes, out_walls)
-    Sizes_out_walls_unique = list(set(Sizes_out_walls))
-
-    # Рассчитываем планировки секции для каждого элемента из списка Sizes_out_walls_unique
-    optim_pls = []
-    optim_pls_pos = []
-    for bh in Sizes_out_walls_unique:
-        tmp1, tmp2 = Section2Rooms(bh[0][0], bh[0][1], bh[1])
-        if tmp1 == 0:
-            return ""
-        optim_pls.append(map(lambda x: [x[0][2:],x[1][2:]],tmp2))  # exclude envelop
-        optim_pls_pos.append(tmp1)
+    # рассчитываем несколько вариантов планировок
+    count_sect = 1
+    count_flat = 3
+    sect_pl = [] #  лист с результатами
+    list_pl =[]
+    list_pos =[]
+    col_list = []
+    flats_out_walls = []
+    for i in range(count_sect):
+        for j in range(count_flat):
+            tmp = Section2Rooms(Size[0], Size[1], out_walls, i, j, grid_columns, isVisual=True)
+            list_pl.append(tmp[1])
+            list_pos.append(tmp[0])
+            col_list.append(tmp[2])
+            flats_out_walls.append(tmp[3])
 
     # Готовим список с планировками и отправляем его в pl2json вместе с StartPosId
-    plac_ls = map(lambda x: optim_pls[Sizes_out_walls_unique.index(x)], Sizes_out_walls)
-    plac_pos_ls = map(lambda x: optim_pls_pos[Sizes_out_walls_unique.index(x)], Sizes_out_walls)
-    for i in range(len(plac_ls)):
-        data[i]["functionalzones"] = pl2json(plac_ls[i], plac_pos_ls[i], (StartPosId[i][0],StartPosId[i][1],StartPosId[i][3],StartPosId[i][2]))
-    file_obj = open('json_out.txt', "w")
-    file_obj.write(json.dumps(data))
+    for i in range(len(list_pl)):
+        sect_pl.append({})
+
+        sect_pl[-1]["functionalzones"] = pl2json(list_pl[i], list_pos[i], col_list[i], flats_out_walls[i])
+        sect_pl[-1]["BimType"] = "section"
+        sect_pl[-1]["Position"] = {"X": 0, "Z": 0, "Y": 0}
+
+    # добавляем исходные колонны
+    for i in range(len(sect_pl)):
+        sect_pl[i]["Columns"] = data["Columns"]
+
+    # КОСТЫЛЬ - чтобы получить доп. результаты дублирую 1 раз первые результаты
+    for i in range(len(sect_pl)):
+        sect_pl.append(sect_pl[i])
+
+    file_obj = open('d:\YandexDisk\EnkiSoft\Evolution\json_out.txt', "w")
+    file_obj.write(json.dumps(sect_pl))
     file_obj.close()
     return json.dumps(data)
 # json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
@@ -174,7 +205,7 @@ def calculation(json_string):
 # json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
 # calculation(json_string)
 
-Section2Rooms(20, 20, (0,1,1,1), 0, 0)
+Section2Rooms(20, 20, (0,1,1,1), 2, 1)
 
 # ToDo надо убрать возврат по количеству квартир, нужно сразу несколько планировок с разным числом квартир разбирать.
 # создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.

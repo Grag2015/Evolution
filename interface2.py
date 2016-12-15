@@ -2,7 +2,7 @@
 # Найденные планировки в JSON
 import json
 # преобразует список планировок КВАРТИР в список словарей, который конвертится в json
-def pl2json(list_pl, StartPosId, addshift = (0,0)):
+def pl2json(list_pl, StartPosId, col_list, flats_out_walls, addshift = (0,0,0,0)):
 
     """
     list_pl - список планировок квартир для секции
@@ -17,16 +17,69 @@ def pl2json(list_pl, StartPosId, addshift = (0,0)):
     """
     compartments = ["envelope", "hall", "corr", "bath", "kitchen", "room", "room", "room", "room", "room"]
     newres = []
+    col_list = ['#73DD9B','#73DD9B','#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC','#ACBFEC','#ACBFEC','#ACBFEC','#ACBFEC','#ACBFEC','#ACBFEC']
     for pl, i in zip(list_pl, range(len(StartPosId))):
         locd = {}
         locd_room = []
 
-        for t in range(len(pl[0]) / 2):
+        # подготовка списка стен и флага внешняя/внутренняя IsOut = True
+        Bt = max(pl[0])
+        Ht = max(pl[1])
+        walls = []
+        for j in range(1, len(pl[0]) / 2):
+            room_out_walls = []
+            # левая стена
+            dicttmp = {}
+            dicttmp["isOut"] = False
+            if (pl[0][2 * j] == 0) and (flats_out_walls[i][0] == 1):
+                dicttmp["isOut"] = True
+            dicttmp["x1"] = round(StartPosId[i][0] + pl[0][2 * j],2)
+            dicttmp["y1"] = round(StartPosId[i][1] + pl[1][2 * j],2)
+            dicttmp["x2"] = round(StartPosId[i][0] + pl[0][2 * j],2)
+            dicttmp["y2"] = round(StartPosId[i][1] + pl[1][2 * j + 1],2)
+            room_out_walls.append(dicttmp)
+
+            # верхняя стена
+            dicttmp = {}
+            dicttmp["isOut"] = False
+            if (pl[1][2 * j + 1] == Ht) and (flats_out_walls[i][1] == 1):
+                dicttmp["isOut"] = True
+            dicttmp["x1"] = round(StartPosId[i][0] + pl[0][2 * j],2)
+            dicttmp["y1"] = round(StartPosId[i][1] + pl[1][2 * j + 1],2)
+            dicttmp["x2"] = round(StartPosId[i][0] + pl[0][2 * j + 1],2)
+            dicttmp["y2"] = round(StartPosId[i][1] + pl[1][2 * j + 1],2)
+            room_out_walls.append(dicttmp)
+
+            # правая стена
+            dicttmp = {}
+            dicttmp["isOut"] = False
+            if (pl[0][2 * j + 1] == Bt) and (flats_out_walls[i][2] == 1):
+                dicttmp["isOut"] = True
+            dicttmp["x1"] = round(StartPosId[i][0] + pl[0][2 * j + 1],2)
+            dicttmp["y1"] = round(StartPosId[i][1] + pl[1][2 * j + 1],2)
+            dicttmp["x2"] = round(StartPosId[i][0] + pl[0][2 * j + 1],2)
+            dicttmp["y2"] = round(StartPosId[i][1] + pl[1][2 * j],2)
+            room_out_walls.append(dicttmp)
+
+            # нинжняя стена
+            dicttmp = {}
+            dicttmp["isOut"] = False
+            if (pl[1][2 * j] == 0) and (flats_out_walls[i][3] == 1):
+                dicttmp["isOut"] = True
+            dicttmp["x1"] = round(StartPosId[i][0] + pl[0][2 * j + 1],2)
+            dicttmp["y1"] = round(StartPosId[i][1] + pl[1][2 * j],2)
+            dicttmp["x2"] = round(StartPosId[i][0] + pl[0][2 * j],2)
+            dicttmp["y2"] = round(StartPosId[i][1] + pl[1][2 * j],2)
+            room_out_walls.append(dicttmp)
+
+            walls.append(room_out_walls)
+
+        for t in range(1,len(pl[0]) / 2):
             deep = round(pl[1][2 * t + 1] - pl[1][2 * t], 2)
             width = round(pl[0][2 * t + 1] - pl[0][2 * t], 2)
-            locd_room.append({"BimType": "room", 'name': compartments[t + 1], "Deep": deep, "Width": width,
+            locd_room.append({"BimType": "room", 'name': compartments[t], "color": col_list[t], "Deep": deep, "Width": width,
                               "Position": {"X": round(StartPosId[i][0] + pl[0][2 * t] + addshift[0],2), "Z": round(StartPosId[i][1] + pl[1][2 * t] + addshift[1],2),
-                                 "Y": addshift[2]}})
+                                 "Y": addshift[2]}, "walls": walls[t-1]})
 
         locd["BimType"] = "functionalzone"
         locd["name"] = "flat"
@@ -34,6 +87,8 @@ def pl2json(list_pl, StartPosId, addshift = (0,0)):
         locd["ParentId"] = addshift[3]
         locd["rooms"] = locd_room
         newres.append(locd)
+
+
     return newres #json.dumps(newres)
 
 
@@ -58,3 +113,24 @@ def json2params(json_data):
     # Первая и последняя секция имеют внешние стены (1,1,0,1)/(0,1,1,1), остальные - (0,1,0,1)
     out_walls = [(1,1,0,1)] + [(0,1,0,1)]*(len(Sizes)-2) + [(0,1,1,1)]
     return Sizes, StartPosId, out_walls
+
+def json_colomns2params(json_data):
+    """
+    На входе словарь с Ширина, Глубина, список колонн с координатами центра
+    >>> js = {"Width":20, "Deep":20, "Columns":[{"BimType":"column","Deep":0.4,"Height":2.8,"Id":94,"Position":{"X":0.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},
+    ... {"BimType":"column","Deep":0.4,"Height":2.8,"Id":95,"Position":{"X":6.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},
+    ... {"BimType":"column","Deep":0.4,"Height":2.8,"Id":96,"Position":{"X":12.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},
+    ... {"BimType":"column","Deep":0.4,"Height":2.8,"Id":97,"Position":{"X":18.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},
+    ... {"BimType":"column","Deep":0.4,"Height":2.8,"Id":252,"Position":{"X":85.3,"Y":0.6,"Z":33.3},"Width":0.4,"ParentId":4},
+    ... {"BimType":"column","Deep":0.4,"Height":2.8,"Id":253,"Position":{"X":89.3,"Y":0.6,"Z":33.3},"Width":0.4,"ParentId":4}]}
+    >>> s1, s2 = json2params(js)
+    >>> (s1[0],s2[5])
+    ((20, 3),[50, 0, 6050])
+    """
+
+    Size = (json_data['Width'], json_data['Deep'])
+    # X - координата ширины, Z - глубины, Y - высоты
+    # извлекаем сетку колонн,
+    grid_columns = map(lambda x: (x["Position"]["X"],x["Position"]["Z"]) , json_data['Columns'])
+
+    return Size, grid_columns
