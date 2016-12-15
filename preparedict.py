@@ -3,12 +3,12 @@ import cPickle
 from settings import *
 
 # загружаем словарь планировок квартир
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res.txt", 'r')
+file = open("dict_res.txt", 'r')
 dict_res = cPickle.load(file)
 file.close()
 
 # загружаем словарь планировок секций
-file = open("d:\YandexDisk\EnkiSoft\Evolution\dict_res_sect.txt", 'r')
+file = open("dict_res_sect.txt", 'r')
 dict_sect_res = cPickle.load(file)
 file.close()
 
@@ -131,7 +131,7 @@ def get_dict_sect_res(sectparams):
     (newb, newh) = (sectparams[0][0] - sectparams[0][0] % 0.5, sectparams[0][1] - sectparams[0][1] % 0.5)
     try:
 
-        res = dict_sect_res_3pl[((newb, newh), sectparams[1])]
+        res = dict_sect_res[((newb, newh), sectparams[1])]
     except KeyError:
         res = 0
         print "Ошибка: в базе планировок секций нет значения: " , sectparams

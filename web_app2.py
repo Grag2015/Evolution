@@ -173,7 +173,7 @@ class WSGIServer(object):
         urlstr = urlstr.replace("%22", '"')
         return urlstr
 
-SERVER_ADDRESS = (HOST, PORT) = '', 8888
+SERVER_ADDRESS = (HOST, PORT) = '', 7788
 
 
 def make_server(server_address, application):
@@ -192,6 +192,8 @@ if __name__ == '__main__':
     httpd = make_server(SERVER_ADDRESS, application)
     print('WSGIServer: Serving HTTP on port {port} ...\n'.format(port=PORT))
     httpd.serve_forever()
+
+# запуск сервера - python web_app2.py pyramidapp:app
 
 # Для тестирования сервера
 # import urllib2

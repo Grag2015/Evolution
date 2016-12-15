@@ -1280,7 +1280,7 @@ def main_topology(max_results, B_, H_, best_sect, printres = True, usetemplate =
 
     if usetemplate:
         # загружаем шаблоны
-        file = open("D:\YandexDisk\EnkiSoft\Evolution\dict_sect2flats.txt", "rb")
+        file = open("dict_sect2flats.txt", "rb")
         dict_sect2flats = cPickle.load(file)
         file.close()
 

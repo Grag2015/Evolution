@@ -6,10 +6,10 @@ from Flat2Rooms import visual_pl
 import numpy as np
 
 import time
-import matplotlib
-matplotlib.use('Qt4Agg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+# import matplotlib
+# matplotlib.use('Qt4Agg')
+# import matplotlib.pyplot as plt
+# import matplotlib.patches as mpatches
 
 from interface2 import pl2json
 from interface2 import json2params
@@ -173,7 +173,7 @@ def calculation(json_string):
     flats_out_walls = []
     for i in range(count_sect):
         for j in range(count_flat):
-            tmp = Section2Rooms(Size[0], Size[1], out_walls, i, j, grid_columns, isVisual=True)
+            tmp = Section2Rooms(Size[0], Size[1], out_walls, i, j, grid_columns, isVisual=False)
             list_pl.append(tmp[1])
             list_pos.append(tmp[0])
             col_list.append(tmp[2])
@@ -195,7 +195,7 @@ def calculation(json_string):
     for i in range(len(sect_pl)):
         sect_pl.append(sect_pl[i])
 
-    file_obj = open('d:\YandexDisk\EnkiSoft\Evolution\json_out.txt', "w")
+    file_obj = open('json_out.txt', "w")
     file_obj.write(json.dumps(sect_pl))
     file_obj.close()
     return json.dumps(data)
@@ -205,7 +205,7 @@ def calculation(json_string):
 # json_string = '[{"BimType":"section","Deep":20.0,"Height":3.0,"Id":18,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":30.0, "ParentId":4}]'
 # calculation(json_string)
 
-Section2Rooms(20, 20, (0,1,1,1), 2, 1)
+#Section2Rooms(20, 20, (0,1,1,1), 2, 1)
 
 # ToDo надо убрать возврат по количеству квартир, нужно сразу несколько планировок с разным числом квартир разбирать.
 # создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.
