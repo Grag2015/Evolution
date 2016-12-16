@@ -157,7 +157,11 @@ def calculation(json_string):
     # функция получает JSON с размерами функ.зон, рассчитывает для каждой уникальной пары размеров планировку секции
     # и возвращает обратно JSON с планировками для каждой функциональной зоны
     print "beforerroe"
-    data = json.loads(json_string)
+    try:
+        data = json.loads(json_string)
+    except ValueError:
+        print "No JSON object could be decoded"
+        return 0
     print "aftererroe"
 
     out_walls = (1,1,1,1)
@@ -165,7 +169,7 @@ def calculation(json_string):
 
     # рассчитываем несколько вариантов планировок
     count_sect = 1
-    count_flat = 3
+    count_flat = 1
     sect_pl = [] #  лист с результатами
     list_pl =[]
     list_pos =[]
@@ -174,6 +178,8 @@ def calculation(json_string):
     for i in range(count_sect):
         for j in range(count_flat):
             tmp = Section2Rooms(Size[0], Size[1], out_walls, i, j, grid_columns, isVisual=False)
+            if tmp == (0, 0):
+                return ""
             list_pl.append(tmp[1])
             list_pos.append(tmp[0])
             col_list.append(tmp[2])
@@ -198,7 +204,7 @@ def calculation(json_string):
     file_obj = open('json_out.txt', "w")
     file_obj.write(json.dumps(sect_pl))
     file_obj.close()
-    return json.dumps(data)
+    return json.dumps(sect_pl)
 # json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
 #  {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''
 # calculation(json_string)
@@ -209,3 +215,9 @@ def calculation(json_string):
 
 # ToDo надо убрать возврат по количеству квартир, нужно сразу несколько планировок с разным числом квартир разбирать.
 # создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.
+
+# import json
+# js_data = {"Width":20,"Deep":20,"Columns":[{"BimType":"column","Deep":0.4,"Height":2.8,"Id":7,"Position":{"X":0.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":8,"Position":{"X":6.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":9,"Position":{"X":12.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":10,"Position":{"X":15.8,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":11,"Position":{"X":19.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":12,"Position":{"X":0.3,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":13,"Position":{"X":6.3,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":14,"Position":{"X":12.3,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":15,"Position":{"X":15.8,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":16,"Position":{"X":19.3,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":17,"Position":{"X":0.3,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":18,"Position":{"X":6.3,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":19,"Position":{"X":12.3,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":20,"Position":{"X":15.8,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":21,"Position":{"X":19.3,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":22,"Position":{"X":0.3,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":23,"Position":{"X":6.3,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":24,"Position":{"X":12.3,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":25,"Position":{"X":15.8,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":26,"Position":{"X":19.3,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":27,"Position":{"X":0.3,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":28,"Position":{"X":6.3,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":29,"Position":{"X":12.3,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":30,"Position":{"X":15.8,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":31,"Position":{"X":19.3,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4}]}
+# json_string = json.dumps(js_data)
+#
+# calculation(json_string)

@@ -8,16 +8,18 @@ def hello_world(request):
     print "request3333"
     # param = request.path.split('/')
     json_string = request.environ['data']
-    print "json_string ", json_string
-    print "type(json_string)", type(json_string)
     print "/request3333"
     file_obj = open('json_in.txt', "w")
     file_obj.write(json_string)
     file_obj.close()
-    return Response(
-       calculation(json_string),
-        content_type = 'application/json'
-    )
+    json_resp = calculation(json_string)
+    if json_resp != 0:
+        return Response(
+            json_resp,
+            content_type = 'application/json'
+        )
+    else:
+        return 0
 
 config = Configurator()
 # The router instance creates a request object by mapping the request URL to URL patterns provided by the route mapper

@@ -5,6 +5,7 @@ import sys
 import json
 import os
 import re
+import time
 
 
 class WSGIServer(object):
@@ -48,6 +49,7 @@ class WSGIServer(object):
 
     def handle_one_request(self):
         #try:
+        print "NEW REQUEST ---------------------------------------------------------"
         self.request_data = request_data = self.client_connection.recv(100000)#.decode('utf-8')
         print "type: ", self.client_connection
         # Print formatted request data a la 'curl -v'
@@ -78,35 +80,36 @@ class WSGIServer(object):
 
 
     def parse_request(self, text):
-        # try:
-        print "print text:" + text
-        request_line = text.splitlines()[0]
-        request_line2 = text.splitlines()[2]
+        try:
+            print "print text:" + text
+            request_line = text.splitlines()[0]
+            request_line2 = text.splitlines()[2]
 
-        request_line = request_line.rstrip('\r\n')
-        request_line2 = request_line2.rstrip('\r\n')
-        # Break down the request line into components
-        (self.request_method,  # GET
-         self.path,            # /hello
-         self.request_version  # HTTP/1.1
-         ) = request_line.split()[0:3]
-        #self.content_length = int(request_line2.replace("Content-Length: ", ""))
-        self.data = self.decode_geturl(re.search("name\=(.*?) HTTP", text).group(1))
-        print "self.data", self.data
-        print "self.data type ", type(self.data)
+            request_line = request_line.rstrip('\r\n')
+            request_line2 = request_line2.rstrip('\r\n')
+            # Break down the request line into components
+            (self.request_method,  # GET
+             self.path,            # /hello
+             self.request_version  # HTTP/1.1
+             ) = request_line.split()[0:3]
+            #self.content_length = int(request_line2.replace("Content-Length: ", ""))
+            self.data = self.decode_geturl(re.search("name\=(.*?) HTTP", text).group(1))
+            file_obj = open('json_request_in.txt', "w")
+            file_obj.write(self.data)
+            file_obj.close()
         #print json.loads(self.data)
-        # except ValueError:
-        #     # Construct a response and send it back to the client
-        #     print "Error request1"
-        #     self.client_connection.close()
-        # except IndexError:
-        #     # Construct a response and send it back to the client
-        #     self.client_connection.close()
-        #     print "Error request1"
-        # except:
-        #     # Construct a response and send it back to the client
-        #     self.client_connection.close()
-        #     print "Unknown error"
+        except ValueError  as e:
+            # Construct a response and send it back to the client
+            print e
+            self.client_connection.close()
+        except IndexError  as e:
+            # Construct a response and send it back to the client
+            self.client_connection.close()
+            print e
+        except Exception as e:
+            # Construct a response and send it back to the client
+            self.client_connection.close()
+            print e
 
 
 
@@ -156,14 +159,19 @@ class WSGIServer(object):
             for data in result:
                 response += data
             # Print formatted response data a la 'curl -v'
+
             print(''.join(
-                '> {line}\n'.format(line=line)
+                '> {line}\n'.format(line=line[0:50])
                 for line in response.splitlines()
             ))
             self.client_connection.sendall(response)
+        except Exception as e:
+            print e
         finally:
             #print "connection keeps alive"
+            #time.sleep(5)
             self.client_connection.close()
+            print "REQUEST was processed succesfully -----------------------------------"
 
     def decode_geturl(self, urlstr):
         urlstr = urlstr.replace("%7B", "{")
@@ -171,6 +179,8 @@ class WSGIServer(object):
         urlstr = urlstr.replace("%5B", "[")
         urlstr = urlstr.replace("%5D", "]")
         urlstr = urlstr.replace("%22", '"')
+        urlstr = urlstr.replace("%20", ' ')
+        urlstr = urlstr.replace("%27", "'")
         return urlstr
 
 SERVER_ADDRESS = (HOST, PORT) = '', 7788

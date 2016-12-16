@@ -14,7 +14,7 @@ podezd_height_delta = 1
 sett_grid_columns = [6,7,8]
 
 #  коэффициент влияние отклонений стен секции от сетки колонн на целевую функцию
-sett_grid_columns_influence = 150
+sett_grid_columns_influence = 20
 
 # настройки генетического алгоритма для планировок секции
 sett_popsize=15
