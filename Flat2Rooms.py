@@ -1540,7 +1540,7 @@ def grid_columns_closer(pl_in, grid_columns, maxdelta = 0.3):
         # преобразуем уровни колонн в список координат колонн
         columns_list = [(x,y) for x in grid_columns[0] for y in grid_columns[1]]
 
-    #по планировке делаем список внутренних стен
+    #по планировке делаем список внутренних стен (при этом берем только квартиры, без подъезда и коридора)
     walls = pl2walls(pl, start = 3)
 
 
@@ -1607,7 +1607,11 @@ def grid_columns_closer(pl_in, grid_columns, maxdelta = 0.3):
                     tmplist[ind] = -1
                 except:
                     break
-            col_wall[i] = list(set(listy)& set(listx))[0]
+            try:
+                col_wall[i] = list(set(listy)& set(listx))[0]
+            except:
+            # исключение возникает если колонна попадает в коридор или подъезд, мы такие колонны не обрабатываем
+                pass
 
     # для всех (уникальных) стен, которые близкие к колоннам рассчитать поправку сдвига
     ## берем только tuple из списка и оставляем уникальные
@@ -1635,7 +1639,7 @@ def grid_columns_closer(pl_in, grid_columns, maxdelta = 0.3):
     # подготовка словаря с квартирами Номер_квартиры: список колонн
     flat_col_dict = {}
     for ind, i in enumerate(col_wall):
-        if isinstance(i, int):
+        if isinstance(i, int) and i != -1:
             if i in flat_col_dict:
                 flat_col_dict[i].append(columns_list[ind])
             else:
