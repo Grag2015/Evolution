@@ -1370,7 +1370,7 @@ def main_size(width, height, scens, best_flat):
         if (res.fun < bestmin) & (res_x[-1].find("dist_neib")==-1):
             bestmin = res.fun
             bestmini = i
-            print 'bestmini', bestmini
+            #print 'bestmini', bestmini
         #print res.message, "nit: ", res.nit
         #print 'bounds', bounds
         xlistnew = list(res.x[0:len(Ax[0]) - 1])
@@ -1464,7 +1464,7 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), best_
 
     flats_out_walls = flats_outwalls(new_scen_res,out_walls)
 
-    print "new_scen_res", new_scen_res
+    #print "new_scen_res", new_scen_res
     # заглушка
     # new_scen_res =[[0,25,11.832458301964532,18.186082541575203,0,18.186082541575203,18.186082541575203,25,0,9.0930412707876016,
     #                 9.0930412707876016,18.186082541575203,0,5.9162291509822662,5.9162291509822662,11.832458301964532],
@@ -1594,14 +1594,14 @@ def check_pl(scen, pl, active = True):
         # делаем предплоложение, что объединение всех комнат в up_corr и down_corr представляют прямоугольник
         # подсчет площади объед-х комнат
         will_deleted = []
-        print up_corr, down_corr
+        #print up_corr, down_corr
         # проверка для up_corr
         a = 0
         b = 0
         for i in range(len(up_corr)):
             a += (pl[0][up_corr[i]*2+1]-pl[0][up_corr[i]*2])
             b = (pl[1][up_corr[i]*2+1]-pl[1][up_corr[i]*2])
-        print "a,b", a, b
+        #print "a,b", a, b
     # проверка площади объединения, ratio
         if (a*b < 60) & (a*b > 0): # объединяем все в одну квартиру
             for t, i in enumerate(up_corr):
@@ -1653,7 +1653,7 @@ def check_pl(scen, pl, active = True):
                             will_deleted.append(i)
                         tmp_min = min(map(lambda x: pl[0][2 * x], up_corr))
                         tmp_max = max(map(lambda x: pl[0][2 * x + 1], up_corr))
-                        print tmp_min,tmp_max
+                        #print tmp_min,tmp_max
                         new_scen[0].append(tmp_min)
                         new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)
                         new_scen[0].append(tmp_min + (tmp_max-tmp_min)/2.)

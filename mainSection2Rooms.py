@@ -168,8 +168,8 @@ def calculation(json_string):
     Size, grid_columns = json_colomns2params(data)
 
     # рассчитываем несколько вариантов планировок
-    count_sect = 1
-    count_flat = 1
+    count_sect = 2
+    count_flat = 3
     sect_pl = [] #  лист с результатами
     list_pl =[]
     list_pos =[]
@@ -197,13 +197,13 @@ def calculation(json_string):
     for i in range(len(sect_pl)):
         sect_pl[i]["Columns"] = data["Columns"]
 
-    # КОСТЫЛЬ - чтобы получить доп. результаты дублирую 1 раз первые результаты
-    for i in range(len(sect_pl)):
-        sect_pl.append(sect_pl[i])
+    # # КОСТЫЛЬ - чтобы получить доп. результаты дублирую 1 раз первые результаты
+    # for i in range(len(sect_pl)):
+    #     sect_pl.append(sect_pl[i])
 
-    file_obj = open('json_out.txt', "w")
-    file_obj.write(json.dumps(sect_pl))
-    file_obj.close()
+    # file_obj = open('json_out.txt', "w")
+    # file_obj.write(json.dumps(sect_pl))
+    # file_obj.close()
     return json.dumps(sect_pl)
 # json_string = '''[{"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 0.0, "Z": 0.0}, "Id": 18, "BimType": "section"},
 #  {"Deep": 20.0, "Height": 3.0, "Width": 30.0, "ParentId": 4, "Position": {"Y": 0.6, "X": 80.0, "Z": 0.0}, "Id": 20, "BimType": "section"}]'''

@@ -105,8 +105,7 @@ def prepare_tc(tc_src):
     # верхний треугольник оставляем без изменений
     # диагональ заполняем значением (6,6)
     global len_comp
-    print "len_comp"
-    print len_comp
+
     for i in range(len_comp):
         tc[i][i].append((6,6))
 
@@ -1645,7 +1644,6 @@ def grid_columns_closer(pl_in, grid_columns, maxdelta = 0.3):
             else:
                 flat_col_dict[i] = [columns_list[ind]]
 
-    print "pl_res", pl_res
     return pl_res, isCorrected, flat_col_dict
 
 def pl2walls(pl, start = 1):
@@ -1675,7 +1673,6 @@ def pl2walls(pl, start = 1):
         wall = ((round(pl[0][2 * j], 2),round(pl[1][2 * j], 2)), (round(pl[0][2 * j + 1], 2), round(pl[1][2 * j], 2)))
         walls.append(wall)
     # оставляем только уникальные значения
-    print walls
     walls = list(set(walls))
     # оставляем только внутренние стены
     res = copy.deepcopy(walls)

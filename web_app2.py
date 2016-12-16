@@ -49,12 +49,13 @@ class WSGIServer(object):
 
     def handle_one_request(self):
         #try:
-        print "NEW REQUEST ---------------------------------------------------------"
+
+        print "NEW REQUEST " + time.ctime(time.time()) + "---------------------------------------------------------"
         self.request_data = request_data = self.client_connection.recv(100000)#.decode('utf-8')
         print "type: ", self.client_connection
         # Print formatted request data a la 'curl -v'
         print(''.join(
-            '< {line}\n'.format(line=line)
+            '< {line}\n'.format(line=line[0:50])
             for line in request_data.splitlines()
         ))
         self.parse_request(request_data)
@@ -81,7 +82,7 @@ class WSGIServer(object):
 
     def parse_request(self, text):
         try:
-            print "print text:" + text
+            print "print text[0:50]:" + text[0:50]
             request_line = text.splitlines()[0]
             request_line2 = text.splitlines()[2]
 
@@ -94,9 +95,9 @@ class WSGIServer(object):
              ) = request_line.split()[0:3]
             #self.content_length = int(request_line2.replace("Content-Length: ", ""))
             self.data = self.decode_geturl(re.search("name\=(.*?) HTTP", text).group(1))
-            file_obj = open('json_request_in.txt', "w")
-            file_obj.write(self.data)
-            file_obj.close()
+            # file_obj = open('json_request_in.txt', "w")
+            # file_obj.write(self.data)
+            # file_obj.close()
         #print json.loads(self.data)
         except ValueError  as e:
             # Construct a response and send it back to the client
@@ -171,7 +172,7 @@ class WSGIServer(object):
             #print "connection keeps alive"
             #time.sleep(5)
             self.client_connection.close()
-            print "REQUEST was processed succesfully -----------------------------------"
+            print "REQUEST was processed succesfully: " + time.ctime(time.time()) + "-----------------------------------"
 
     def decode_geturl(self, urlstr):
         urlstr = urlstr.replace("%7B", "{")

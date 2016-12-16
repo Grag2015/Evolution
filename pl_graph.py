@@ -225,5 +225,5 @@ def createbounds(pl, B, H):
     isCorrbounds = True
     if len(filter(lambda x: x[1] - x[0] < 0, bounds)) > 0:
         isCorrbounds = False
-    print "bounds: ", bounds
+    # print "bounds: ", bounds
     return bounds, isCorrbounds

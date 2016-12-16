@@ -9,9 +9,9 @@ def hello_world(request):
     # param = request.path.split('/')
     json_string = request.environ['data']
     print "/request3333"
-    file_obj = open('json_in.txt', "w")
-    file_obj.write(json_string)
-    file_obj.close()
+    # file_obj = open('json_in.txt', "w")
+    # file_obj.write(json_string)
+    # file_obj.close()
     json_resp = calculation(json_string)
     if json_resp != 0:
         return Response(

@@ -2,10 +2,10 @@
 # файл с настройками проекта
 
 # максимальное количество результатов при расчете топологии секции
-sett_max_results_sect_topol = 1
+sett_max_results_sect_topol = 2
 
 # сдвиг подъезда по горизонтали
-podezd_position_x_delta = 1
+podezd_position_x_delta = 2
 
 # изменение высоты подъезда
 podezd_height_delta = 1
@@ -14,7 +14,7 @@ podezd_height_delta = 1
 sett_grid_columns = [6,7,8]
 
 #  коэффициент влияние отклонений стен секции от сетки колонн на целевую функцию
-sett_grid_columns_influence = 20
+sett_grid_columns_influence = 150 # на практике от 20 до 150
 
 # настройки генетического алгоритма для планировок секции
 sett_popsize=15
