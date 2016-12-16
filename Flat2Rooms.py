@@ -1441,9 +1441,9 @@ def Flat2Rooms(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls, flat_co
     show_board = postproc(pl_rotated)
     comp_col = ['#73DD9B', '#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC', '#ACBFEC', '#ACBFEC', '#ACBFEC']
     if len(flat_col_list)!=0:
-        pl_rotated, isCorrected, tmp = grid_columns_closer(pl_rotated, flat_col_list)
+        pl_rotated, isCorrected, tmp = grid_columns_closer(pl_rotated, flat_col_list, maxdelta=1)
         if not isCorrected:
-            pl_rotated, isCorrected, tmp = grid_columns_closer(pl_rotated, flat_col_list, maxdelta=0.4)
+            pl_rotated, isCorrected, tmp = grid_columns_closer(pl_rotated, flat_col_list, maxdelta=1.5)
     return pl_rotated, comp_col[0:int(len(pl[0])/2-1)], show_board
 
 def Flat2Rooms_old(B_, H_, entr_wall, hall_pos, count_rooms, flat_out_walls):
