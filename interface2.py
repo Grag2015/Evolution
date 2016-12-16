@@ -74,6 +74,24 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, addshift = (0,0,0,0)
 
             walls.append(room_out_walls)
 
+            # Подготовка данных для дверей
+            if j == 1: # hall, вешаем дверь на нижнюю стену
+                x1 = walls[-1][3]["x1"]
+                x2 = walls[-1][3]["x2"]
+                y1 = walls[-1][3]["y1"]
+                y2 = walls[-1][3]["y2"]
+                mx = (x1 + x2)/2
+                my = (y1 + y2)/2
+                dx1 = mx + (x1-x2)*0.45/(((x1-x2)**2+(y1-y2)**2)**0.5)
+                dx2 = mx - (x1-x2)*0.45/(((x1-x2)**2+(y1-y2)**2)**0.5)
+                dy1 = my + (y1-y2)*0.45/(((x1-x2)**2+(y1-y2)**2)**0.5)
+                dy2 = my - (y1-y2)*0.45/(((x1-x2)**2+(y1-y2)**2)**0.5)
+                walls[-1][3]["door"] = {}
+                walls[-1][3]["door"]["x1"] = dx1
+                walls[-1][3]["door"]["x2"] = dx2
+                walls[-1][3]["door"]["y1"] = dy1
+                walls[-1][3]["door"]["y2"] = dy2
+
         for t in range(1,len(pl[0]) / 2):
             deep = round(pl[1][2 * t + 1] - pl[1][2 * t], 2)
             width = round(pl[0][2 * t + 1] - pl[0][2 * t], 2)
