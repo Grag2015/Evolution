@@ -101,7 +101,7 @@ def Section2Rooms(B_, H_, out_walls, best_sect=0, best_flat=0, grid_columns_in =
 
         visual_sect(globplac, B_, H_, col_list, show_board, line_width, fill_, grid_columns)
 
-    return res1, res2, col_list, flats_out_walls
+    return res1, res2, col_list, flats_out_walls, entrwall
 
 def prepareflats(flats):
     # output - x1,y1, B, H, count_rooms
@@ -174,6 +174,7 @@ def calculation(json_string):
     list_pl =[]
     list_pos =[]
     col_list = []
+    entrwall_list = []
     flats_out_walls = []
     for i in range(count_sect):
         for j in range(count_flat):
@@ -183,13 +184,14 @@ def calculation(json_string):
             list_pl.append(tmp[1])
             list_pos.append(tmp[0])
             col_list.append(tmp[2])
+            entrwall_list.append(tmp[4])
             flats_out_walls.append(tmp[3])
 
     # Готовим список с планировками и отправляем его в pl2json вместе с StartPosId
     for i in range(len(list_pl)):
         sect_pl.append({})
 
-        sect_pl[-1]["functionalzones"] = pl2json(list_pl[i], list_pos[i], col_list[i], flats_out_walls[i])
+        sect_pl[-1]["functionalzones"] = pl2json(list_pl[i], list_pos[i], col_list[i], flats_out_walls[i], entrwall_list[i])
         sect_pl[-1]["BimType"] = "section"
         sect_pl[-1]["Position"] = {"X": 0, "Z": 0, "Y": 0}
 
@@ -217,8 +219,7 @@ def calculation(json_string):
 # создание ограничений позволяет отрезать заведомо неисполнимые планировки, остальные будем рассчитывать.
 
 # import json
-# js_data = {"Width":20,"Deep":20,"Columns":[{"BimType":"column","Deep":0.4,"Height":2.8,"Id":7,"Position":{"X":0.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":8,"Position":{"X":6.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":9,"Position":{"X":12.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":10,"Position":{"X":15.8,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":11,"Position":{"X":19.3,"Y":0.6,"Z":0.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":12,"Position":{"X":0.3,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":13,"Position":{"X":6.3,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":14,"Position":{"X":12.3,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":15,"Position":{"X":15.8,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":16,"Position":{"X":19.3,"Y":0.6,"Z":6.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":17,"Position":{"X":0.3,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":18,"Position":{"X":6.3,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":19,"Position":{"X":12.3,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":20,"Position":{"X":15.8,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":21,"Position":{"X":19.3,"Y":0.6,"Z":12.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":22,"Position":{"X":0.3,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":23,"Position":{"X":6.3,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":24,"Position":{"X":12.3,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":25,"Position":{"X":15.8,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":26,"Position":{"X":19.3,"Y":0.6,"Z":15.8},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":27,"Position":{"X":0.3,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":28,"Position":{"X":6.3,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":29,"Position":{"X":12.3,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":30,"Position":{"X":15.8,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":31,"Position":{"X":19.3,"Y":0.6,"Z":19.3},"Width":0.4,"ParentId":4}]}
+# js_data = {"Width":24.4,"Deep":18.4,"Columns":[{"BimType":"column","Deep":0.4,"Height":2.8,"Id":7,"Position":{"X":0.0,"Y":0.6,"Z":0.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":8,"Position":{"X":6.0,"Y":0.6,"Z":0.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":9,"Position":{"X":12.0,"Y":0.6,"Z":0.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":10,"Position":{"X":18.0,"Y":0.6,"Z":0.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":11,"Position":{"X":24.0,"Y":0.6,"Z":0.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":12,"Position":{"X":0.0,"Y":0.6,"Z":6.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":13,"Position":{"X":6.0,"Y":0.6,"Z":6.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":14,"Position":{"X":12.0,"Y":0.6,"Z":6.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":15,"Position":{"X":18.0,"Y":0.6,"Z":6.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":16,"Position":{"X":24.0,"Y":0.6,"Z":6.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":17,"Position":{"X":0.0,"Y":0.6,"Z":12.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":18,"Position":{"X":6.0,"Y":0.6,"Z":12.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":19,"Position":{"X":12.0,"Y":0.6,"Z":12.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":20,"Position":{"X":18.0,"Y":0.6,"Z":12.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":21,"Position":{"X":24.0,"Y":0.6,"Z":12.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":22,"Position":{"X":0.0,"Y":0.6,"Z":18.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":23,"Position":{"X":6.0,"Y":0.6,"Z":18.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":24,"Position":{"X":12.0,"Y":0.6,"Z":18.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":25,"Position":{"X":18.0,"Y":0.6,"Z":18.0},"Width":0.4,"ParentId":4},{"BimType":"column","Deep":0.4,"Height":2.8,"Id":26,"Position":{"X":24.0,"Y":0.6,"Z":18.0},"Width":0.4,"ParentId":4}]}
 # json_string = json.dumps(js_data)
-#
 # calculation(json_string)
 

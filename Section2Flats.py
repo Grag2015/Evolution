@@ -1453,10 +1453,10 @@ def Section2Flats(B_, H_, out_walls, (grid_columns_x_i, grid_columns_y_i), best_
     optim_scens = optim_scens[0]
     # включаем доводчик
     if sett_isActive_sect_closer:
-        optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i])
+        optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i], maxdelta=1)
         # если не было корректировок, то пробовать увеличить maxdelta
         if not isCorrected:
-            optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i], maxdelta=0.6)
+            optim_scens, isCorrected, flat_col_dict = grid_columns_closer(optim_scens, [grid_columns_x_i, grid_columns_y_i], maxdelta=1.5)
     new_scen_res, hall_pos_res, entrwall_res = check_pl(place2scen(optim_scens), optim_scens, active=False)
 
 
