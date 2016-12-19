@@ -18,17 +18,24 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
     compartments = ["envelope", "hall", "corr", "bath", "kitchen", "room", "room", "room", "room", "room"]
     newres = []
     col_list = ['#73DD9B','#73DD9B','#73DD9B', '#EAE234', '#ECA7A7', '#ACBFEC','#ACBFEC','#ACBFEC','#ACBFEC','#ACBFEC','#ACBFEC','#ACBFEC']
-    def calcul_door(walls, wall_num):
+    def calcul_door(walls, wall_num, adj_part = []):
         '''
-        функция на стену с номером wall_num вешает дверь и прекрепляет ее в словарь walls
+        функция на стену с номером wall_num вешает дверь и прикрепляет ее в словарь walls
         :param walls:
         :param wall_num:
         :return:
         '''
-        x1 = walls[-1][wall_num]["x1"]
-        x2 = walls[-1][wall_num]["x2"]
-        y1 = walls[-1][wall_num]["y1"]
-        y2 = walls[-1][wall_num]["y2"]
+        if len(adj_part) == 0:
+            x1 = walls[-1][wall_num]["x1"]
+            x2 = walls[-1][wall_num]["x2"]
+            y1 = walls[-1][wall_num]["y1"]
+            y2 = walls[-1][wall_num]["y2"]
+        else:
+            x1 = adj_part[0]
+            y1 = adj_part[1]
+            x2 = adj_part[2]
+            y2 = adj_part[3]
+
         mx = (x1 + x2) / 2
         my = (y1 + y2) / 2
         dx1 = mx + (x1 - x2) * 0.45 / (((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5)
@@ -36,14 +43,14 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
         dy1 = my + (y1 - y2) * 0.45 / (((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5)
         dy2 = my - (y1 - y2) * 0.45 / (((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5)
         walls[-1][wall_num]["door"] = {}
-        walls[-1][wall_num]["door"]["x1"] = dx1
-        walls[-1][wall_num]["door"]["x2"] = dx2
-        walls[-1][wall_num]["door"]["y1"] = dy1
-        walls[-1][wall_num]["door"]["y2"] = dy2
+        walls[-1][wall_num]["door"]["x1"] = round(dx1,2)
+        walls[-1][wall_num]["door"]["x2"] = round(dx2,2)
+        walls[-1][wall_num]["door"]["y1"] = round(dy1,2)
+        walls[-1][wall_num]["door"]["y2"] = round(dy2,2)
 
     def get_adj_wall(walls, j, hall_lev, corr_lev):
         '''
-        возвращает номер стены смежной с прихожей или (при его отсутствии) с коридором
+        возвращает номер стены смежной с прихожей или (при его отсутствии) с коридором и номер стены прихожей/коридора
         :param walls: словарь стен
         :param j:  порядковый номер комнаты для которой ищем стену
         :param hall_lev: тьюпл с уровнями прихожей
@@ -51,25 +58,52 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
         :return:
         '''
         if walls[-1][3]["y1"] == hall_lev[3]:  # нижняя стена
-            wall_num = 3
+            wall_num_room, wall_num_hall = 3, 1
+            is_horiz = True
+            hall_corr = 0
         elif walls[-1][2]["x1"] == hall_lev[0]:
-            wall_num = 2
+            wall_num_room, wall_num_hall = 2, 0
+            is_horiz = False
+            hall_corr = 0
         elif walls[-1][1]["y1"] == hall_lev[2]:
-            wall_num = 1
+            wall_num_room, wall_num_hall = 1, 3
+            is_horiz = True
+            hall_corr = 0
         elif walls[-1][0]["x1"] == hall_lev[1]:
-            wall_num = 0
-        if walls[-1][3]["y1"] == corr_lev[3]:  # нижняя стена
-            wall_num = 3
+            wall_num_room, wall_num_hall = 0, 2
+            is_horiz = False
+            hall_corr = 0
+        elif walls[-1][3]["y1"] == corr_lev[3]:  # нижняя стена
+            wall_num_room, wall_num_hall = 3, 1
+            is_horiz = True
+            hall_corr = 1
         elif walls[-1][2]["x1"] == corr_lev[0]:
-            wall_num = 2
+            wall_num_room, wall_num_hall = 2, 0
+            is_horiz = False
+            hall_corr = 1
         elif walls[-1][1]["y1"] == corr_lev[2]:
-            wall_num = 1
+            wall_num_room, wall_num_hall = 1, 3
+            is_horiz = True
+            hall_corr = 1
         elif walls[-1][0]["x1"] == corr_lev[1]:
-            wall_num = 0
+            wall_num_room, wall_num_hall = 0, 2
+            is_horiz = False
+            hall_corr = 1
         else:
-            wall_num = -1
+            return -1, -1, []
 
-        return wall_num
+        # расчет отрезка ниже только для горизонтальныйх или вертикальных отрезков
+        if is_horiz:
+            points_list = [walls[-1][wall_num_room]["x1"], walls[-1][wall_num_room]["x2"], walls[hall_corr][wall_num_hall]["x1"], walls[hall_corr][wall_num_hall]["x2"]]
+            points_list.sort()
+            adj_part = [points_list[1], walls[-1][wall_num_room]["y1"], points_list[2], walls[-1][wall_num_room]["y1"]]
+        else:
+            points_list = [walls[-1][wall_num_room]["y1"], walls[-1][wall_num_room]["y2"], walls[hall_corr][wall_num_hall]["y1"], walls[hall_corr][wall_num_hall]["y2"]]
+            points_list.sort()
+            adj_part = [walls[-1][wall_num_room]["x1"], points_list[1], walls[-1][wall_num_room]["x1"], points_list[2]]
+
+
+        return wall_num_room, wall_num_hall, adj_part
 
     for pl, i in zip(list_pl, range(len(StartPosId))):
         locd = {}
@@ -129,28 +163,30 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
 
             # Подготовка данных для дверей
             # уровни прихожей
-            levx1_hall = walls[0][0]["x1"]
-            levx2_hall = walls[0][2]["x1"]
-            levy1_hall = walls[0][3]["y1"]
-            levy2_hall = walls[0][1]["y1"]
-            levs_hall = (levx1_hall, levx2_hall, levy1_hall, levy2_hall)
+            if j ==1:
+                levx1_hall = walls[0][0]["x1"]
+                levx2_hall = walls[0][2]["x1"]
+                levy1_hall = walls[0][3]["y1"]
+                levy2_hall = walls[0][1]["y1"]
+                levs_hall = (levx1_hall, levx2_hall, levy1_hall, levy2_hall)
             # уровни коридора
-            levx1_corr = walls[0][0]["x1"]
-            levx2_corr = walls[0][2]["x1"]
-            levy1_corr = walls[0][3]["y1"]
-            levy2_corr = walls[0][1]["y1"]
-            levs_corr = (levx1_corr, levx2_corr, levy1_corr, levy2_corr)
+            if j == 2:
+                levx1_corr = walls[1][0]["x1"]
+                levx2_corr = walls[1][2]["x1"]
+                levy1_corr = walls[1][3]["y1"]
+                levy2_corr = walls[1][1]["y1"]
+                levs_corr = (levx1_corr, levx2_corr, levy1_corr, levy2_corr)
 
             if j == 1: # hall, вешаем дверь на входную стену
                 entry = entrwall[i][0]
                 calcul_door(walls, entry)
             elif j in [3, 4, 5]:  # bath, kitchen, room1 вешаем дверь смежную с прихожей и коридором
-                wall_num = get_adj_wall(walls, j, levs_hall, levs_corr)
-                calcul_door(walls, wall_num)
+                wall_num, wall_num_hall, adj_part = get_adj_wall(walls, j, levs_hall, levs_corr)
+                calcul_door(walls, wall_num, adj_part)
             elif j > 5:  # room2+, вешаем дверь смежную с прихожей и коридором или если такой нет, то на стену смежную с room1
-                wall_num = get_adj_wall(walls, j, levs_hall, levs_corr)
+                wall_num, wall_num_hall, adj_part = get_adj_wall(walls, j, levs_hall, levs_corr)
                 if wall_num != -1:
-                    calcul_door(walls, wall_num)
+                    calcul_door(walls, wall_num, adj_part)
                 else:
                     t = j-1
                     while t >=5:
@@ -159,8 +195,8 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
                         levy1_room = walls[t][3]["y1"]
                         levy2_room = walls[t][1]["y1"]
                         levs_room = (levx1_room, levx2_room, levy1_room, levy2_room)
-                        wall_num = get_adj_wall(walls, j, levs_room, levs_corr)
-                        calcul_door(walls, wall_num)
+                        wall_num, wall_num_hall, adj_part = get_adj_wall(walls, j, levs_room, levs_corr)
+                        calcul_door(walls, wall_num, adj_part)
                         t -= 1
 
         for t in range(1,len(pl[0]) / 2):
