@@ -57,59 +57,79 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
         :param corr_lev:
         :return:
         '''
-        if walls[-1][3]["y1"] == hall_lev[3]:  # нижняя стена
-            wall_num_room, wall_num_hall = 3, 1
-            is_horiz = True
-            if hall_corr == -1: hall_corr = 0
-        elif walls[-1][2]["x1"] == hall_lev[0]:
-            wall_num_room, wall_num_hall = 2, 0
-            is_horiz = False
-            if hall_corr == -1: hall_corr = 0
-        elif walls[-1][1]["y1"] == hall_lev[2]:
-            wall_num_room, wall_num_hall = 1, 3
-            is_horiz = True
-            if hall_corr == -1: hall_corr = 0
-        elif walls[-1][0]["x1"] == hall_lev[1]:
-            wall_num_room, wall_num_hall = 0, 2
-            is_horiz = False
-            if hall_corr == -1: hall_corr = 0
-        elif walls[-1][3]["y1"] == corr_lev[3]:  # нижняя стена
-            wall_num_room, wall_num_hall = 3, 1
-            is_horiz = True
-            if hall_corr == -1: hall_corr = 1
-        elif walls[-1][2]["x1"] == corr_lev[0]:
-            wall_num_room, wall_num_hall = 2, 0
-            is_horiz = False
-            if hall_corr == -1: hall_corr = 1
-        elif walls[-1][1]["y1"] == corr_lev[2]:
-            wall_num_room, wall_num_hall = 1, 3
-            is_horiz = True
-            if hall_corr == -1: hall_corr = 1
-        elif walls[-1][0]["x1"] == corr_lev[1]:
-            wall_num_room, wall_num_hall = 0, 2
-            is_horiz = False
-            if hall_corr == -1: hall_corr = 1
+        if hall_corr != -1:
+            if (walls[-1][3]["y1"] == hall_lev[3]) and not(min(walls[hall_corr][1]["x1"],walls[hall_corr][1]["x2"]) >= max(walls[-1][3]["x1"], walls[-1][3]["x2"]) or \
+            max(walls[hall_corr][1]["x1"],walls[hall_corr][1]["x2"]) <= min(walls[-1][3]["x1"], walls[-1][3]["x2"])):  # нижняя стена
+                wall_num_room, wall_num_hall = 3, 1
+                is_horiz = True
+            elif (walls[-1][2]["x1"] == hall_lev[0]) and not(min(walls[hall_corr][0]["y1"], walls[hall_corr][0]["y2"]) >= max(walls[-1][2]["y1"], walls[-1][2]["y2"]) \
+                        or max(walls[hall_corr][0]["y1"], walls[hall_corr][0]["y2"]) <= min(walls[-1][2]["y1"], walls[-1][2]["y2"])):
+                wall_num_room, wall_num_hall = 2, 0
+                is_horiz = False
+            elif (walls[-1][1]["y1"] == hall_lev[2]) and not(min(walls[hall_corr][3]["x1"],walls[hall_corr][3]["x2"]) >= max(walls[-1][1]["x1"], walls[-1][1]["x2"]) or \
+            max(walls[hall_corr][3]["x1"],walls[hall_corr][3]["x2"]) <= min(walls[-1][1]["x1"], walls[-1][1]["x2"])):
+                wall_num_room, wall_num_hall = 1, 3
+                is_horiz = True
+            elif (walls[-1][0]["x1"] == hall_lev[1]) and not(min(walls[hall_corr][2]["y1"], walls[hall_corr][2]["y2"]) >= max(walls[-1][0]["y1"], walls[-1][0]["y2"]) \
+                        or max(walls[hall_corr][2]["y1"], walls[hall_corr][2]["y2"]) <= min(walls[-1][0]["y1"], walls[-1][0]["y2"])):
+                wall_num_room, wall_num_hall = 0, 2
+                is_horiz = False
+            else:
+                return -1, -1, []
         else:
-            return -1, -1, []
+            if (walls[-1][3]["y1"] == hall_lev[3]) and not(min(walls[0][1]["x1"],walls[0][1]["x2"]) >= max(walls[-1][3]["x1"], walls[-1][3]["x2"]) or \
+            max(walls[0][1]["x1"],walls[0][1]["x2"]) <= min(walls[-1][3]["x1"], walls[-1][3]["x2"])):  # нижняя стена
+                wall_num_room, wall_num_hall = 3, 1
+                is_horiz = True
+                hall_corr = 0
+            elif (walls[-1][2]["x1"] == hall_lev[0]) and not(min(walls[0][0]["y1"], walls[0][0]["y2"]) >= max(walls[-1][2]["y1"], walls[-1][2]["y2"]) \
+                        or max(walls[0][0]["y1"], walls[0][0]["y2"]) <= min(walls[-1][2]["y1"], walls[-1][2]["y2"])):
+                wall_num_room, wall_num_hall = 2, 0
+                is_horiz = False
+                hall_corr = 0
+            elif (walls[-1][1]["y1"] == hall_lev[2]) and not(min(walls[0][3]["x1"],walls[0][3]["x2"]) >= max(walls[-1][1]["x1"], walls[-1][1]["x2"]) or \
+            max(walls[0][3]["x1"],walls[0][3]["x2"]) <= min(walls[-1][1]["x1"], walls[-1][1]["x2"])):
+                wall_num_room, wall_num_hall = 1, 3
+                is_horiz = True
+                hall_corr = 0
+            elif (walls[-1][0]["x1"] == hall_lev[1]) and not(min(walls[0][2]["y1"], walls[0][2]["y2"]) >= max(walls[-1][0]["y1"], walls[-1][0]["y2"]) \
+                        or max(walls[0][2]["y1"], walls[0][2]["y2"]) <= min(walls[-1][0]["y1"], walls[-1][0]["y2"])):
+                wall_num_room, wall_num_hall = 0, 2
+                is_horiz = False
+                hall_corr = 0
+            elif (walls[-1][3]["y1"] == corr_lev[3]) and not(min(walls[1][1]["x1"],walls[1][1]["x2"]) >= max(walls[-1][3]["x1"], walls[-1][3]["x2"]) or \
+            max(walls[1][1]["x1"],walls[1][1]["x2"]) <= min(walls[-1][3]["x1"], walls[-1][3]["x2"])):  # нижняя стена
+                wall_num_room, wall_num_hall = 3, 1
+                is_horiz = True
+                hall_corr = 1
+            elif (walls[-1][2]["x1"] == corr_lev[0]) and not(min(walls[1][0]["y1"], walls[1][0]["y2"]) >= max(walls[-1][2]["y1"], walls[-1][2]["y2"]) \
+                        or max(walls[1][0]["y1"], walls[1][0]["y2"]) <= min(walls[-1][2]["y1"], walls[-1][2]["y2"])):
+                wall_num_room, wall_num_hall = 2, 0
+                is_horiz = False
+                hall_corr = 1
+            elif (walls[-1][1]["y1"] == corr_lev[2]) and not(min(walls[1][3]["x1"],walls[1][3]["x2"]) >= max(walls[-1][1]["x1"], walls[-1][1]["x2"]) or \
+            max(walls[1][3]["x1"],walls[1][3]["x2"]) <= min(walls[-1][1]["x1"], walls[-1][1]["x2"])):
+                wall_num_room, wall_num_hall = 1, 3
+                is_horiz = True
+                hall_corr = 1
+            elif (walls[-1][0]["x1"] == corr_lev[1]) and not(min(walls[1][2]["y1"], walls[1][2]["y2"]) >= max(walls[-1][0]["y1"], walls[-1][0]["y2"]) \
+                        or max(walls[1][2]["y1"], walls[1][2]["y2"]) <= min(walls[-1][0]["y1"], walls[-1][0]["y2"])):
+                wall_num_room, wall_num_hall = 0, 2
+                is_horiz = False
+                hall_corr = 1
+
+            else:
+                return -1, -1, []
 
         # расчет отрезка ниже только для горизонтальныйх или вертикальных отрезков
         if is_horiz:
             points_list = [walls[-1][wall_num_room]["x1"], walls[-1][wall_num_room]["x2"], walls[hall_corr][wall_num_hall]["x1"], walls[hall_corr][wall_num_hall]["x2"]]
-            if min(points_list[1], walls[-1][wall_num_room]["y1"]) >= max(points_list[2], walls[-1][wall_num_room]["y1"]) or max(points_list[1], walls[-1][wall_num_room]["y1"]) <= min(points_list[2], walls[-1][wall_num_room]["y1"]):
-                # отрезки не имеют общей части
-                return -1, -1, []
-            else:
-                points_list.sort()
-                adj_part = [points_list[1], walls[-1][wall_num_room]["y1"], points_list[2], walls[-1][wall_num_room]["y1"]]
+            points_list.sort()
+            adj_part = [points_list[1], walls[-1][wall_num_room]["y1"], points_list[2], walls[-1][wall_num_room]["y1"]]
         else:
             points_list = [walls[-1][wall_num_room]["y1"], walls[-1][wall_num_room]["y2"], walls[hall_corr][wall_num_hall]["y1"], walls[hall_corr][wall_num_hall]["y2"]]
-            if min(walls[-1][wall_num_room]["x1"], points_list[1]) >= max(walls[-1][wall_num_room]["x1"], points_list[2]) or max(walls[-1][wall_num_room]["x1"], points_list[1]) <= min(walls[-1][wall_num_room]["x1"], points_list[2]):
-                # отрезки не имеют общей части
-                return -1, -1, []
-            else:
-                points_list.sort()
-                adj_part = [walls[-1][wall_num_room]["x1"], points_list[1], walls[-1][wall_num_room]["x1"], points_list[2]]
-
+            points_list.sort()
+            adj_part = [walls[-1][wall_num_room]["x1"], points_list[1], walls[-1][wall_num_room]["x1"], points_list[2]]
 
         return wall_num_room, wall_num_hall, adj_part
 
