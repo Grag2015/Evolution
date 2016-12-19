@@ -48,7 +48,7 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
         walls[-1][wall_num]["door"]["y1"] = round(dy1,2)
         walls[-1][wall_num]["door"]["y2"] = round(dy2,2)
 
-    def get_adj_wall(walls, j, hall_lev, corr_lev):
+    def get_adj_wall(walls, j, hall_lev, corr_lev, hall_corr = -1):
         '''
         возвращает номер стены смежной с прихожей или (при его отсутствии) с коридором и номер стены прихожей/коридора
         :param walls: словарь стен
@@ -60,47 +60,55 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
         if walls[-1][3]["y1"] == hall_lev[3]:  # нижняя стена
             wall_num_room, wall_num_hall = 3, 1
             is_horiz = True
-            hall_corr = 0
+            if hall_corr == -1: hall_corr = 0
         elif walls[-1][2]["x1"] == hall_lev[0]:
             wall_num_room, wall_num_hall = 2, 0
             is_horiz = False
-            hall_corr = 0
+            if hall_corr == -1: hall_corr = 0
         elif walls[-1][1]["y1"] == hall_lev[2]:
             wall_num_room, wall_num_hall = 1, 3
             is_horiz = True
-            hall_corr = 0
+            if hall_corr == -1: hall_corr = 0
         elif walls[-1][0]["x1"] == hall_lev[1]:
             wall_num_room, wall_num_hall = 0, 2
             is_horiz = False
-            hall_corr = 0
+            if hall_corr == -1: hall_corr = 0
         elif walls[-1][3]["y1"] == corr_lev[3]:  # нижняя стена
             wall_num_room, wall_num_hall = 3, 1
             is_horiz = True
-            hall_corr = 1
+            if hall_corr == -1: hall_corr = 1
         elif walls[-1][2]["x1"] == corr_lev[0]:
             wall_num_room, wall_num_hall = 2, 0
             is_horiz = False
-            hall_corr = 1
+            if hall_corr == -1: hall_corr = 1
         elif walls[-1][1]["y1"] == corr_lev[2]:
             wall_num_room, wall_num_hall = 1, 3
             is_horiz = True
-            hall_corr = 1
+            if hall_corr == -1: hall_corr = 1
         elif walls[-1][0]["x1"] == corr_lev[1]:
             wall_num_room, wall_num_hall = 0, 2
             is_horiz = False
-            hall_corr = 1
+            if hall_corr == -1: hall_corr = 1
         else:
             return -1, -1, []
 
         # расчет отрезка ниже только для горизонтальныйх или вертикальных отрезков
         if is_horiz:
             points_list = [walls[-1][wall_num_room]["x1"], walls[-1][wall_num_room]["x2"], walls[hall_corr][wall_num_hall]["x1"], walls[hall_corr][wall_num_hall]["x2"]]
-            points_list.sort()
-            adj_part = [points_list[1], walls[-1][wall_num_room]["y1"], points_list[2], walls[-1][wall_num_room]["y1"]]
+            if min(points_list[1], walls[-1][wall_num_room]["y1"]) >= max(points_list[2], walls[-1][wall_num_room]["y1"]) or max(points_list[1], walls[-1][wall_num_room]["y1"]) <= min(points_list[2], walls[-1][wall_num_room]["y1"]):
+                # отрезки не имеют общей части
+                return -1, -1, []
+            else:
+                points_list.sort()
+                adj_part = [points_list[1], walls[-1][wall_num_room]["y1"], points_list[2], walls[-1][wall_num_room]["y1"]]
         else:
             points_list = [walls[-1][wall_num_room]["y1"], walls[-1][wall_num_room]["y2"], walls[hall_corr][wall_num_hall]["y1"], walls[hall_corr][wall_num_hall]["y2"]]
-            points_list.sort()
-            adj_part = [walls[-1][wall_num_room]["x1"], points_list[1], walls[-1][wall_num_room]["x1"], points_list[2]]
+            if min(walls[-1][wall_num_room]["x1"], points_list[1]) >= max(walls[-1][wall_num_room]["x1"], points_list[2]) or max(walls[-1][wall_num_room]["x1"], points_list[1]) <= min(walls[-1][wall_num_room]["x1"], points_list[2]):
+                # отрезки не имеют общей части
+                return -1, -1, []
+            else:
+                points_list.sort()
+                adj_part = [walls[-1][wall_num_room]["x1"], points_list[1], walls[-1][wall_num_room]["x1"], points_list[2]]
 
 
         return wall_num_room, wall_num_hall, adj_part
@@ -188,14 +196,14 @@ def pl2json(list_pl, StartPosId, col_list, flats_out_walls, entrwall, addshift =
                 if wall_num != -1:
                     calcul_door(walls, wall_num, adj_part)
                 else:
-                    t = j-1
-                    while t >=5:
+                    t = j-2
+                    while t >=4:
                         levx1_room = walls[t][0]["x1"]
                         levx2_room = walls[t][2]["x1"]
                         levy1_room = walls[t][3]["y1"]
                         levy2_room = walls[t][1]["y1"]
                         levs_room = (levx1_room, levx2_room, levy1_room, levy2_room)
-                        wall_num, wall_num_hall, adj_part = get_adj_wall(walls, j, levs_room, levs_corr)
+                        wall_num, wall_num_hall, adj_part = get_adj_wall(walls, j, levs_room, levs_corr, t)
                         calcul_door(walls, wall_num, adj_part)
                         t -= 1
 
